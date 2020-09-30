@@ -1,6 +1,6 @@
 ########################################################################
 #
-# Makefile for UCB client cs2ringserver
+# Makefile for UCB client cs2ring
 #
 # The makefile in each directory should support the following targets:
 #       all
@@ -32,7 +32,7 @@ LDLIBS	= -m$(NUMBITS) $(DEBUG) $(CSULIB) $(QLIB2_LIB) $(DALI_LIB) -lm
 
 ########################################################################
 
-P1 = cs2ringserver
+P1 = cs2ring
 
 SRCS1 	= $(P1).c comserv_subs.c scnl_convert.c socket_subs.c
 
@@ -45,7 +45,7 @@ all:		$(ALL)
 $(P1):		$(OBJS1) $(CSULIB)
 		$(CC) $(CFLAGS) -o $@ $(OBJS1) $(LDLIBS)
 
-cs2ringserver.o:	cs2ringserver.c \
+cs2ring.o:	cs2ring.c \
 		channel_info.h datasock_codes.h basics.h \
 		$(CSINCL)/dpstruc.h $(CSINCL)/seedstrc.h $(CSINCL)/stuff.h \
 		$(CSINCL)/timeutil.h $(CSINCL)/service.h $(CSINCL)/cfgutil.h 

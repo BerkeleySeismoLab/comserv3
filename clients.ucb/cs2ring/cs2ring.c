@@ -1,5 +1,5 @@
 /************************************************************************
- * cs2ringserver
+ * cs2ringserver (aka cs2ring)
  *
  * Modification History:
  *  2020-09-29 DSN Updated for comserv3.
@@ -11,7 +11,7 @@
 #ifdef COMSERV2
 #define CLIENT_NAME	"2RNG"
 #else
-#define CLIENT_NAME	"CS2RINGSERVER"
+#define CLIENT_NAME	"CS2RING"
 #endif
 char *syntax[] = {
 "%s   version " VERSION,

@@ -18,7 +18,7 @@ endif
 
 ########################################################################
 
-TARGETS	=   cs2ringserver datalog datasock dataspy netmon sl2mcast
+TARGETS	=   cs2ring datalog datasock dataspy netmon sl2mcast
 
 OBSOLETE = cpick_card_server evtalarm
 
