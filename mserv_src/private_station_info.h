@@ -7,12 +7,15 @@
 
 #ifndef __PRIVATE_STATION_INFO_H__
 #define __PRIVATE_STATION_INFO_H__
+
 #include <linux/limits.h>
+
+#include "cstypes.h"
 
 /* Structure for storing private station-specific info. */
 typedef struct _private_station_info {
-  char stationName[16];
-  char conf_path_prefix[PATH_MAX];
+    tservername stationName;
+    char conf_path_prefix[PATH_MAX];
 } private_station_info;
 
 #endif

@@ -38,13 +38,13 @@ ifeq ($(OPTIMIZE),NORMAL)
 CFLAGS  = -g -I $(QD) -DPROG_DL -DPROG_SS -DINLIB660 -DDEVSOH\
 	-O2 -ffast-math -finline-functions\
 	-funswitch-loops -g -DUSE_GCC_PACKING -w  -fmessage-length=0 -m$(NUMBITS) \
-	-DBSL_Q8SERV -DBSL_Q8SERV_DEBUG -DDSN -Dlinux
+	-Dlinux -DBSL #:: -DBSL_DEBUG 
 endif
 
 ifeq ($(OPTIMIZE),DEBUG)
 CFLAGS  = -g -I $(QD) -DPROG_DL -DPROG_SS -DINLIB660 -DDEVSOH\
 	-O0 -ffast-math\
-	-g -DUSE_GCC_PACKING -w -m$(NUMBITS) -DBSL_Q8SERV -DBSL_Q8SERV_DEBUG -DDSN -Dlinux
+	-g -DUSE_GCC_PACKING -w -m$(NUMBITS) -Dlinux -DBSL -DBSL_DEBUG 
 endif
 
 COPT	= 

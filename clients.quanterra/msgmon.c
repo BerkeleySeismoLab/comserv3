@@ -31,6 +31,8 @@ Edit History:
 #include <signal.h>
 #include <unistd.h>
 
+#include "cslimits.h"
+#include "cstypes.h"
 #include "dpstruc.h"
 #include "seedstrc.h"
 #include "stuff.h"
@@ -39,8 +41,8 @@ Edit History:
 #include "stuff.h"
 
 #define BUF_SIZE 200
-string15 name = "MSGM" ;
-string15 sname = "RAND" ;
+tclientname name = "MSGM" ;
+tservername sname = "RAND" ;
 tstations_struc stations ;
 
 typedef char char23[24] ;

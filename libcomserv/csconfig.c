@@ -53,7 +53,6 @@ Edit History:
 #include "csconfig.h"
 
 short VER_CSCFG = 23 ;
-string15 station ;
 
 #define STATIONS_INI	"/etc/stations.ini"
 #define STATION_INI	"station.ini"
@@ -348,19 +347,10 @@ int getCSServerParams (csconfig *cs_cfg, char *server_dir, char *section)
 	    upshift(str2) ;
 	    comserv_split (str2, stemp, ',') ;
 	    strcpy (cs_cfg->clients[i].client_name, str2);
-//::	    copy_cname_cs_str(cs_cfg->clients[i].client_name,str2);
 	    /* get timeout, if any */
 	    if (stemp[0] != '\0')
 	    {
 		cs_cfg->clients[i].timeout = atol((pchar)&stemp) ;
-//:: 		cs_cfg->clients[i].timeout = atol((pchar)&stemp) ;
-//::		if (cs_cfg->clients[i].timeout)
-//::		{
-//:: 		    set_bit (&blockmask, i) ;
-//:: 		    cs_cfg->clients[i].last_service = dtime () ;
-//:: 		    cs_cfg->clients[i].active = TRUE ;
-//:: 		    cs_cfg->clients[i].blocking = TRUE ;
-//:: 		}
  	    }
 	    continue;
 	}

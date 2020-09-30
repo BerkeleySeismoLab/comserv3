@@ -21,6 +21,7 @@ Edit History:
 #include <stdint.h>
 
 #include "cslimits.h"
+#include "cstypes.h"
 #include "service.h"
 
 #define BLOB 4096
@@ -60,13 +61,16 @@ typedef struct
 
 typedef struct
 {
+#ifdef COMSERV2
     int client_memid ;               /* client's shared memory ID */
     int client_pid ;                 /* client's process ID */
     int client_uid ;                 /* client's user ID */
-#ifdef COMSERV2
     complong client_name ;           /* client's name */
 #else
-    string15 client_name ;           /* client's name */
+    int client_memid ;               /* client's shared memory ID */
+    pid_t client_pid ;                 /* client's process ID */
+    uid_t client_uid ;                 /* client's user ID */
+    tclientname client_name ;           /* client's name */
 #endif
     pclient_struc client_address ;   /* where client's shared memory appears */
     pchar outbuf ;                   /* For reading detector parameters, etc. */

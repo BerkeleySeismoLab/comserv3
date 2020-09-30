@@ -22,14 +22,14 @@ for nb in ${argv[@]} ; do
     errfile=make.$NUMBITS.err
     echo make ...
     make >& $logfile
-    egrep -i "(error)|(warning)" $logfile > $errfile
+    egrep -i "(error)|(warning)" $logfile | grep -v Werror > $errfile
     echo $errfile errors = `cat $errfile | wc -l`
 
     logfile=install.$NUMBITS.log
     errfile=install.$NUMBITS.err
     echo make install ...
     make install >& $logfile
-    egrep -i "(error)|(warning)" $logfile > $errfile
+    egrep -i "(error)|(warning)" $logfile | grep -v Werror > $errfile
     echo $errfile errors = `cat $errfile | wc -l`
 
 done

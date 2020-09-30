@@ -129,7 +129,7 @@ char *cmdname;			/* Program name.			*/
 static int port = -1;		/* No explicit port means the program	*/
 				/* should inherit the socket on stdout.	*/
 FILE *info;			/* Default FILE for messages.		*/
-static string15 client = DEFAULT_CLIENT;	/* Default client name	*/
+static tclientname client = DEFAULT_CLIENT;	/* Default client name	*/
 static int nreq;		/* # of stations in request list.	*/
 static int ngen;		/* # of stations in comserv list.	*/
 static STATCHAN *req;		/* station info from requests.		*/

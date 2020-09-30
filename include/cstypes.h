@@ -9,6 +9,8 @@
 
 #include <stdint.h>
 
+#include "cslimits.h"
+
 /* Originally from dpstruc.h */
 /* Boolean constants */
 #ifndef FALSE
@@ -38,8 +40,12 @@ typedef uint32_t chan_map ;
    the dynamic length, followed by up to xx characters */
 typedef char string15[16] ;
 typedef char string23[24] ;
+typedef char string31[32] ;
 typedef char string59[60] ;
 typedef char string79[80] ;
+
+typedef char tservername[SERVER_NAME_SIZE] ;
+typedef char tclientname[CLIENT_NAME_SIZE] ;
 
 /* Common fields within SEED headers and other structures */
 typedef char seed_name_type[3] ;

@@ -31,6 +31,8 @@
 #include <qlib2.h>
 #include <libslink.h>
 
+#include "cslimits.h"
+#include "cstypes.h"
 #include "dpstruc.h"
 #include "service.h"
 #include "seedstrc.h"
@@ -180,9 +182,9 @@ int main (int argc, char **argv)
     pclient_station thist;
     short j;
     boolean alert ;
-    short data_mask = 0;                  /* Data mask for cs_setup.      */
-    static string15 cname = CLIENT_NAME;	/* Default client name          */
-    string15 sname = "" ;                 /* Default station/mserv name.  */
+    short data_mask = 0;			/* Data mask for cs_setup.      */
+    static tclientname cname = CLIENT_NAME;	/* Default client name          */
+    tservername sname = "" ;			/* Default station/mserv name.  */
     tstations_struc stations ;
 
 

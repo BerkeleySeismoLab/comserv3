@@ -48,7 +48,7 @@ typedef struct { /* for file access */
 typedef tfile_owner *pfile_owner ;
 
 typedef struct { /* parameters for lib_create call */
-    string15 msmcastid_station ; /* initial station name */
+    string31 msmcastid_station ; /* initial station name */
     string95 host_software ; /* host software type and version */
     string15 host_ident ; /* short host software identification */
     word opt_verbose ; /* VERB_xxxx bitmap */

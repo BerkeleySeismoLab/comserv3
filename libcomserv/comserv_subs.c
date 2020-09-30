@@ -287,14 +287,13 @@ int comserv_init (csconfig *cs_cfg, char* server_name)
     struct sembuf notbusy = { 0, 1, 0 } ;
     int32_t bufsize, size ;
        
-    string15 station_name ;
+    tservername station_name ;
       
     start_time = (int32_t) dtime () ;
 
     /* Initialize the comserv station name from the provided server_name, */
     strncpy(station_name, server_name,SERVER_NAME_SIZE) ;
     station_name[SERVER_NAME_SIZE-1] = '\0';
-    copy_sname_cs_str(station,"");
 
     /* Report versions of all comserv subsystem modules */
     LogMessage (CS_LOG_TYPE_INFO, "Configuring comserv subsystem for server_name : %s\n",server_name);

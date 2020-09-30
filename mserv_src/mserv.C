@@ -53,6 +53,7 @@
 
 // comserv includes
 #include "cslimits.h"
+#include "cstypes.h"
 #include "comserv_calls.h"
 #include "srvc.h"
 
@@ -110,7 +111,7 @@ void print_syntax(char *cmdname)
 
 int main(int argc, char *argv[]) {
     char *cmdname;				// program name.
-    char server_name[MAX_CHARS_IN_SERVER_NAME];
+    tservername server_name;
     time_t nextStatusUpdate;
     char log_basename[2048];
     int log_mode;

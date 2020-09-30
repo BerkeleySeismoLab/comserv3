@@ -56,6 +56,8 @@ Edit History:
 #include <signal.h>
 #include <unistd.h>
 
+#include "cslimits.h"
+#include "cstypes.h"
 #include "dpstruc.h"
 #include "seedstrc.h"
 #include "stuff.h"
@@ -66,8 +68,8 @@ Edit History:
 #define BUF_SIZE 200
 #define WAIT_SECONDS 30
 #define CSDP_ABT 100
-string15 name = "CMDS" ;
-string15 sname = "RAND" ;
+tclientname name = "CMDS" ;
+tservername sname = "RAND" ;
 tstations_struc stations ;
 chan_struc *pcs = NULL ;
 pclient_struc me ;

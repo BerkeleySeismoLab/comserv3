@@ -11,7 +11,7 @@
 #ifdef COMSERV2
 #define CLIENT_NAME	"2RNG"
 #else
-#define CLIENT_NAME	"CS2RING"
+#define CLIENT_NAME	"CS2RINGSERVER"
 #endif
 char *syntax[] = {
 "%s   version " VERSION,
@@ -96,7 +96,7 @@ CHANNEL_INFO **channelv = NULL;	/* list of channels.			*/
 DLCP *dlconn;			/* descriptor for ring connection	*/
 char *new_sn;			/* Optional station.channel rename.	*/
 int ack = 0;			/* Default is no ack from ringserver.	*/
-string15 client_name;		/* Comserv client name			*/
+tclientname client_name;	/* Comserv client name			*/
 
 /*  Signal handler variables and functions.				*/
 void finish_handler(int sig);
@@ -271,7 +271,7 @@ int write_to_ring(seed_record_header *tseed)
 /************************************************************************/
 int main (int argc, char **argv)
 {
-    string15 station;
+    tservername station;
     char *host = NULL;
     char *service = NULL;
     int request_flag = 0;

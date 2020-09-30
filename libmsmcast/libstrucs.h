@@ -107,7 +107,7 @@ typedef struct { /* this is the actual context which is hidden from clients */
     boolean nested_log ; /* we are actually writing a log record */
     integer log_timer ; /* count-down since last added message line */
     plcq msg_lcq ;
-    string15 station_ident ; /* network-station */
+    string31 station_ident ; /* network-station */
     /* following are cleared after de-registering */
     word first_clear ; /* first byte to clear */
     boolean ipv6 ; /* TRUE if using IPV6 */

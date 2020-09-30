@@ -57,11 +57,13 @@
 #endif
 #endif
 
-#include <dpstruc.h>
-#include <cfgutil.h>
-#include <service.h>
-#include <timeutil.h>
-#include <stuff.h>
+#include "cslimits.h"
+#include "cstypes.h"
+#include "dpstruc.h"
+#include "cfgutil.h"
+#include "service.h"
+#include "timeutil.h"
+#include "stuff.h"
 
 #define	QUOTE(x)	#x
 #define	STRING(x)	QUOTE(x)
@@ -152,7 +154,7 @@ NULL };
  *  Structures for client and station info used by this program.
  ************************************************************************/
 typedef struct _client_info {		/* Client info structure.	*/
-    string15 client;			/* Client name.			*/
+    tclientname client;			/* Client name.			*/
     char pidfile[256];			/* Client pid file.		*/
     char program[256];			/* Client program.		*/
     double time_check;			/* Time to check client status.	*/
@@ -164,7 +166,7 @@ typedef struct _client_info {		/* Client info structure.	*/
 } CLIENT_INFO;
 
 typedef struct _station_info {		/* Station info structure.	*/
-    string15 station;			/* Station name.		*/
+    tservername station;		/* Station name.		*/
     char config_state;			/* Station run state in file.	*/
     char target_state;			/* Station target run state.	*/
     char present_state;			/* Station present run state.	*/
@@ -727,7 +729,7 @@ STATION_INFO *collect_station_info (char *station_name)
 {
     STATION_INFO *s;
     CLIENT_INFO *c;
-    string15 station;
+    tservername station;
     char str1[SECWIDTH], str2[SECWIDTH];
     config_struc station_cfg;
     char *p;

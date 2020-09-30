@@ -45,8 +45,6 @@ Edit History:
 #ifdef COMSERV2
 /* Number of bytes for string storage. */
 /* COMSERV2 storage is limited to 4 bytes in complong structure. */
-#define CLIENT_NAME_SIZE		5
-#define SERVER_NAME_SIZE		5
 #define empty_string(s1)		(s1.l == 0)
 #define client_match(s1,s2)		(s1.l == s2.l)
 #define site_match(s1,s2)		(s1.l == s2.l)
@@ -63,8 +61,6 @@ Edit History:
 #else
 /* Number of bytes for string storage. */
 /* COMSERV3 structure storage is the same as string storage. */
-#define CLIENT_NAME_SIZE		16
-#define SERVER_NAME_SIZE		16
 #define empty_string(s1)		(s1[0] == 0)
 #define client_match(s1,s2)		(strncasecmp(s1,s2,CLIENT_NAME_SIZE) == 0)
 #define site_match(s1,s2)		(strncasecmp(s1,s2,SERVER_NAME_SIZE) == 0)
@@ -193,7 +189,7 @@ typedef struct
 #ifdef COMSERV2
     complong clientname ;
 #else
-    string15 clientname ;
+    tclientname clientname ;
 #endif
 } tsvc ;
  
@@ -228,7 +224,7 @@ typedef struct
 #ifdef COMSERV2
     complong name ;           /* station name - WAS complong */
 #else
-    string15 name ;           /* station name - WAS complong */
+    tservername name ;           /* station name - WAS complong */
 #endif
     int32_t seg_key ;         /* station segment key */
     int16_t command ;         /* Command to perform for this call */
@@ -271,7 +267,7 @@ typedef struct
 #ifdef COMSERV2
     complong myname ;              /* Client's Name - WAS complong */
 #else
-    string15 myname ;              /* Client's Name - WAS complong */
+    tclientname myname ;              /* Client's Name - WAS complong */
 #endif
     int32_t client_pid ;           /* Client's PID */
     int32_t client_shm ;           /* Client's shared memory */
@@ -296,7 +292,7 @@ typedef struct
 #ifdef COMSERV2
     complong stationname ;    /* Station's name - WAS complong */
 #else
-    string15 stationname ;    /* Station's name - WAS complong */
+    tservername stationname ;    /* Station's name - WAS complong */
 #endif
     int32_t comoutsize ;      /* Comoutbuf size */
     int16_t selectors ;       /* Number of selectors wanted */
@@ -311,7 +307,7 @@ typedef struct
 #ifdef COMSERV2
     complong myname ;                           /* Client's name - WAS complong */
 #else
-    string15 myname ;                           /* Client's name - WAS complong */
+    tclientname myname ;                           /* Client's name - WAS complong */
 #endif
     boolean shared ;                            /* TRUE if comoutbuffer is shared among all stations */
     int16_t station_count ;                     /* Number of stations in list */

@@ -52,6 +52,8 @@ Usage Notes:
 #include <math.h>
 
 extern "C" {
+#include "cslimits.h"
+#include "cstypes.h"
 #include "dpstruc.h"
 #include "service.h"
 #include "seedstrc.h"
@@ -96,8 +98,8 @@ const int MAX_CHARS_IN_CHANNEL_NAME = 10;
 FILE *info = stdout;		/* Default FILE for messages.		*/
 char	*cmdname;		/* Program name.			*/
 short data_mask = 0;		/* data mask for cs_setup.		*/
-static string15 name = CLIENT_NAME ;	/* Default client name		*/
-string15 sname = "*" ;		/* Default station list.		*/
+static tclientname name = CLIENT_NAME ;	/* Default client name		*/
+tservername sname = "*" ;		/* Default station list.		*/
 tstations_struc stations ;
 typedef char char23[24] ;
 typedef char char5[6] ;

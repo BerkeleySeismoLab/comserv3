@@ -84,7 +84,8 @@ void LibmsmcastInterface::initializeCreationInfo(char *stationName, ConfigVO our
     memset (&this->creationInfo, 0, sizeof(this->creationInfo));	
 
     // Fill out the parts of the creationInfo that we know about.
-    strcpy(this->creationInfo.msmcastid_station, ourConfig.getServerName());
+    strlcpy(this->creationInfo.msmcastid_station, ourConfig.getServerName(),
+	    sizeof(this->creationInfo.msmcastid_station));
     strcpy(this->creationInfo.host_software, APP_VERSION_STRING);
     strcpy(this->creationInfo.host_ident, APP_IDENT_STRING);
     this->creationInfo.opt_verbose = ourConfig.getLogLevel();
@@ -98,7 +99,8 @@ void LibmsmcastInterface::initializeCreationInfo(char *stationName, ConfigVO our
     this->fowner.call_fileacc = (tcallback)&this->file_callback;
     this->fowner.station_ptr = (void *)&this->station_info;
     /* Set private station info used for file callback functions. */
-    strcpy(this->station_info.stationName, ourConfig.getServerName());
+    strlcpy(this->station_info.stationName, ourConfig.getServerName(),
+	    sizeof(this->station_info.stationName));
     if(strlen(ourConfig.getContFileDir())) {
 	sprintf(this->station_info.conf_path_prefix, "%s/%s.", ourConfig.getContFileDir(), stationName);
     } 

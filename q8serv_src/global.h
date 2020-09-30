@@ -10,8 +10,6 @@
 
 /* GLobal definitions. */
  
-#define MAX_CHARS_IN_SERVER_NAME 16
-
 #define DEFAULT_STATUS_INTERVAL 100
 #define MIN_STATUS_INTERVAL 5
 #define MAX_STATUS_INTERVAL 200

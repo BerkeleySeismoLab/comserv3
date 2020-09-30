@@ -26,6 +26,9 @@ Edit History:
 #include <sys/shm.h>
 #include <sys/time.h>
 #include <signal.h>
+
+#include "cslimits.h"
+#include "cstypes.h"
 #include "dpstruc.h"
 #include "seedstrc.h"
 #include "stuff.h"
@@ -34,8 +37,8 @@ Edit History:
 
 /* #define RESTRICT uncomment to restrict channel request */
 
-string15 name = "CONF" ;
-string15 sname = "*" ;
+tclientname name = "CONF" ;
+tservername sname = "*" ;
 tstations_struc stations ;
 
 typedef char char23[24] ;

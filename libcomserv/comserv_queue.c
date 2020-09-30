@@ -152,12 +152,6 @@ Edit History:
 
 short VER_COMLINK = 31 ;
 
-#ifdef COMSERV2
-extern complong station;
-#else
-extern string15 station ;
-#endif
-
 /* Comserv external variables used in this file. */
 extern pchar dest ;
 extern linkstat_rec linkstat ;

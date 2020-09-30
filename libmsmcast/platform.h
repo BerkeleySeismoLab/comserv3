@@ -85,9 +85,13 @@ Edit History:
 #include <windows.h>
 #include <winbase.h>
 
+#ifndef boolean
 #define boolean unsigned __int8 /* 8 bit unsigned, 0 or non-zero */
+#endif
 #define shortint signed __int8 /* 8 bit signed */
+#ifndef byte
 #define byte unsigned __int8 /* 8 bit unsigned */
+#endif
 #define int16 __int16 /* 16 bit signed */
 #define word unsigned __int16 /* 16 bit unsigned */
 #define longint __int32 /* 32 bit signed */
@@ -136,9 +140,13 @@ typedef struct _stat tfile_state ;
 #include <sys/termios.h>
 #endif
 
+#ifndef boolean
 #define boolean uint8_t /* 8 bit unsigned, 0 or non-zero */
+#endif
 #define shortint int8_t /* 8 bit signed */
+#ifndef byte
 #define byte uint8_t /* 8 bit unsigned */
+#endif
 #define int16 int16_t /* 16 bit signed */
 #define word uint16_t /* 16 bit unsigned */
 #define longint int32_t /* 32 bit signed */

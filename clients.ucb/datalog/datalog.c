@@ -60,12 +60,15 @@ double log2(double);
 
 #include "qlib2.h"
 
+#include "cslimits.h"
+#include "cstypes.h"
 #include "dpstruc.h"
 #include "seedstrc.h"
 #include "stuff.h"
 #include "timeutil.h"
 #include "service.h"
 #include "cfgutil.h"
+
 pchar seednamestring (seed_name_type *sd, location_type *loc);
 
 #include "datalog.h"
@@ -88,8 +91,8 @@ int gapfd=-1;
 short data_mask = DEFAULT_DATA_MASK;	/* data mask for cs_setup.	*/
 
 char *cmdname;				/* Name of this program.	*/
-string15 station;			/* station name.		*/
-string15 client_name = CLIENT_NAME;	/* client name			*/
+tservername station;			/* station name.		*/
+tclientname client_name = CLIENT_NAME;	/* client name			*/
 char *default_duration = "1d";		/* default duration of file.	*/
 char lockfile[160];			/* Name of optional lock file.	*/
 int lockfd;				/* Lockfile file desciptor.	*/

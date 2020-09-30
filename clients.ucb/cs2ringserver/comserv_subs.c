@@ -33,6 +33,8 @@
 #include "datasock_codes.h"
 #include "basics.h"
 
+#include "cslimits.h"
+#include "cstypes.h"
 #include "dpstruc.h"
 #include "seedstrc.h"
 #include "stuff.h"
@@ -53,7 +55,7 @@
 #define	boolean_value(str)  ((str[0] == 'y' || str[0] == 'Y') ? 1 : 0)
 
 /*  Comserv variables.	*/
-extern string15 client_name;
+extern tclientname client_name;
 
 short data_mask =		/* data mask for cs_setup.		*/
     (CSIM_DATA);

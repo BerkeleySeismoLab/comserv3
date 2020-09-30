@@ -31,6 +31,8 @@ Edit History:
 #include <sys/time.h>
 #include <signal.h>
 
+#include "cslimits.h"
+#include "cstypes.h"
 #include "dpstruc.h"
 #include "seedstrc.h"
 #include "stuff.h"
@@ -44,8 +46,8 @@ pchar seednamestring (seed_name_type *sd, location_type *loc);
 /* #define CLIENT_NAME	"DATA" */
 
 #define	MAX_SELECTORS	CHAN+2
-string15 name = CLIENT_NAME ;
-string15 sname = "*" ;
+tclientname name = CLIENT_NAME ;
+tservername sname = "*" ;
 char cname[4] = "???" ;
 tstations_struc stations ;
 typedef char char23[24] ;

@@ -31,6 +31,8 @@ Edit History:
 #include <signal.h>
 #include <unistd.h>
 
+#include "cslimits.h"
+#include "cstypes.h"
 #include "dpstruc.h"
 #include "seedstrc.h"
 #include "stuff.h"
@@ -38,8 +40,8 @@ Edit History:
 #include "service.h"
 #include "seedutil.h"
 
-string15 name = "DATA" ;
-string15 sname = "*" ;
+tclientname name = "DATA" ;
+tservername sname = "*" ;
 tstations_struc stations ;
 typedef char char23[24] ;
 boolean verbose = FALSE ;

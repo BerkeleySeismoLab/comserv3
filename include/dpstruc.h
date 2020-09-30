@@ -318,7 +318,7 @@ typedef struct
 #ifdef COMSERV2
     complong client_name ;   /* Client's name */
 #else
-    string15 client_name ;   /* Client's name */
+    tclientname client_name ;   /* Client's name */
 #endif
     double last_service ;    /* Time of last service */
     int32_t timeout ;        /* Timeout value */

@@ -53,6 +53,8 @@ Usage Notes:
 #include <netdb.h>
 #include <math.h>
 
+#include "cslimits.h"
+#include "cstypes.h"
 #include "dpstruc.h"
 #include "service.h"
 #include "seedstrc.h"
@@ -91,8 +93,8 @@ const int MAX_CHARS_IN_CHANNEL_NAME = 10;
  *  Externals required in multiple files.
  ************************************************************************/
 
-static string15 name = CLIENT_NAME ;	/* Default client name		*/
-string15 sname = "*" ;		/* Default station list.		*/
+static tclientname name = CLIENT_NAME ;	/* Default client name		*/
+tservername sname = "*" ;		/* Default station list.		*/
 
 FILE *info = stdout;		/* Default FILE for messages.		*/
 char	*cmdname;		/* Program name.			*/

@@ -45,6 +45,8 @@ Edit History:
 
 #include "qlib2.h"
 
+#include "cslimits.h"
+#include "cstypes.h"
 #include "dpstruc.h"
 #include "seedstrc.h"
 #include "stuff.h"
@@ -108,7 +110,6 @@ char *cmdname;				/* command name.		*/
 int verbosity;				/* verbosity flag.		*/
 short data_mask = (CSIM_EVENT);		/* data mask for cs_setup.	*/
 char *detection_types = "t";		/* default detection type.	*/
-string15 sname = "*" ;			/* default station list.	*/
 int flush = 1;				/* flag to flush old detections.*/
 int start_flag = 0;			/* flag to set start time.	*/
 double dstart = 0.0;			/* detection start time.	*/
@@ -536,7 +537,7 @@ pclient_struc setup_comserv_connections(LIST station_list, LIST station_exclude,
     pclient_struc me;
     pclient_station this_station;
     tstations_struc stations; 
-    string15 station_name;
+    tservername station_name;
     char time_str[TIMESTRLEN];
     int i, j;
     char *p;

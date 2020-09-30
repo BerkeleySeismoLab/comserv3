@@ -9,8 +9,8 @@ to the original Quanterra COMSERV system and user_contributed
 COMSERV2 updates.
 
 1.  Changed the original COMSERV client-server protocol from 4 char 
-client_name and station_name fields to 15 char client and server_named 
-strings (15 char plus null-termination). The COMSERV3 server_name used
+client_name and station_name fields to 32 char client and server_named 
+strings (31 char plus null-termination). The COMSERV3 server_name used
 for each instance of a server program is now completely decoupled from 
 the SEED station name of the data from the data logger. In order to make
 each server_name unique and descriptive, you may choose to include the

@@ -90,11 +90,6 @@ EXTERN double curtime ;
  * External variables that do NOT require initialization.
  ***********************************************************************/
 
-#ifdef COMSERV2
-EXTERN complong station ;
-#else
-EXTERN string15 station ;
-#endif
 EXTERN tring rings[NUMQ] ;                /* Access structure for rings */
 EXTERN pserver_struc base ;
 EXTERN config_struc cfg ;

@@ -41,7 +41,7 @@ Edit History:
 
 #undef FAKEERROR
 #undef DODBPRINT
-#ifdef BSL_Q8SERV_DEBUG
+#ifdef BSL_DEBUG
 /* #define DODBPRINT */
 #endif
 
