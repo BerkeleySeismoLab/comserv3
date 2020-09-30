@@ -53,8 +53,12 @@ Date     who	Version	Modifications.
 #include <stdlib.h>
 
 #define	VERSION	"1.6.0 (2020.273)"
+
+#ifdef COMSERV2
+#define	DEFAULT_CLIENT	"DSOC"
+#else
 #define	DEFAULT_CLIENT	"DATASOCK"
-/* #define	DEFAULT_CLIENT	"DATASOCK" */
+#endif
 
 char *syntax[] = {
 "%s - Version " VERSION,

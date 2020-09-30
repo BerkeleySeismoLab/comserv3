@@ -26,8 +26,12 @@ Usage Notes:
 
 **********************************************************/
 #define VERSION	"1.1.0 (2020.273)"
+
+#ifdef COMSERV2
+#define CLIENT_NAME	"CSST"
+#else
 #define CLIENT_NAME	"CSSTAT"
-/* #define CLIENT_NAME	"CSST" */
+#endif
 
 #include <iostream>
 #include <fstream>

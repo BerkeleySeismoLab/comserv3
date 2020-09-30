@@ -17,8 +17,12 @@
 */
 
 #define	VERSION		"1.6.0 (2020.273)"
+
+#ifdef COMSERV2
+#define	CLIENT_NAME	"DLOG"
+#else
 #define	CLIENT_NAME	"DATALOG"
-/* #define	CLIENT_NAME	"DLOG" */
+#endif
 
 #include <stdio.h>
 

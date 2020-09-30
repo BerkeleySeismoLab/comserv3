@@ -30,8 +30,12 @@ Usage Notes:
 **********************************************************/
 
 #define VERSION "1.1.0 (2020.273)"
+
+#ifdef COMSERV2
+#define CLIENT_NAME	"CS2M"
+#else
 #define CLIENT_NAME	"CS2MCAST"
-/* #define CLIENT_NAME	"CS2MCAST" */
+#endif
 
 #include <iostream>
 #include <stdlib.h>

@@ -28,8 +28,12 @@
 */
 
 #define	VERSION		"1.2.0 (2020.273)"
+
+#ifdef COMSERV2
+#define	CLIENT_NAME	"NETM"
+#else
 #define	CLIENT_NAME	"NETMON"
-/* #define	CLIENT_NAME	"NETM" */
+#endif
 
 #include    <stdio.h>
 

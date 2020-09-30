@@ -42,8 +42,11 @@ pchar seednamestring (seed_name_type *sd, location_type *loc);
 
 #define VERSION "1.1.0 (2018.273)"
 
+#ifdef COMSERV2
+#define CLIENT_NAME	"DSPY"
+#else
 #define CLIENT_NAME	"DATASPY"
-/* #define CLIENT_NAME	"DATA" */
+#endif
 
 #define	MAX_SELECTORS	CHAN+2
 tclientname name = CLIENT_NAME ;

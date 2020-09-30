@@ -8,11 +8,13 @@
 #include <stdio.h>
 
 #define VERSION	"1.02 (2020.273)"
+
 #ifdef COMSERV2
 #define CLIENT_NAME	"2RNG"
 #else
 #define CLIENT_NAME	"CS2RINGSERVER"
 #endif
+
 char *syntax[] = {
 "%s   version " VERSION,
 "%s - write MSEED data records from comserv server or datsock socket to ringserver.",

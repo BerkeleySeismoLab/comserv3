@@ -15,8 +15,12 @@ Edit History:
 */
 
 #define	VERSION		"1.0.1 (2020.273)"
+
+#ifdef COMSERV2
+#define	CLIENT_NAME	"EVTD"
+#else
 #define	CLIENT_NAME	"EVENT_DETECTOR"
-/* #define	CLIENT_NAME	"EVTD" */
+#endif
 
 #include <stdio.h>
 

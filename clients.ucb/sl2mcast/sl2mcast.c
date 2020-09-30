@@ -43,7 +43,12 @@
 #include "retcodes.h"
 
 #define VERSION "1.04 (2020.273)"
+
+#ifdef COMSERV2
+#define	CLIENT_NAME	"SL2M"
+#else
 #define	CLIENT_NAME	"SL2MCAST"
+#endif
 
 #define TIMESTRLEN      80
 #define MAX_SELECTORS CHAN+2

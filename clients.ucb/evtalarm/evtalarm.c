@@ -19,8 +19,12 @@ Edit History:
  ************************************************************************/
 
 #define	VERSION		"1.1.0 (2020.273)"
+
+#ifdef COMSERV2
+#define	CLIENT_NAME	"EVTA"
+#else
 #define	CLIENT_NAME	"EVTALARM"
-/* #define	CLIENT_NAME	"EVTA" */
+#endif
 
 #include <stdint.h>
 #include <stdio.h>
