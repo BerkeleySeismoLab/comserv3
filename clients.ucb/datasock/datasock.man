@@ -1,0 +1,202 @@
+########################################################################
+# $Id: datasock.man,v 1.2 2007/01/24 23:17:56 redi Exp $
+########################################################################
+========================================================================
+		Instruction on the use of datasock
+	Doug Neuhauser, UC Berkeley Seismological Laboratory
+		doug@seismo.berkeley.edu
+			1997/10/10
+
+========================================================================
+Datasock is a comserv client that will read MiniSEED data records
+from one or more comserv servers and write the MiniSEED data a 
+datasock client over a socket.  
+
+A.  Datasock startup modes:
+
+1.  Manual operation.
+
+Datasock can listen on the specified port number for an incoming socket
+connection.  A datasock client connects to the datasock port.  Datasock
+writes the MiniSEED data records to the socket, and the datasock client
+reads the records from the socket.  Datsock will continue to request
+MiniSEED data records from comserv and write the records to the socket
+until the socket is closed by the datasock client or until the process
+is killed.
+
+2.  Started from inetd.
+
+Datasock can be configured to start from inetd.  In this configuration, the
+inetd.conf file contains the datasock command to be run when an incoming
+connection is received on a specified port.  Inetd will then start datasock,
+and datasock will inherit the open socket on file descriptor 0 from inetd.
+It then operates in the same mode as described under manual operation.
+
+B. Datasock station and channel selection modes:
+
+1.  Command line
+
+Datasock can be configured via the command line to provide MiniSEED
+records for an explicit list of stations and channels.  The MiniSEED
+channel list is constructed from the cross product of the station and
+channel list.  For example, if the command line station and channel lists
+are:
+	BKS,CMB	BHZ,BHN,BHE
+datasock will request from comserv the following data channels:
+	BKS.BHZ, BKS.BHN, BKS.BHE, CMB.BHZ, CMB.BHN, CMB.BHE The station and
+channel list can contain wildcard characters.  The station list can contain
+"*" or "?". The wildcard characters are expanded like the standard Unix shell
+wildcard characters. 
+
+The channel list consists of comma-separated channel-location strings in the
+format CCC.LL, that is a three-letter channel name followed by a 2-letter
+location code separated by a period. The single-letter wildcard '*' may be
+used in place of the three letter channel code or two-letter location code;
+this match all possible channel or location codes, respctively.  The
+single-letter wildcard '?' may be used in any position of the channel or
+location strings.  A channel-location string of "CCC" will be treated as
+"CCC.??"  while the channel-location string of "CCC." will be treated as 
+"CCC.  ", i.e. the empty location code. Blank (space) characters in teh
+location code should be given as `-' characters.
+
+2.  Client request.
+
+If datasock is started with the "-i" option, it expects the client
+to send a request which contains the station and channel list.
+
+C.  Client verification
+
+Datasock can be configured to require the client to provide an
+initial password over the socket when the socket connection is 
+first opened.  This allows datasock to decide whether it should
+provide data to the client.  If datasock does not receive
+the correct password, it will close the socket.
+
+D.  Station, channel, and password request format sent by datasock client.
+
+If datasock is configured with an explicit station and channel list and
+is not configure to check for a password, it will not perform any
+read from the socket connection to the datasock client, and will only
+write MiniSEED records to socket.
+
+If datasock is configured to read the station and channel list
+from the datasock client, or if it configured to verify a password,
+it will read request line(s) from the datasock client when the
+socket connection is first made.  There are 2 versions of request
+that datasock recognizes:
+
+1.  Single line station and channel list.
+The datasock client will write a single line to the socket, which
+will contain a station_list and channel_list in the same format as 
+the command line arguments.  eg:
+	station_list  channel_list
+The line consists of ascii characters and is terminated by a newline.
+
+2.  Multi-line station and channel list, and/or password.
+The datasock client writes a multi-line request to datasock.
+Each line begins with a numeric code and an (optional) token list.
+A valid request will start with a password line (if required), and
+will terminate with an END_OF_REQUEST line.  It may contains 0 or
+more station_list and channel_list request lines.
+	100 PASSWORD password               (optional)              
+	110 station_list channel_list       (comma-delmited lists)
+         ...                                                         */
+	199 END_OF_REQUEST     
+Each line will be terminated by a newline.
+
+E.  Syntax:
+
+datasock - Version 1.4.1 (1997.283)
+datasock  [-S port] [-p passwd | -P passwdfile] [-c client_name]
+	[-v n] [-h] station_list channel_list
+    where:
+	-S port		Specify port number to listen to for connections.
+			If no port is specified, assume port is already open
+			on unit 0 (from inetd).
+	-p passwd	Password required from remote connection.
+	-P passwdfile	File containing password required from remote system.
+	-c client_name	Comserv client name.  Default is 'DSOC'.
+	-v n		Set verbosity level to n.
+	-h		Help - prints syntax message.
+	-i		Interactive - get station and channel list from port.
+	station_list	List of station names (comma-delimited).
+	channel_list	List of channel names (comma-delimited).
+
+F:  Examples.
+
+1.  Manual operation of datasock with fixed station and channel list.
+
+	datasock -S 12345 BKS BHZ,BHN,BHE
+
+Datasock will listen on port 12345, and when it gets a socket connection
+from a datasock client, it will output MiniSEED data records for channels
+BKS.BHZ, BKS.BHN, and BKS.BHE on the socket.
+
+3.  Manual operation with password:
+
+	datasock -S 12345 -p secretPasswd BKS BHZ,BHN,BHE
+
+Datasock will listen on port 12345, and when it gets a socket connection
+from a datasock client, it will read a password from the socket and compare
+it to the password on the command line.  If the password matches, it will
+output MiniSEED data records for channels BKS.BHZ, BKS.BHN, and BKS.BHE on
+the socket.  
+
+3.  Manual operation with client-requested station and channel list.
+
+	datasock -S 12345 -i 
+
+Datasock will listen on port 12345, and when it gets a socket connection
+from a datasock client, it will read the station and channel list from
+the socket.  It will then output MiniSEED data records for requested 
+station and channels.
+
+4.  Manual operation with client-requested station and channel list and
+password.
+
+	datasock -S 12345 -i -p secretPasswd
+
+Datasock will listen on port 12345, and when it gets a socket connection
+from a datasock client, it will read both a password and station and channel
+request lines from the socket.  If the password matches, it will output
+the requested MiniSEED data records on the socket.  
+
+5.  Inetd invocation with fixed station and channel list.
+(Line from inetd.conf shown below):
+
+ew_mseed_server stream tcp nowait redi4	\
+	/home/aq04/redi4/run/bin/datasock datasock BKS,CMB BHZ,BHN,BHE
+
+Inetd will listen on port "ew_mseed_server" (defined in the services file),
+will start datasock when an incoming socket request is made to that port,
+and datasock will inherit the open socket on file descriptor 0.  Datasock
+will output MiniSEED data records for channels BKS.BHZ, BKS.BHN, BKS.BHE,
+CMB.BHZ, CMB.BHN, CMB.BHE on the socket.
+
+6.   Inetd invocation with password and fixed station and channel list.
+(Line from inetd.conf shown below):
+
+ew_mseed_server stream tcp nowait redi4	\
+	/home/aq04/redi4/run/bin/datasock datasock \
+	-p secretPasswd BKS,CMB BH?
+
+Inetd will listen on port "ew_mseed_server" (defined in the services file),
+will start datasock when an incoming socket request is made to that port,
+and datasock will inherit the open socket on file descriptor 0.  Datasock
+will read the password from the socket, verify the password, and will output
+MiniSEED data records for channels BKS.BH? and CMB.BH?.
+
+6.   Inetd invocation with password and client-requested list.
+(Line from inetd.conf shown below):
+
+ew_mseed_server stream tcp nowait redi4	\
+	/home/aq04/redi4/run/bin/datasock datasock \
+	-p secretPasswd -i
+
+Inetd will listen on port "ew_mseed_server" (defined in the services file),
+will start datasock when an incoming socket request is made to that port,
+and datasock will inherit the open socket on file descriptor 0.  Datasock
+will read the password and station and channel request lines from the
+socket, verify the password, and will output MiniSEED data records for
+requested channels.
+

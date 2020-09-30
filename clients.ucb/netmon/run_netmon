@@ -1,0 +1,16 @@
+#!/bin/bash
+# Start netmon as a background client and server management daemon.
+# Add the -b option to clear pid files as boot time.
+
+# Uncomment and set an appropriate path for BINDIR
+# export BINDIR=/home/doug/config/bin
+
+if [ -z "$BINDIR" ] ; then
+    echo "Error in $0: BINDIR variable not set."
+    exit 1
+fi
+
+ulimit -c unlimited
+cd $BINDIR
+export PATH=$BINDIR:$PATH
+netmon -D -B -l $argv 0</dev/null &

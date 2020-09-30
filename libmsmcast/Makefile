@@ -1,0 +1,62 @@
+ifndef NUMBITS
+$(error NUMBITS is not set)
+endif
+
+TARGET	= libmsmcast.a
+#OPTIMIZE = NORMAL
+OPTIMIZE = DEBUG
+
+SRCS	= libclient.c libcmds.c libmsgs.c libseed.c libstats.c libstrucs.c \
+	 libsupport.c readpackets.c libdata.c memutil.c
+
+HDRS	= libclient.h libstrucs.h libcmds.h libmsgs.h libseed.h libsupport.h readpackets.h \
+	libtypes.h platform.h memutil.h
+
+ALLSRCS =	libarchive.c libclient.c libcmds.c libcompress.c libcont.c\
+	libdata.c libdataserv.c libdetect.c libfilters.c liblogs.c\
+	libmsgs.c libopaque.c libpoc.c libsampcfg.c libsample.c\
+	libseed.c libstats.c libstrucs.c libsupport.c libverbose.c
+
+ALLHDRS =	libarchive.h libclient.h libcmds.h libcompress.h\
+	libcont.h libdata.h libdataserv.h libdetect.h\
+	libfilters.h liblogs.h libmsgs.h libopaque.h\
+	libpoc.h libsampcfg.h libsampglob.h libsample.h\
+	libseed.h libstats.h libstrucs.h libsupport.h libtypes.h libverbose.h\
+	$(QD)/memutil.h $(QD)/pascal.h $(QD)/platform.h\
+	$(QD)/readpackets.h $(QD)/sha256.h $(QD)/ssifc.h $(QD)/utiltypes.h\
+	$(QD)/xmlcfg.h $(QD)/xmlseed.h $(QD)/xmlsup.h Makefile
+
+OBJS	= $(SRCS:%.c=%.o)
+
+RANLIB	= ranlib
+
+.PRECIOUS:	$(TARGET)
+
+CC	= gcc
+
+ifeq ($(OPTIMIZE),NORMAL)
+CFLAGS  = -g -I $(QD) -DPROG_DL -DPROG_SS -DINLIB660 -DDEVSOH\
+	-O2 -ffast-math -finline-functions\
+	-funswitch-loops -g -DUSE_GCC_PACKING -w  -fmessage-length=0 -m$(NUMBITS) \
+	-DBSL_Q8SERV -DBSL_Q8SERV_DEBUG -DDSN -Dlinux
+endif
+
+ifeq ($(OPTIMIZE),DEBUG)
+CFLAGS  = -g -I $(QD) -DPROG_DL -DPROG_SS -DINLIB660 -DDEVSOH\
+	-O0 -ffast-math\
+	-g -DUSE_GCC_PACKING -w -m$(NUMBITS) -DBSL_Q8SERV -DBSL_Q8SERV_DEBUG -DDSN -Dlinux
+endif
+
+COPT	= 
+
+$(TARGET)  := CFLAGS += $(COPT)
+
+ALL	=  $(TARGET)
+
+all:	$(ALL)
+
+$(TARGET):	$(TARGET)($(OBJS)) $(HDRS)
+	$(RANLIB) $@
+
+clean:
+	-rm -f *.o $(ALL)

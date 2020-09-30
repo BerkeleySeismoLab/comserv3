@@ -1,0 +1,9 @@
+1997/11/03	Doug Neuhauser, doug@seismo.berkeley.edu
+    1.	Updated fnmatch.c to correspond with Solaris and POSIX versions.
+	Return code of 0 means match now, not non-match.
+	Updated cpick_card_server.c and evtalarm.c which use fnmatch.
+    2.	Updated datalog_utils to perform pattern match on the ...LIMIT
+	channel names.  Now the following config directive should work.
+		DATA_LIMIT=12H,HL?,HH?
+2020/06/22
+    1.	Removed fnmatch.c - use system-provided fnmatch().

@@ -1,0 +1,7 @@
+clients.cit
+
+cs2mcast - This is a comserv client that multicasts data out onto the network
+	for mserv to receive.
+
+csstat - This is a comserv client that reads packets from a comserv memory 
+	area and calculates the statistics of specified channels.  

@@ -1,0 +1,452 @@
+			Datalog Documentation
+	Douglas Neuhauser, UC Berkeley Seismological Laboratory
+			Last updated:	2007/05/22
+
+The datalog client is a comserv client that receives SEED data records from a
+single comserv server (and hence a single Quanterra station) and writes that
+information to disk files for archival purposes.  For reliable data delivery 
+between comserv and datalog, datalog should be configure as a comserv
+blocking client.
+
+Datalog archives the following type of information on a per-SEED channel
+basis (where a channel is determined by the SEED channel name and optional
+SEED location name).
+
+1.  DATA - SEED Data Records containing data for a specific SEED channel.
+	The SEED Data Record may also contain blockettes defining the
+	data format and time.
+
+2.  EVENT DETECTION - SEED Data Records containing event detection blockettes
+	for a specific SEED channel.  The Data Record will contain no data
+	values.
+
+3.  CALIBRATION - SEED Data Records containing event calibration blockettes
+	for a specific SEED channel.  The Data Record will contain no data 
+	values.
+
+4.  OPAQUE DATA - SEEED Data Records containing Opaque Data blockettes 
+	(SEED Blockette 2000).  Usually a channel that contains Opaque Data 
+	Records will not contain any other type of data.  It is referred to 
+	in the configuration directives as a "blk" or blockette data.
+
+Datalog archives the following types information on a per-station basis:
+
+4.  LOG - SEED Data Records containing all text messages from the station.
+	The ASCII text is contained in the SEED Data Record in place of data
+	values.  
+	The log channel is normally given the SEED channel name of LOG.  
+	The sample rate is 0, and the number_of_samples is used to signify 
+	the number of characters in the message.
+
+5.  TIMING - SEED Data Records logs ALL clock exception blockettes.
+	The channel is normally given a SEED channel name of ACE.
+
+Since each channel (SEED channel and optional SEED location) may have 4
+distinct types of information (DATA, DETECTION, CALIBRATION, and OPAQUE DATA),
+we will refer to each (channel,location,type) tuple as a "channel_type".
+
+Each of the six types of information is assigned a extension string.
+Records for each channel_type are written to a files located in a unique
+directory for that channel_type.  For example, if the extension string for
+DATA is "D" and the extension string for DETECTION is "E", the directory for
+BHZ DATA records would be BHZ.D and the directory for BHZ DETECTION records
+would be BHZ.E.  All of the channel_type directories for the station are
+located within a single station directory.  The default extension strings
+for the channel types are configurable.
+
+The records for each channel_type are written to a file named "active" in the
+corresponding channel_type directory.  The file consists of a single SEED
+VOL record with a blockette 8 header followed by the SEED Data records for
+that channel_type.  The VOL record and blockette contain the SEED station,
+location, network and channel identifiers as well as the time of the first
+and last data sample (or record for non-DATA types) in the file.
+
+Configuration information for the datalog client is located in the [DLOG]
+section of the station configuration file.  The following sample station
+configuration section illustrates the configurable parameters for Datalog.
+Detailed information on each configuration directive is shown below.
+
+========================================================================
+
+[DLOG]
+*
+* Pathnames for data directory and pid file.
+*
+dir=/home/aq01/data/MCC
+pidfile=/home/aq01/config/etc/pid/mcc.dlog
+lockfile=/home/aq01/config/etc/lock/mcc.lock
+gapfile=/home/aq01/config/etc/gaps/mcc.gap
+trimreclen=n
+channel_format=%S.%N.%C.%L
+mshdr_wordorder=-1
+*
+* Extension strings for each information type.
+*
+data_ext=D
+detection_ext=E
+calibration_ext=C
+timing_ext=T
+log_ext=L
+blk_ext=O
+*
+* Channel selector for default and specific types.
+* Global channel selector specified default channel selector(s) for all types.
+* Specific type selector lines set the data mask (y|n) for that type,
+* and optionally set specific channel selectors for that data type.
+*
+selector=???
+data_selector=y
+detection_selector=y,???
+calibration_selector=y
+timing_selector=y
+log_selector=y
+blk_selector=y
+*
+* Time limit specifiers for files.
+* Global time limit sets default time limits for all files.
+* Specific type limits set limits for either all files of that type,
+* or for specific channels for that types.
+*
+limit=1d
+data_limit=12H,HH?,HL?
+data_limit=2d,V??,U??
+data_limit=2d,A??,
+detection_limit=1d
+calibration_limit=1d
+timing_limit=1d
+log_limit=1d
+log_blk=1d
+*
+save=BT?,BQ?
+data_save=y,BT?,BQ?
+detection_save=n
+calibration_save=n
+timing_save=n
+log_save=n
+blk_log=y
+* 
+* Filename format template.
+* %S=STATION %s=station %N=NET %n=net %C=CHAN %c=chan %L=LOCATION %l=location
+* %X=EXTENSION %x=extention
+* %Y=year %y=yr %j=doy %m=month %d=day %H=hr %M=min %T=time (hhmmss)
+*
+filename_format=%S.%N.%C.%L.%X.%Y.%j.%H%M
+* Without location codes:
+chandir_format=%C.%X
+* With location code
+* chandir_format=%C.%L.%X:
+
+========================================================================
+
+Datalog Configuration parameters:
+
+DIR=station_dir
+	is the pathname of the station directory that will contain all of
+	the channel_type directories.
+
+PIDFILE=pathname
+	is the pathname of a file used to hold the PID of the currently
+	running Datalog program for this station.  It is used by the netmon
+	program.
+
+LOCKILE=pathname
+	is an optional directive that specifies the pathname of a lockfile
+	for the Datalog program for this station.  If specified, Datalog
+	opens the file an creates an exclusive lock on the entire file
+	while it is running.  This can be used to ensure that only one
+	copy of Datalog is running for this station.
+
+GAPFILE=pathname
+	is an optional directive that specifies the pathname of a file
+	where gap listing information (of the BalerAdmin format) is
+	written when datalog detects a gap in data. The format is:
+
+	NN-SSSS[-LL]|time of start of gap|gap in seconds|chan
+	
+	This file is openned each time a gap is written and then closed
+	so that truncating of the file may take place as gaps are
+	filled. Note  that this feature ONLY RECORDS GAPS OF DATA
+	WITHIN A RUN OF DATALOG (not across datalog runs).
+
+TRIMRECLEN=Y|N
+	is an optional directive that specifies that DATA for all channels
+	should be trimmed to the minimum record size.  This option is only
+	useful if the remote datalogger has one or more channels configured
+	to transmit SEED records with fewer data frames than the default.
+	For example, if a channel is defined in the datalogger with the
+	directive COMFR=4, the data records would contain only 4 frames
+	of data and header, and could fit within a 256 byte SEED data record.
+	If this option is set to Y, datalog will reset the record length
+	of all data records for this channel to 256 bytes before archiving
+	the data record.  This can reduce wasted space in disk files.
+	The default value is N.
+
+CHANNEL_FORMAT=
+	specifies the format template used to construct the full channel
+	name for a MiniSEED record in error and debugging messages.
+	The CHANNEL_FORMAT template can contain the following special 
+	conversion characters:
+		%S = STATION NAME (upper case)
+		%s = station name (lower case)
+		%N = NETWORK NAME (upper case)
+		%n = network name (lower case)
+		%C = CHANNEL NAME (upper case)
+		%C = channel name (lower case)
+		%L = LOCATION NAME (upper case)
+		%l = location name (lower case)
+	The default value is "%S.%N.%C.%L".
+
+MSHDR_WORDORDER=-1|0|1
+	specifies whether the wordorder of the MiniSEED header should be
+	rewritten in a specific wordorder.  The value -1 means do not change
+	the wordorder of the MinISEED header.  The value 0 means force the
+	wordorder of the MiniSEED header to SEED_LITTLE_ENDIAN.  The value 1
+	means forst the wordorder of the MiniSEED header to SEED_BIG_ENDIAN.
+	The default value is -1.
+
+DATA_EXT=string
+DETECTION_EXT=string
+CALIBRATION_EXT=string
+TIMING_EXT=string
+LOG_EXT=string
+BLK_EXT=string
+	define the extention strings to be used for the each type of
+	information.  The default values:
+		DATA_EXT=D
+		DETECTION_EXT=E
+		CALIBRATION_EXT=C
+		TIMING_EXT=T
+		LOG_EXT=L
+		BLK_EXT=O (the letter "oh")
+	will be used if the directive is not specified.
+
+SELECTOR=default_channel_selector
+	specifies the default selector to be used for all channel_types if
+	no selector is specified on a per-type basis.  The default is
+	SELECTOR=??? (or ?????).
+
+DATA_SELECTOR=Y|N[,selector_list]
+DETECTION_SELECTOR=Y|N[,selector_list]
+CALIBRATION_SELECTOR=Y|N[,selector_list]
+TIMING_SELECTOR=Y|N[,selector_list]
+LOG_SELECTOR=Y|N[,selector_list]
+BLK_SELECTOR=Y|N|,selector_list]
+	specifies whether the type of information should be acquired from
+	the server (ie the value of the channel mask), and optionally
+	specifies a comma-delimited selector list for that type.  If no
+	directive is given, the default is to acquire that type of
+	information using the default_channel_selector specified by the
+	SELECTOR directive.  If a value of N is specified for the channel
+	mask, the selector list is ignored, since no packets of that type
+	will be received from the server.
+
+	This allows you to selectively configure what channels and types of
+	information you want to acquire.  For example, you could chose to
+	acquire only BH? and LH? data, but acquire event detections from all
+	channels.
+
+NOTE:  If you configure datalog as a BLOCKING CLIENT in the [comlink]
+section of the station configuration file, you should NOT use ANY Of the
+SELECTOR directives to limit the type or channels of information that you
+receive from the server.  If you specify ANY type of info or channels that
+you do not want to receive from the server, the server will maintain those
+undelivered packets in the server buffer, and the server may eventually
+block (due to a lack of free packets in the server) and may stop receiving
+packets from the datalogger.  If you configure datalog as a blocking client,
+use the SAVE directives to select the type of info and channels that you
+want to write to disk.
+
+SAVE=default_channel_selector 
+	specifies the default selector to be used for selecting data to be
+	written to disk for all channel_types if no selector is specified on
+	a per-type basis for writing.  The default is SAVE=??? (or ?????).
+
+DATA_SAVE=Y|N[,selector_list]
+DETECTION_SAVE=Y|N[,selector_list]
+CALIBRATION_SAVE=Y|N[,selector_list]
+TIMING_SAVE=Y|N[,selector_list]
+LOG_SAVE=Y|N[,selector_list]
+BLK_SAVE=Y|N[,selector_list]
+
+	specifies whether the type of information should be written to disk,
+	(ie a channel mask for writing to disk), and optionally specifies a
+	comma-delimited selector list for that type.  If no directive is
+	given, or a channel_mask of "Y" is given with no selector list, all
+	packets of that type that are received from the server and match the
+	SAVE selector mask will be written to disk.  If a value of N is
+	specified for the channel mask, the selector list is ignored, and no
+	packets of that type will be written to disk.
+
+	This allows you to selectively configure what channels and types of
+	information you want to write to disk.  For example, you could chose
+	to write only BH? and LH? data, but write event detections from all
+	channels.
+
+
+LIMIT=time_span
+	specifies the global default time span for all active files.
+	Records are logged to an active file (named "active") in each
+	channel_type directive.  When a SEED record for a channel_type is
+	received, and that record exceeds the time span of the active file,
+	the active file is closed and renamed, a new active file is started,
+	and the SEED record is logged to the new active file.
+
+	A time_span can be specified as either <n>d (for <n> days) or <n>H
+	(for <n> Hours).  Currently, the Hours limit must be <= 24 and must
+	integrally divide 24 with no remainder in order that one of the file
+	boundaries will be approximate a day boundary.  The default LIMIT is
+	1d.
+
+CLOSE_OFFSET=minutes|AUTO
+	specifies an offset in minutes to be added to each file limit
+	in order to avoid all datalogs openinc and and closing files 
+	simultaneously. Valid values are between 0 and 59 inclusive.
+	The default value is 0.
+	AUTO computes a offset in seconds between 0 and 3500 seconds 
+	inclusive by using the index of the first character of the station 
+	name in the string "[A-Z][0-9]" and multiplying this value by 100.
+	
+DATA_LIMIT=time_span[,selector_list]
+DETECTION_LIMIT=time_span[,selector_list]
+CALIBRATION_LIMIT=time_span[,selector_list]
+TIMING_LIMIT=time_span[,selector_list]
+LOG_LIMIT=time_span[,selector_list]
+BLK_LIMIT=time_span[,selector_list]
+	specifies the default time span either for all channels of the
+	specified type, or for all channels that match the selector list for
+	the specified type.  For example,
+		DATA_LIMIT=12H
+	specifies that all DATA files should span 12 hours.
+		DATA_LIMIT=12H,HH?,HL?
+		DATA_LIMIT=2d,V??,U??
+	specifies that DATA files for HH? and HL? channel should span 12
+	hours, and DATA files for V?? and U?? channels should span 2 days.
+	There may be multiple directives for each information type.
+
+	If a limit for a channel is not explicitly specified for a given
+	type, the limit for that channel is the default limit for that
+	type.  If a channel matches a channel_selector on more that one
+	LIMIT of the same type , the last LIMIT directive that matches that
+	channel will be used.  If no default limit is specified for a type,
+	the default limit for the type is the the global limit.
+
+CHANDIR_FORMAT=template
+	specifies the format template used to construct the directory
+	name for each channel and datatype within the station directory.
+	In older version of datalog, the channel directory was hardcoded
+	using the format string:
+		%C.%X
+	If you are using SEED location codes, you should use a format string
+	that includes the location code, such as:
+		%C.%L.%X
+	The special conversion characters have the same meaning as those
+	used in the FILENAME_FORMAT shown below.
+
+FILENAME_FORMAT=template
+	specifies the format template used to construct the filename for
+	inactive files in a channel directory.  When the time_span is exceeded
+	for an active file, a new filename is constructed using the template,
+	and the file is renamed to the new filename.  
+
+	Both the CHANDIR_FORMAT and FILENAME_FORMAT templates can contain the
+	following special conversion characters:
+		%S = STATION NAME (upper case)
+		%s = station name (lower case)
+		%N = NETWORK NAME (upper case)
+		%n = network name (lower case)
+		%C = CHANNEL NAME (upper case)
+		%C = channel name (lower case)
+		%L = LOCATION NAME (upper case)
+		%l = location name (lower case)
+		%X = TYPE EXTENSION (upper case)
+		%X = type extension (lower case)
+		%Y = 4 digit year 
+		%y = 2 digit year
+		%j = 3 digit day-of-year
+		%m = 2 digit month
+		%d = 2 digit day-of-month
+		%H = 2 digit hour
+		%M = 2 digit minute
+		%T = 6 digit time (hhmmss)
+
+	Any other characters in the template are used verbatim in the
+	filename.  The date and time information refer to the time of the
+	first record withing the file, NOT to the beginning time of the
+	time_span.  
+	The default filename template (for backwards compatibility) is:
+		%S.%N.%C.%X.%Y.%j.%H%M
+	If you use SEED location codes, the recommended filename template is:
+		%S.%N.%C.%L.%X.%Y.%j.%H%M
+
+	If you use the location name (%L or %l) in a template and you do not
+	use location codes, you will have an empty component in the
+	constructed channel directory and/or filename, such as
+		direcory:	BHZ..D
+		filename:	CMB.BK.BHZ..D.2002.123.0000
+
+Operation:
+
+Datalog is started with the station name as a command line argument, and an
+optional verbosity flag.  
+	datalog [-v N] station
+where:
+	-v N
+		specifies the level of info written to stdout.
+		N=0 -> normal startup/shutdown level
+		N=1 -> diagnostic info
+		N=2 -> more diagnostic info
+	
+Datalog reads the DLOG configuration section from the station configuration
+file, sets up the appropriate connection to the comserv server for the
+station as client name DLOG, and then endlessly requests SEED records from
+comserv and writes them to the appropriate disk files.  On receipt of a
+SIGINT or SIGKILL signal, it will finish writing any outstanding records
+that it has received, acknowledge receipt of the data to the server, detach
+from the server, and terminate.
+
+If datalog is defined as a comserv blocking client, it can be stopped and
+started within the time limit defined for it on the CLIENT line in the
+[COMSERV] section with no loss of data.  If the comserv server is stopped and
+started cleanly (ie only when it has no outstanding blocked packets for any
+blocking client), no packets should be lost as long as dacommo never
+completely uses its free buffer pool and is forced to discard packets within
+the Quanterra.  Datalog will continue to operate correctly across a shutdown
+and restart of comserv.  The Netmon program is designed to provide a
+coordinated startup and shutdown of datalog and comserv in order to insure
+no loss of data packets.
+
+Examples:
+
+1.  Example without the use of SEED location codes:
+filename_format=%S.%N.%C.%X.%Y.%j.%H%M
+chandir_format=%C.%X
+
+The data logging directory for station MCC may contain the following
+directories, one for each channel.type of info:
+
+LOG.L	BHZ.D	BHN.D	BHE.D	LHZ.D	LHN.D	LHE.D	VHZ.D	VHN.D	VHE.D
+ACE.T	BHZ.E	LHZ.E	VHZ.E
+
+Within each directory, there will be an "active" file as well as older
+non-active files.  for example, the BHZ.D directory may contain the 
+following files:
+
+active	MCC.BK.BHZ.D.1994.304.0000	MCC.BK.BHZ.D.1994.305.0000
+
+1.  Example with the use of SEED location codes (location code 00):
+filename_format=%S.%N.%C.%L.%X.%Y.%j.%H%M
+chandir_format=%C.%L.%X
+
+The data logging directory for station MCC may contain the following
+directories, one for each channel.type of info:
+
+LOG.00.L	BHZ.00.D	BHN.00.D	BHE.00.D	LHZ.00.D
+LHN.00.D	LHE.00.D	VHZ.00.D	VHN.00.D	VHE.00.D
+ACE.00.T	BHZ.00.E	LHZ.00.E	VHZ.00.E
+
+Within each directory, there will be an "active" file as well as older
+non-active files.  for example, the BHZ.D directory may contain the 
+following files:
+
+active	MCC.BK.BHZ.00.D.1994.304.0000	MCC.BK.BHZ.00.D.1994.305.0000
+

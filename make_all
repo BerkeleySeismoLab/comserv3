@@ -1,0 +1,35 @@
+#!/bin/bash
+
+# Shell script to build and install one or more
+# builds of the comserv3 system.
+
+if [[ $# > 0 ]] ; then
+    argv=$*
+else
+    argv=(32 64)
+fi
+
+for nb in ${argv[@]} ; do
+
+    export NUMBITS=$nb
+    echo NUMBITS=$NUMBITS
+    rm -rf bin.$NUMBITS
+
+    echo make clean ...
+    make clean >& /dev/null
+
+    logfile=make.$NUMBITS.log
+    errfile=make.$NUMBITS.err
+    echo make ...
+    make >& $logfile
+    egrep -i "(error)|(warning)" $logfile > $errfile
+    echo $errfile errors = `cat $errfile | wc -l`
+
+    logfile=install.$NUMBITS.log
+    errfile=install.$NUMBITS.err
+    echo make install ...
+    make install >& $logfile
+    egrep -i "(error)|(warning)" $logfile > $errfile
+    echo $errfile errors = `cat $errfile | wc -l`
+
+done

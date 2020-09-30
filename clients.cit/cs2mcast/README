@@ -1,0 +1,38 @@
+-- README for cs2mcast
+
+This program is a comserv client. When started, it will connect to a comserv memory area, and read packets from the memory area, and multicast them out onto an attached network.
+
+For calling information use:
+
+cs2mcast -h
+
+cs2mcast
+    [-?] [-h] [-v n] -M ip_addr -I ip_addr -P port_num -T d,e -C Channel1,ChannelN
+    where:
+        -?                     Help - prints syntax message.
+        -h                     Help - prints syntax message.
+        -v n               Set verbosity level to n.
+       -I 131.215.65.34       Set's the multicast interface to use as output
+       -A 192.0.0.100         Sets the multicast address to send the data to
+       -P 10000               Sets the multicast port to multicast 
+       -T d,e,c,t,m,b or *    Sets the type of data to be multicast
+       -C BHZ,BHN,BHE or *    Sets the channels to be multicast
+
+
+As an example, here's the client definition for a station.ini using a cs2mcast client.
+
+[comlink]
+...
+client10=cs2m
+client1=dlog,3600
+
+[netm]
+...
+server=/home/rtem/comserv/bin/comserv
+client1=dlog,/home/rtem/comserv/bin/datalog 
+client10=cs2m,/home/rtem/comserv/bin/cs2mcast -I 10.1.1.6 -A 224.1.0.200 -P 8014
+ -T d,e,c,t,m,b
+
+
+Note that netmon will insert the station code to the end of the invocation link when it starts the client.
+

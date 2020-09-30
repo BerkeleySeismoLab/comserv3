@@ -1,0 +1,6 @@
+2010/09/17	Doug Neuhauser
+
+sl2mcast is a version of slink2mcast designed to be run for a single station
+as an "mserv input client".  It registers itself as an mserv client so that
+netmon can monitor, start, and stop is synchronously with the corresponding
+mserv process.

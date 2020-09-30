@@ -1,0 +1,67 @@
+######################################################################
+# Global definitions used in every Makefile of the comserv system.
+
+# If you are building for a single LP (Long, Pointer) size, you may
+# define NUMBITS here.  If you want to build for both 32 and 64
+# systems, set the NUMBITS environment variable instead.
+
+# NUMBITS	= 64
+
+######################################################################
+# 1.  Global compilation options.
+
+CC	= gcc
+CXX	= g++
+DEBUG	= -g
+COPT	= -Wall
+
+OSDEFS	= -DLINUX -Dlinux
+ENDIAN	= -DENDIAN_LITTLE -D_BIG_ENDIAN_HEADER
+
+# To build system to be COMSERV2-compliant, uncomment the following line.
+# OSDEFS	+= -DCOMSERV2
+
+######################################################################
+# 2. Definitions for any external libraries that are required.
+
+# Paths MUST be fully-qualified path, NOT relative paths,
+# since Makefiles at different directory levels will use this file.
+
+#---------------------------------------------------------------------
+# qlib2 definitions.
+
+# qlib2 source code directory, if building from source code directory.
+QLIB2_DIR		= /data/love/doug/git/external_libs/qlib2
+# Qlib2 include file directory.
+QLIB2_INCL	= $(QLIB2_DIR)
+
+# qlib2 library pathname.  May be dependent on NUMBITS.
+ifeq ($(NUMBITS), 32)
+QLIB2_LIB = $(QLIB2_DIR)/lib/libqlib2.a
+else ifeq ($(NUMBITS), 64)
+QLIB2_LIB = $(QLIB2_DIR)/lib64/libqlib2.a
+else
+$(error Unknown value of NUMBITS)
+endif
+
+#---------------------------------------------------------------------
+# libslink definitions.
+
+# libslink source code directory, if building from source code directory.
+SLINK_DIR = /data/love/doug/git/external_libs/libslink
+# libslink include directory.
+SLINK_INCL = $(SLINK_DIR)
+# libslink library pathname.   May be dependent on NUMBITS.
+SLINK_LIB = $(SLINK_DIR)/libslink_$(NUMBITS).a
+
+#---------------------------------------------------------------------
+# libdali definitions.
+
+# libdali source code directory, if building from source code directory.
+DALI_DIR = /data/love/doug/git/external_libs/libdali-master
+# libslink include directory.
+DALI_INCL = $(DALI_DIR)
+# libslink library pathname.   May be dependent on NUMBITS.
+DALI_LIB = $(DALI_DIR)/libdali_$(NUMBITS).a
+
+######################################################################

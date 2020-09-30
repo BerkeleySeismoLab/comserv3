@@ -1,0 +1,64 @@
+24 August 2007 - DOug Neuhauser:
+
+  Changes made to handle SIGALRM between client and servers.
+    The nanosleep() call in Solaris is not interrupted and terminated
+    when SIGALRM is ignored.  Therefore, the client and server were
+    only handling requestes from the other when their nanosleep()
+    normally terminated, NOT when the process received a SIGALRM.
+
+    Instead of ignoring SIGALRM (which apparently did work under
+    SUNOS and perhaps earlier Solaris versions, or versions with 
+    usleep()), I added signal handling for SIGLARM so that nanosleep()
+    would be interrupted and return EINTR instead of waiting for the
+    entire sleep time to finish.  Note that I used sigaction() instead
+    signal(), since I was able to demonstrate that signal() really IS
+    unreliable, and that it cannot properly handle all signals in 
+    an SVR4 environment (eg Solaris).
+
+15 June 2004 - Paul Friberg removed the PASCAL code entirely
+05 May 2004 - Paul Friberg - merged comserv and comserv4linux to one code base.
+
+
+21 April 2004 - Doug Neuhauser - added the myipaddr directive:
+
+NOTES:
+Files:	server.c, cscfg.c, Makefile (added -DMYIPADDR in CFLAGS)
+
+What I want is to be able to have a comserv host H have (2) IP addresses
+on the same network (address A1 and A2), and have it use address A1 to 
+talk to Q1 and address A2 to talk to Quanterra Q2.
+I added a new [comserv] config directive
+	myipaddr=192.168.101.2
+to force comserv to use this IP address in its bind() function and to
+use it as the source addresses in its socket or UDP packets.
+
+It appears that dacommo listens and receives UDP packets on ANY interface
+and does not check to see that the source address in the UDP packets
+that it receives is the same as the dest address that it sends packets
+to.  Likewise, by default comserv binds to all interfaces, so that if
+a packet is addressed to address A1 it can be received (and ACKed) on address
+A2, because comserv does not check the destination address when it receives
+a packet from the Quanterra.
+
+However, from an administrative point of view, this allows me to
+enforce IP assignments, which I think is beneficial.
+
+I currently have all added code embedded in
+	#ifdef	MYIPADDR
+(with the exception of 2 added diagnostic msgs)
+so that if we collectively decide to not support it can be a "Berkeley
+special".
+
+The motivation for this is so that if one of my comserv hosts is down,
+the other comserv host can assume its IP address and continue to receive
+data from the Quanterras.  We only have (2) frame relay T1 circuits,
+so this allows me to handle any of the following proclems:
+	T1 circuit down.
+	Router for T1 circuit down.
+	Comserv host down.
+with having only 2 comlinks per Quanterra instead of 4 or 8 comlinks
+per Quanterra.
+
+By explicitly setting the "myipaddr" I can easily see what comservs have
+been reconfigured to read from the "borrowed" IP address.
+

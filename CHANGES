@@ -1,0 +1,122 @@
+COMSERV3 changes:
+
+=========================================================================================
+Doug Neuhauser, doug@seismo.berkeley.edu
+2020/09/25
+
+Initial release of the COMSERV3 system, an enhancement and ugprade
+to the original Quanterra COMSERV system and user_contributed
+COMSERV2 updates.
+
+1.  Changed the original COMSERV client-server protocol from 4 char 
+client_name and station_name fields to 15 char client and server_named 
+strings (15 char plus null-termination). The COMSERV3 server_name used
+for each instance of a server program is now completely decoupled from 
+the SEED station name of the data from the data logger. In order to make
+each server_name unique and descriptive, you may choose to include the
+SEED network code and SEED station name (or some varient of it) in the
+server_name.  Examples are:
+	CMB.BK
+	BK.CMB
+	CMB_BK
+	BK_CMB
+or for sites that have multiple data loggers that generate data with
+the same SEED name, you may use more complicated names, eg:
+	CI_PASC
+	CI_PASC_20
+	CI_PASC2
+	CI_PASC_2
+This string is now referred to a the server_name rather than the 
+station_name, since it uniquely identifies an instance of one
+of the server programs.
+
+2.  Since the server_name is no longer directly tied to the SEED station 
+name, the following directives MUST be provided in each server_name section
+in the STATIONS_INI file
+	NET=seed_network_code
+	SITE=seed_station_code
+or	STATION=seed_station_code 
+Examples are:
+	STATION=CMB
+	NET=BK
+The full 5 character SEED station names is now supported.
+
+3.  Now that client names are no longer limited to 4 characters,
+the default client_names have now been changed to be the same
+as the program name.  New client names are:
+	netmon
+	datalog
+	sl2mcast
+	cs2ringserver
+	datasock
+	cs2mcast
+	csstat
+and the programs will look for sections in the server_program's
+STATION_INI file with these names.
+
+4.  Deprecated the original comserv server program (aka comlink),
+since the dataloggers it supported (Quanterra Q680/Q4120/Q730 systems)
+are obsolete and are no longer operational.
+
+5.  Renamed the qmaserv (or qmaserv2) server program to q330serv to
+more accurately reflect its purpose.
+
+6.  Added q8serv server program to support Quanterra Qantix Q8 data loggers.
+
+7.  For each server program (mserv, q330serv, q8serv), created a 
+config section in each server_name's STATION_INI file for parameters
+specifc to that server program that are NOT related to the the COMSERV3
+client/server subsystem.  The config sections are named the same as the programs:
+	[mserv]
+	[q330serv]
+	[q8serv]
+
+8.  Created the [global_defaults] section in NETWORK_INI file.
+All server program (or netmon client) now read at the [global_defaults] 
+section for default parameter setting that may be overridden
+by settings in the server section of the station file (or the netmon,
+the [netmon] section in the NETWORK_INI file).
+
+9.  Moved the following server program config directives from the 
+NETWORK_INI file's [netmon] section to the [global_defaults] section 
+in NETWORK_INI file:
+	LOGDIR
+	LOGTYPE
+	MULTICASTENABLED
+	MULTICASTHOST
+	MULTICASTPORT	
+	MULTICASTCHANNELLIST
+The parameters
+	LOGDIR
+	LOGTYPE
+may still be specified in the the [netmon] section of
+The netmon program has been changed to also first look in the 
+section [global_defaults] for the directives
+	LOGDIR
+	LOGTYPE
+These parametes may be
+
+10.  Added the following server program directives to the [global_defaults] section:
+	CONTFILEDIR
+	STATUSINTERVAL
+	WAITFORCLIENTS
+These directives may be overridden in the program section of each
+server_name's STATION_INI file.
+
+11.  Changed the name of the [COMLINK] section in the each server_name's 
+STATION_INI file to [COMSERV] to reflect that it contains information for the
+COMSERV3 client/server subsystem.  Removed all deprecated config directives
+that were for only for the  Quanterra Q680/Q4120/Q730 systems
+communication or command-and-control protocol with those dataloggers.
+For backwards compatability, the [COMLINK] section name is still 
+supported as a synonym for [COMSERV] section name.
+
+12.  All server program now read the [global_defaults] section in the NETWORK_INI
+for program parameters that can be applied to any instance of the server program.
+These parameters can then be overridden by parameter settings in the
+program's section of the STATION_INI file for the specific server_name.
+Note that the order of precedence has changed from older COMSERV distributions,
+where the global info in the NETWORK_INI fie overrode configuration parameters
+in the STATION_INI files.
+
+================================================================================
