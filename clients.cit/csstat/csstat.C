@@ -172,14 +172,14 @@ void output_statistics (char * header)
 	std::ofstream of(statfile);
 	of << header<< std::endl;
 	for (cmi = chanmap.begin(); cmi != chanmap.end(); cmi++) {
-	    of << *((*cmi).second) << std::endl;
+	    of << *((*cmi).second); // << std::endl;
 	}
 	of.close();
 	return;
     }
     std::cout<< header <<std::endl;
     for (cmi = chanmap.begin(); cmi != chanmap.end(); cmi++) {
-	std::cout << *((*cmi).second) << std::endl;
+	std::cout << *((*cmi).second); // << std::endl;
     }
 }
 
@@ -573,7 +573,7 @@ void terminate_program (int error)
     }
 
     for (cmi = chanmap.begin(); cmi != chanmap.end(); cmi++) {
-	std::cout << *((*cmi).second) << std::endl;
+	std::cout << *((*cmi).second); // << std::endl;
     }
 
     /* Perform final cs_scan for 0 records to ack previous records.	*/

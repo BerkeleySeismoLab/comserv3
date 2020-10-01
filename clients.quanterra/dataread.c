@@ -138,6 +138,12 @@ int main (int argc, char *argv[])
     cs_setup (&stations, name, sname, TRUE, TRUE, 10, 5, CSIM_MSG |  CSIM_DATA | CSIM_CAL |
               CSIM_EVENT | CSIM_TIMING | CSIM_BLK, 6000) ;
 
+    if (stations.station_count <= 0)
+    {
+	printf ("Error: No station matching %s was found\n", sname);
+	exit(1);
+    }
+
 /* Create my segment and attach to all stations */      
     me = cs_gen (&stations) ;
 

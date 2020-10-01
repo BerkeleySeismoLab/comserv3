@@ -2,20 +2,21 @@ COMSERV3 changes:
 
 =========================================================================================
 Doug Neuhauser, doug@seismo.berkeley.edu
-2020/09/25
+2020/10/01
 
 Initial release of the COMSERV3 system, an enhancement and ugprade
 to the original Quanterra COMSERV system and user_contributed
 COMSERV2 updates.
 
-1.  Changed the original COMSERV client-server protocol from 4 char 
-client_name and station_name fields to 32 char client and server_named 
-strings (31 char plus null-termination). The COMSERV3 server_name used
-for each instance of a server program is now completely decoupled from 
-the SEED station name of the data from the data logger. In order to make
-each server_name unique and descriptive, you may choose to include the
-SEED network code and SEED station name (or some varient of it) in the
-server_name.  Examples are:
+1.  Changed the original COMSERV client-server protocol from 4 char
+client_name and 4 char station_name fields to 32 char client and 32
+char server_named strings (31 char plus null-termination). 
+
+The COMSERV3 server_name used for each instance of a server program is now
+completely decoupled from the SEED station name of the data from the
+data logger. In order to make each server_name unique and descriptive,
+you may choose to include the SEED network code and SEED station name
+(or some varient of it) in the server_name.  Examples are:
 	CMB.BK
 	BK.CMB
 	CMB_BK
@@ -55,10 +56,14 @@ and the programs will look for sections in the server_program's
 STATION_INI file with these names.
 
 4.  Deprecated the original comserv server program (aka comlink),
-since the dataloggers it supported (Quanterra Q680/Q4120/Q730 systems)
-are obsolete and are no longer operational.
+and UCB client cpick_card_server and evtalarm since the dataloggers
+they supported (Quanterra Q680/Q4120/Q730 systems) are obsolete and 
+are no longer operational.  Source code for each of these is still 
+provided for reference for reference.  The source codes for the
+deprecated programs have been updated to compile with the current 
+COMSERV3 include files and libraries.
 
-5.  Renamed the qmaserv (or qmaserv2) server program to q330serv to
+5.  Renamed the Q330 server program qmaserv (or qmaserv2) to q330serv to
 more accurately reflect its purpose.
 
 6.  Added q8serv server program to support Quanterra Qantix Q8 data loggers.
@@ -77,9 +82,9 @@ section for default parameter setting that may be overridden
 by settings in the server section of the station file (or the netmon,
 the [netmon] section in the NETWORK_INI file).
 
-9.  Moved the following server program config directives from the 
-NETWORK_INI file's [netmon] section to the [global_defaults] section 
-in NETWORK_INI file:
+9.  Moved the following globally-used server program config directives
+from the NETWORK_INI file's [netmon] section to the [global_defaults]
+section in NETWORK_INI file:
 	LOGDIR
 	LOGTYPE
 	MULTICASTENABLED
@@ -89,12 +94,14 @@ in NETWORK_INI file:
 The parameters
 	LOGDIR
 	LOGTYPE
-may still be specified in the the [netmon] section of
+may still be specified in the the [netmon] section of the NETWORK_INI
+file to allow netmon to override the setting in the [global_defaults].
 The netmon program has been changed to also first look in the 
 section [global_defaults] for the directives
 	LOGDIR
 	LOGTYPE
-These parametes may be
+These directives (for netmon) may be override in the [netmon] program
+section of the NETWORK_INI file.
 
 10.  Added the following server program directives to the [global_defaults] section:
 	CONTFILEDIR
@@ -115,7 +122,7 @@ supported as a synonym for [COMSERV] section name.
 for program parameters that can be applied to any instance of the server program.
 These parameters can then be overridden by parameter settings in the
 program's section of the STATION_INI file for the specific server_name.
-Note that the order of precedence has changed from older COMSERV distributions,
+Note that the order of precedence has changed from older COMSERV2 distribution,
 where the global info in the NETWORK_INI fie overrode configuration parameters
 in the STATION_INI files.
 

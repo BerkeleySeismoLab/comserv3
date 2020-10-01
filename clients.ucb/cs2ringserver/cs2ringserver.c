@@ -393,7 +393,7 @@ int main (int argc, char **argv)
     else {
 	status = fill_from_comserv (station);
     }
-    terminate_program (0);
+    terminate_program (status);
     return (0);
 }
 

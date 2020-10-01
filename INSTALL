@@ -1,0 +1,84 @@
+The COMSERV3 distribution is currently supported on Linux/Unix system.
+See the CHANGES files for information about the COMSERV3 distribution.
+
+The COMSERV3 distribution required 3 external libraries that are not 
+included in this ditribution.
+
+1.  qlib2 (from UC Berkeley), required for the following clients:
+	csstat
+	datalog
+	datasock
+	dataspy
+	sl2mcast
+	cs2ringserver
+
+2.  libslink (from IRIS), required for client
+    	sl2mcast
+
+3.  libdali (from IRIS), required for client
+	cs2ringserver
+
+In order to build the entire COMSERV3 software, do the following:
+
+1.  First download and build these libraries.  It is recommended that
+you do this in a different directory.  If you want to build both a
+32-bit and 64-bit version of the COMSERV3 package, you should build
+both 32-bit ahd 64-bit versions of these libraries, and either name
+the resulting libraries based on the compilation mode, or place them
+separate directories so that they can both exist simultaneously.
+See the Makefile.include file for examples
+
+2.  Update the definitions in the COMSERV3 Makefile.include file to
+point to these libraries and include files.  Note that you MUST use
+absolute pathnames rather than relative pathnames for the libraries
+and include directories since these are used to build programs in
+multiple directories of the COMSERV3 distribution.  Also note that the
+pathnames of the libraries may be dependent on the NUMBITS environment
+variable (see below) if you intent to build both 32-bit and 64-bit
+versions of the COMSERV3 package.
+
+3.  If you want to build the COMSERV3 distribution in COMSERV2
+compatability mode, uncomment the line in the Makefile.include file.
+      OSDEFS	+= -DCOMSERV2
+This is NOT recommended unless you need build the programs to 
+operate with an existing COMSERV2 installation.
+
+4.  Set the environment variable NUMBITS to either 32 or 64 to
+define whether you want to built a 32-bit or 64-bit version of
+the COMSERV3 package.  For the BASH shell, use one of the 
+following commands:
+    export NUMBITS=64
+    export NUMBITS=32
+All COMSERV3 Makefiles require this variable to be set to control
+the options required to compile and build the programs.
+
+5.  The top-level Makefile defines the INSTALL directory
+(bin.32 or bin.64), and passes this to all other Makefiles when 
+running 
+	make install
+If you run manually run "make install"  individually within the server or
+client directories, you must define the BINDIR variable on the command line.
+For example, if you want to install just the netmon client in the bin.64
+directory, from the netmon client directory you would run
+	make install BINDIR=../../bin.64
+       
+6.  The make_all script provides an easy way to build, 
+check for errors and warning, and install all executables 
+in the respective bin directories.
+make_all 32
+	Build and install a 32-bit version of COMSERV3 package.
+	Creates the log files:
+		make.32.log
+		make.32.err
+		install.32.log
+		install.32.err
+make_all 64
+	Build and install a 32-bit version of COMSERV3 package.
+	Creates the log files:
+		make.64.log
+		make.64.err
+		install.64.log
+		install.64.err
+make_all
+	Build and install both 32-bit and 64-bit version of the
+	COMSERV3 package.

@@ -85,7 +85,7 @@ char lockfile[160];			/* Name of optional lock file.	*/
 char pidfile[160];
 
 int save_this_record (seed_record_header *pseed);
-void parse_cfg (char *str1, char *str2);
+int parse_cfg (char *str1, char *str2);
 
 /************************************************************************/
 
@@ -157,9 +157,11 @@ void terminate_program (int error)
     }
 
     strcpy(time_str, localtime_string(dtime()));
-	fprintf (info, "%s - Terminated\n", time_str);
+    fprintf (info, "%s - Terminated\n", time_str);
 
-    fprintf (stdout, "Exiting through signal handler\n");
+    if (error == 1) {
+	fprintf (stdout, "Exiting through signal handler\n");
+    }
     exit(error);
 }
 
@@ -262,8 +264,9 @@ int fill_from_comserv (char *station)
 /* open the stations list and look for that station */
     strcpy (filename, "/etc/stations.ini") ;
     if (open_cfg(&cfg, filename, station)) {
-	fprintf (stderr,"Could not find station\n") ;
-	exit(1);
+	fprintf (stderr,"Could not find station %s\n", station) ;
+	return FAILURE;
+//	exit(1);
     }
 
 /* Try to find the station directory, source, and description */
@@ -288,15 +291,19 @@ int fill_from_comserv (char *station)
     strcpy (filename, station_dir);
     strcat (filename, "station.ini");
     if (open_cfg(&cfg, filename, client_name)) {
-	fprintf (stderr, "Warning: Could not find [%s] section in station.ini file %s\n",
-		 client_name, filename);
+	fprintf (stderr, "Error: Could not find [%s] section in for server %s in station.ini file\n",
+		 client_name, station);
 	fflush (stderr);
-/*::	exit(1); */
+	return FAILURE;
+//	exit(1);
     }
           
     /* Read and parse client directives in the station's config file.	*/
     while (read_cfg(&cfg, str1, str2), (int)strlen(str1) > 0) {
-	parse_cfg (str1, str2);
+	res = parse_cfg (str1, str2);
+	if (res != SUCCESS) {
+	    return res;
+	}
     }
     close_cfg (&cfg);
 
@@ -306,13 +313,15 @@ int fill_from_comserv (char *station)
     if (strlen(lockfile) > 0) {
 	if ((lockfd = open (lockfile, O_RDWR|O_CREAT,0644)) < 0) {
 	    fprintf (info, "Unable to open lockfile: %s\n", lockfile);
-	    exit(1);
+	    return FAILURE;
+//	    exit(1);
 	}
 	if ((status=lockf (lockfd, F_TLOCK, 0)) < 0) {
 	    fprintf (info, "Unable to lock daemon lockfile: %s status=%d errno=%d\n", 
 		     lockfile, status, errno);
 	    close (lockfd);
-	    exit(1);
+	    return FAILURE;
+//	    exit(1);
 	}
     }
 
@@ -320,7 +329,8 @@ int fill_from_comserv (char *station)
 	FILE *fp;
 	if ((fp = fopen (pidfile,"w")) == NULL) {
 	    fprintf (info, "Unable to open pidfile: %s\n", pidfile);
-	    exit(1);
+	    return FAILURE;
+//	    exit(1);
 	}
 	else {
 	    fprintf (fp, "%d\n",(int)getpid());
@@ -426,7 +436,7 @@ int fill_from_comserv (char *station)
  *  parse_cfg:
  *	Parse config directives in section for for this program.
  ************************************************************************/
-void parse_cfg (char *str1, char *str2)
+int parse_cfg (char *str1, char *str2)
 {
     char *p;
 
@@ -516,9 +526,10 @@ void parse_cfg (char *str1, char *str2)
 	if ((p=strchr(str2,','))) store_selectors(BLKQ, &save[BLK_INDEX].sel,++p);
     }
     else {
-	fprintf (stderr, "Unknown datalog directive: %s\n", str1);
-	terminate_program (1);
+	fprintf (stderr, "Unknown configuration directive: %s\n", str1);
+	return FAILURE;
     }
+    return SUCCESS;
 }
 
 /************************************************************************

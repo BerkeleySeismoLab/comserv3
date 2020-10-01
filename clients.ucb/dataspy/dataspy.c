@@ -167,6 +167,12 @@ int main (int argc, char *argv[])
     cs_setup (&stations, name, sname, TRUE, TRUE, 10,
 	      MAX_SELECTORS, data_mask , 6000) ;
 
+    if (stations.station_count <= 0)
+    {
+	printf ("Error: No station matching %s was found\n", sname);
+	exit(1);
+    }
+
     /* Create my segment and attach to all stations */      
     me = cs_gen (&stations) ;
 
