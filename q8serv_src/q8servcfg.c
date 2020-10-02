@@ -77,26 +77,32 @@ int GetServerParamsFromStationsIni(struct q8serv_cfg *out_cfg, char *server_name
     while (1)
     {
 	read_cfg(&stations_cfg,&str1[0],&str2[0]);
-	if (str1[0] == '\0') {
+	if (str1[0] == '\0')
+	{
 	    break;
 	}
-	if (strcmp(str1,"DIR")==0) {
+	if (strcmp(str1,"DIR")==0)
+	{
 	    strcpy(out_cfg->server_dir,str2);
 	    continue;
 	}
-	if (strcmp(str1,"DESC")==0) {
+	if (strcmp(str1,"DESC")==0)
+	{
 	    strcpy(out_cfg->server_desc,str2);
 	    continue;
 	}
-	if (strcmp(str1,"SOURCE")==0) {
+	if (strcmp(str1,"SOURCE")==0)
+	{
 	    strcpy(out_cfg->server_source,str2);
 	    continue;
 	}
-	if (strcmp(str1,"STATION")==0 || strcmp(str1,"SITE")==0) {
+	if (strcmp(str1,"STATION")==0 || strcmp(str1,"SITE")==0)
+	{
 	    strcpy(out_cfg->seed_station,str2);
 	    continue;
 	}
-	if (strcmp(str1,"NET")==0) {
+	if (strcmp(str1,"NETWORK")==0 || strcmp(str1,"NET")==0)
+	{
 	    strcpy(out_cfg->seed_network,str2);
 	    continue;
 	}
@@ -198,7 +204,8 @@ int GetServerParamsFromStationIni(struct q8serv_cfg* out_cfg, char *section_name
 
     /* Try to open the STATION_INI file in this station's directory */
     sprintf (filename, "%s/%s", out_cfg->server_dir, STATION_INI);
-    if (open_cfg(&cfg, filename, section_name)) {
+    if (open_cfg(&cfg, filename, section_name))
+    {
 	fprintf (stderr, "Warning: Could not find a [%s] section in %s\n", section_name, filename);
 	return QSERV_FAILURE;
     }

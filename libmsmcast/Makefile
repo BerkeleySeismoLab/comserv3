@@ -1,3 +1,16 @@
+########################################################################
+#
+# Makefile for libmsmcast
+#
+# The makefile in each directory should support the following targets:
+#       all
+#       clean
+#       install
+#
+
+MAKEFILE := $(lastword $(MAKEFILE_LIST))
+include	../$(MAKEFILE).include
+
 ifndef NUMBITS
 $(error NUMBITS is not set)
 endif
@@ -60,3 +73,5 @@ $(TARGET):	$(TARGET)($(OBJS)) $(HDRS)
 
 clean:
 	-rm -f *.o $(ALL)
+
+install:

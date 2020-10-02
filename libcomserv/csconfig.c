@@ -117,11 +117,13 @@ int getLogParamsFromNetwork(csconfig *cs_cfg)
 	    break;
 	}
 	/* Logging parameters.               */
-	if (strcmp(str1,"LOGDIR")==0) {
+	if (strcmp(str1,"LOGDIR")==0)
+	{
 	    strcpy(cs_cfg->logdir,str2);
 	    continue;
 	}
-	if (strcmp(str1,"LOGTYPE")==0) {
+	if (strcmp(str1,"LOGTYPE")==0)
+	{
 	    strcpy(cs_cfg->logtype,str2);
 	    continue;
 	}
@@ -161,27 +163,28 @@ int getCSServerInfo(csconfig *cs_cfg, char *server_name)
 	{
 	    break;
 	}
-	if (strcmp(str1,"DIR")==0) {
+	if (strcmp(str1,"DIR")==0)
+	{
 	    strcpy(cs_cfg->server_dir,str2);
 	    continue;
 	}
-	if (strcmp(str1,"DESC")==0) {
+	if (strcmp(str1,"DESC")==0)
+	{
 	    strcpy(cs_cfg->server_desc,str2);
 	    continue;
 	}
-	if (strcmp(str1,"SOURCE")==0) {
+	if (strcmp(str1,"SOURCE")==0)
+	{
 	    strcpy(cs_cfg->server_source,str2);
 	    continue;
 	}
-	if (strcmp(str1,"STATION")==0) {
+	if (strcmp(str1,"STATION")==0 || strcmp(str1,"SITE")==0)
+	{
 	    strcpy(cs_cfg->seed_station,str2);
 	    continue;
 	}
-	if (strcmp(str1,"SITE")==0) {	/* Alias for STATION */
-	    strcpy(cs_cfg->seed_station,str2);
-	    continue;
-	}
-	if (strcmp(str1,"NET")==0) {
+	if (strcmp(str1,"NETWORK")==0 || strcmp(str1,"NET")==0)
+	{
 	    strcpy(cs_cfg->seed_network,str2);
 	    continue;
 	}
@@ -217,7 +220,8 @@ int getCSServerParams (csconfig *cs_cfg, char *server_dir, char *section)
     do
     {
 	read_cfg(&station_cfg, str1, str2) ;
-	if (str1[0] == '\0') {
+	if (str1[0] == '\0') 
+	{
 	    break ;
 	}
 #ifdef COMSERV2
@@ -298,7 +302,8 @@ int getCSServerParams (csconfig *cs_cfg, char *server_dir, char *section)
 	    strncpy(cs_cfg->timing_channel_id, tmp, 3);
 	    continue;
 	}
-	if (strcmp(str1, "SEGID") == 0) {
+	if (strcmp(str1, "SEGID") == 0)
+	{
 	    cs_cfg->segid = atoi((pchar)&str2) ;
 	    continue;
 	}

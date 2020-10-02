@@ -73,28 +73,35 @@ int GetServerParamsFromStationsIni(struct mserv_cfg *out_cfg, char *server_name)
 		 server_name, STATIONS_INI);
 	return (QSERV_FAILURE);
     }
-    while (1) {
+    while (1) 
+    {
 	read_cfg(&stations_cfg,&str1[0],&str2[0]);
-	if (str1[0] == '\0') {
+	if (str1[0] == '\0')
+	{
 	    break;
 	}
-	if (strcmp(str1,"DIR")==0) {
+	if (strcmp(str1,"DIR")==0)
+	{
 	    strcpy(out_cfg->server_dir,str2);
 	    continue;
 	}
-	if (strcmp(str1,"DESC")==0) {
+	if (strcmp(str1,"DESC")==0)
+	{
 	    strcpy(out_cfg->server_desc,str2);
 	    continue;
 	}
-	if (strcmp(str1,"SOURCE")==0) {
+	if (strcmp(str1,"SOURCE")==0)
+	{
 	    strcpy(out_cfg->server_source,str2);
 	    continue;
 	}
-	if (strcmp(str1,"STATION")==0 || strcmp(str1,"SITE")==0) {
+	if (strcmp(str1,"STATION")==0 || strcmp(str1,"SITE")==0)
+	{
 	    strcpy(out_cfg->seed_station,str2);
 	    continue;
 	}
-	if (strcmp(str1,"NET")==0) {
+	if (strcmp(str1,"NETWORK")==0 || strcmp(str1,"NET")==0)
+	{
 	    strcpy(out_cfg->seed_network,str2);
 	    continue;
 	}
@@ -121,28 +128,40 @@ int GetGlobalParamsFromNetworkIni(struct mserv_cfg* out_cfg)
 		 global_defaults_section_name, NETWORK_INI);
 	return QSERV_FAILURE;
     }
-    while (1) {
+    while (1)
+    {
 	read_cfg(&network_cfg,&str1[0],&str2[0]);
 	if (str1[0] == '\0') 
 	{
 	    break;
 	}
-	if (strcmp(str1, "LOGDIR") == 0) {
+	if (strcmp(str1, "LOGDIR") == 0)
+	{
 	    strcpy(out_cfg->logdir, str2);
+	    continue;
 	}
-	if (strcmp(str1, "LOGTYPE") == 0) {
+	if (strcmp(str1, "LOGTYPE") == 0) 
+	{
 	    strcpy(out_cfg->logtype, str2);
+	    continue;
 	}
-	if (strcmp(str1, "CONTFILEDIR") == 0) {
+	if (strcmp(str1, "CONTFILEDIR") == 0)
+	{
 	    strcpy(out_cfg->contFileDir, str2);
+	    continue;
 	}
-	if (strcmp(str1, "STATUSINTERVAL") == 0) {
+	if (strcmp(str1, "STATUSINTERVAL") == 0)
+	{
 	    strcpy(out_cfg->statusinterval, str2) ;
+	    continue;
 	}
-	if (strcmp(str1, "VERBOSITY") == 0) {
+	if (strcmp(str1, "VERBOSITY") == 0)
+	{
 	    strcpy(out_cfg->verbosity, str2) ;
+	    continue;
 	}
-	if (strcmp(str1, "WAITFORCLIENTS") == 0) {
+	if (strcmp(str1, "WAITFORCLIENTS") == 0)
+	{
 	    strcpy(out_cfg->waitForClients, str2) ;
 	    continue;
 	}
@@ -164,68 +183,84 @@ int GetServerParamsFromStationIni(struct mserv_cfg* out_cfg, char *section_name)
 
     /* Try to open the STATION_INI file in this station's directory */
     sprintf (filename, "%s/%s", out_cfg->server_dir, STATION_INI);
-    if (open_cfg(&cfg, filename, section_name)) {
+    if (open_cfg(&cfg, filename, section_name))
+    {
 	fprintf (stderr, "Warning: Could not find a [%s] section in %s\n", section_name, filename);
 	return QSERV_FAILURE;
     }
 
     /* Now with file open, scan for program/server info */
-    while (1) {
+    while (1)
+    {
 	read_cfg(&cfg, str1, str2) ;
-	if (str1[0] == '\0') {
+	if (str1[0] == '\0')
+	{
 	    break ;
 	}
 	/* Possible global parameters. */
-	if (strcmp(str1, "LOGDIR") == 0) {
+	if (strcmp(str1, "LOGDIR") == 0)
+	{
 	    strcpy(out_cfg->logdir, str2);
 	    continue;
 	}
-	if (strcmp(str1, "LOGTYPE") == 0) {
+	if (strcmp(str1, "LOGTYPE") == 0)
+	{
 	    strcpy(out_cfg->logtype, str2);
 	    continue;
 	}
-	if (strcmp(str1, "CONTFILEDIR") == 0) {
+	if (strcmp(str1, "CONTFILEDIR") == 0)
+	{
 	    strcpy(out_cfg->contFileDir, str2);
 	    continue;
 	}
-	if (strcmp(str1, "STATUSINTERVAL") == 0) {
+	if (strcmp(str1, "STATUSINTERVAL") == 0)
+	{
 	    strcpy(out_cfg->statusinterval, str2) ;
 	    continue;
 	}
-	if (strcmp(str1, "WAITFORCLIENTS") == 0) {
+	if (strcmp(str1, "WAITFORCLIENTS") == 0)
+	{
 	    strcpy(out_cfg->waitForClients, str2) ;
 	    continue;
 	}
 	/* Server/program specific parameters. */
-	if (strcmp(str1, "MCASTIF") == 0) {
+	if (strcmp(str1, "MCASTIF") == 0)
+	{
 	    strcpy(out_cfg->mcastif, str2) ;
 	    continue;
 	}
-	if (strcmp(str1, "UDPADDR") == 0) {
+	if (strcmp(str1, "UDPADDR") == 0)
+	{
 	    strcpy(out_cfg->udpaddr, str2) ;
 	    continue;
 	}
-	if (strcmp(str1, "IPPORT") == 0) {
+	if (strcmp(str1, "IPPORT") == 0)
+	{
 	    strcpy(out_cfg->ipport, str2) ;
 	    continue;
 	}
-	if (strcmp(str1, "LOCKFILE") == 0) {
+	if (strcmp(str1, "LOCKFILE") == 0)
+	{
 	    strcpy(out_cfg->lockfile, str2) ;
 	    continue;
 	}
-	if (strcmp(str1, "STARTMSG") == 0) {
+	if (strcmp(str1, "STARTMSG") == 0)
+	{
 	    strcpy(out_cfg->startmsg, str2) ;
 	    continue;
 	}
-	if (strcmp(str1, "VERBOSITY") == 0) {
+	if (strcmp(str1, "VERBOSITY") == 0)
+	{
 	    strcpy(out_cfg->verbosity, str2) ;
 	    continue;
 	}
-	if (strcmp(str1, "DIAGNOSTIC") == 0) {
+	if (strcmp(str1, "DIAGNOSTIC") == 0)
+	{
 	    strcpy(out_cfg->diagnostic, str2) ;
 	    continue;
 	}
-	if (strcmp(str1, "LOGLEVEL") == 0) {
+	if (strcmp(str1, "LOGLEVEL") == 0)
+	{
 	    strcpy(out_cfg->loglevel, str2);
 	    continue;
 	}

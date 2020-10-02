@@ -512,7 +512,7 @@ int setup_socket (int port)
 
     sin.sin_family = AF_INET;
     sin.sin_addr.s_addr = htonl(INADDR_ANY);
-    sin.sin_port = port;
+    sin.sin_port = htons(port);
 
     ruflag = 1;
     if (setsockopt (ld, SOL_SOCKET, SO_REUSEADDR, (char *)&ruflag, sizeof(ruflag))) {
