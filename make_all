@@ -13,7 +13,16 @@ for nb in ${argv[@]} ; do
 
     export NUMBITS=$nb
     echo NUMBITS=$NUMBITS
-    rm -rf bin.$NUMBITS
+
+    BINDIR=bin.$NUMBITS
+    SUFFIX=`egrep DCOMSERV2 Makefile.include | fgrep -v '#'`
+    if [[ ! -z $SUFFIX ]] ; then \
+	echo $SUFFIX
+	SUFFIX=cs2_compat
+	BINDIR=$BINDIR.$SUFFIX
+    fi
+
+    rm -rf $BINDIR
 
     echo make clean ...
     make clean >& /dev/null
@@ -27,8 +36,8 @@ for nb in ${argv[@]} ; do
 
     logfile=install.$NUMBITS.log
     errfile=install.$NUMBITS.err
-    echo make install ...
-    make install >& $logfile
+    echo make install BINDIR=$BINDIR ...
+    make install BINDIR=$BINDIR >& $logfile
     egrep -i "(error)|(warning)" $logfile | grep -v Werror > $errfile
     echo $errfile errors = `cat $errfile | wc -l`
 

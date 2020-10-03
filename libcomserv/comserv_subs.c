@@ -253,11 +253,11 @@ void check_clients (void)
 	&& (combusy != clientpoll) ;
     msgbuf[0] = '\0';
     if (timedout && verbose)
-        sprintf(msgbuf,"Client %s timed out at %s", (char *)&pt->client_name, time_string(dtime())) ;
+        sprintf(msgbuf,"Client %s timed out at %s", (char *)cname_str_cs(pt->client_name), time_string(dtime())) ;
     else if (died && verbose)
-        sprintf(msgbuf,"Client %s has died at %s", (char *)&pt->client_name, time_string(dtime())) ;
+        sprintf(msgbuf,"Client %s has died at %s", (char *)cname_str_cs(pt->client_name), time_string(dtime())) ;
     else if (foreign_to && verbose)
-        sprintf(msgbuf,"Foreign Client %s presumed dead at %s", (char *)&pt->client_name, time_string(dtime())) ;
+        sprintf(msgbuf,"Foreign Client %s presumed dead at %s", (char *)cname_str_cs(pt->client_name), time_string(dtime())) ;
     if (died || timedout || foreign_to)
     {
 	if (verbose)
@@ -539,7 +539,7 @@ int comserv_scan()
 				client_tag = "Returning" ;
 			    LogMessage (CS_LOG_TYPE_DEBUG, "%s client %s, with PID of %d with memory ID %d\n",
 					client_tag,
-					clients[i].client_name,
+					cname_str_cs(clients[i].client_name),
 					cursvc->client_pid, clientid) ;
 			}
 			if (clients[i].timeout) /* client can be blocking */
@@ -579,11 +579,11 @@ int comserv_scan()
 			{
 			    if (cursvc->client_uid == base->server_uid)
 				LogMessage (CS_LOG_TYPE_DEBUG, "New client %s, with PID %d and memory ID %d\n", 
-					    clients[i].client_name,
+					    cname_str_cs(clients[i].client_name),
 					    cursvc->client_pid, clientid) ;
 			    else
 				LogMessage (CS_LOG_TYPE_DEBUG, "New Foreign client %s, with PID %d, UID %d, and memory ID %d\n", 
-					    clients[i].client_name, cursvc->client_pid,
+					    cname_str_cs(clients[i].client_name), cursvc->client_pid,
 					    cursvc->client_uid, clientid) ;
 			}
 		    }

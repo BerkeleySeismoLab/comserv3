@@ -25,8 +25,9 @@
 #include "lib660Interface.h"
 #include "portingtools.h"
 
-// #define DEBUG_Lib660Interface
-#define DEBUG_FILE_CALLBACK	1
+//: #define DEBUG_Lib660Interface
+//: #define DEBUG_MULTICAST
+//: #define DEBUG_FILE_CALLBACK	1
 
 static int throttle_free_packet_threshold = 0.5 * PACKETQUEUE_QUEUE_SIZE;
 static int min_free_packet_threshold = 0.1 * PACKETQUEUE_QUEUE_SIZE;
@@ -386,7 +387,7 @@ void Lib660Interface::onesec_callback(pointer p) {
     msg.rate = htonl((int)src->rate);
 
 #ifdef DEBUG_Lib660Interface
-    g_log << __func__ << ": channnel: " << msg.station << "." << msg.net << "." << msg.channel << "." << msg.location << std::endl;
+    g_log << __func__ << "onsec-callback: channnel: " << msg.station << "." << msg.net << "." << msg.channel << "." << msg.location << std::endl;
 #endif
   
     // Convert q660 epoch time to q330 epoch time for the multicast timestamp.
@@ -416,7 +417,7 @@ void Lib660Interface::onesec_callback(pointer p) {
     int fnmatch_flags = 0;
     for(int i=0; i < num_multicastChannelEntries; i++) {
 	if( fnmatch(multicastChannelList[i].channel, msg.channel, fnmatch_flags) == 0 && 
-	    fnmatch(multicastChannelList[i].location, msg.channel, fnmatch_flags) == 0) {
+	    fnmatch(multicastChannelList[i].location, msg.location, fnmatch_flags) == 0) {
 	    retval = sendto(mcastSocketFD, &msg, msgsize, 0, (struct sockaddr *) &(mcastAddr), sizeof(mcastAddr));
 #ifdef DEBUG_MULTICAST      
 	    g_log << "Multicasting " << msg.station << "." << msg.net << "." <<  msg.channel << "." << msg.location << std::endl;
@@ -602,8 +603,11 @@ void Lib660Interface::msg_callback(pointer p) {
  *
  ************************************************************************/
 
+#if DEBUG_FILE_CALLBACK > 0
 static const char *FK_str[] = { "File_Unknown", "File_CFG", "File_Cont", "File_Data" } ;
 static const char *FAT_str[] = { "OPEN", "CLOSE", "DELETE", "SEEK", "READ", "WRITE", "SIZE", "CL_RDIR", "DIR_FIRST", "DIR_NEXT", "DIR_CLOSE" } ;
+static const char *tag = (char *)"q8serv_file";
+#endif
 
 /***********************************************************************
  * translate_file:
@@ -669,7 +673,6 @@ void Lib660Interface::file_callback (pointer p)
     integer numwrite ;
     struct stat sb ;
     int filekind = FK_UNKNOWN;
-    char *tag = (char *)"q8serv_file";
   
     private_station_info *pstation_info = NULL;
     char *conf_path_prefix = NULL;

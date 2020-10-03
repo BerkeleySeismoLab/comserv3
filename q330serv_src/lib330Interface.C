@@ -305,7 +305,7 @@ void Lib330Interface::onesec_callback(pointer p) {
     int fnmatch_flags = 0;
     for(int i=0; i < num_multicastChannelEntries; i++) {
 	if( fnmatch(multicastChannelList[i].channel, msg.channel, fnmatch_flags) == 0 && 
-	    fnmatch(multicastChannelList[i].location, msg.channel, fnmatch_flags) == 0) {
+	    fnmatch(multicastChannelList[i].location, msg.location, fnmatch_flags) == 0) {
 	    retval = sendto(mcastSocketFD, &msg, msgsize, 0, (struct sockaddr *) &(mcastAddr), sizeof(mcastAddr));
 #ifdef DEBUG_MULTICAST      
 	    std::cout << "Multicasting " << msg.station << "." << msg.net << "." <<  msg.channel << "." << msg.location << std::endl;

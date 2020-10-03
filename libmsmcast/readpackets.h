@@ -35,7 +35,7 @@ Edit History:
 #include "libtypes.h"
 #endif
 
-typedef string31 tlogfields[LOGF_SIZE] ;
+//::typedef string31 tlogfields[LOGF_SIZE] ;
 
 /* Data Packet Codes */
 #define DT_DATA 0           /* Normal Data */

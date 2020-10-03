@@ -53,9 +53,14 @@ bool readConfigFile(char* server_name)
         return false;
     }
 
+#ifdef COMSERV2
+    // In COMSERV2 there was no separate prog_section_name for mserv.
+    // All info for mserv was in the comlink section.
+#else
     // Call to check that all required config values are set
     res = validateMservConfig(mcfg);
     if(res == false) return false;
+#endif
 
     // Initialize class with config info, and update global class.
     ConfigVO tcvo(mcfg);

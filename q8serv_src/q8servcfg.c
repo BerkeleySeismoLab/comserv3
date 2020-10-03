@@ -372,7 +372,7 @@ int getq8servcfg(struct q8serv_cfg *out_cfg, char *server_name)
     if (status != QSERV_SUCCESS) return status;
 
     /* 
-     * Finally read program-specifci server info in the STATION_INI file.
+     * Finally read program-specific server info in the STATION_INI file.
      * The "source=" general section will be read by comserv's config routines.
      */
     GetServerParamsFromStationIni(out_cfg, prog_section_name);

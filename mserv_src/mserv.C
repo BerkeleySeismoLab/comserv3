@@ -168,9 +168,18 @@ int main(int argc, char *argv[]) {
     if (strlen(cs_cfg.logdir) > 0)   g_cvo.setLogDir(cs_cfg.logdir);
     if (strlen(cs_cfg.logtype) > 0)  g_cvo.setLogType(cs_cfg.logtype);
     if (strlen(cs_cfg.lockfile) > 0) g_cvo.setLockFile(cs_cfg.lockfile);
-    if (strlen(cs_cfg.udpaddr) > 0)  g_cvo.setUdpAddr(cs_cfg.udpaddr);
+    // The following parameters are REQUIRED for mserv
+    int nmissing = 0;
+    if (strlen(cs_cfg.udpaddr) > 0) g_cvo.setUdpAddr(cs_cfg.udpaddr);
+    else { g_log << "Error: missing parameter for udpaddr" << std::endl; ++nmissing; }
     if (strlen(cs_cfg.ipport) > 0)   g_cvo.setIPPort(cs_cfg.ipport);
+    else { g_log << "Error: missing parameter for ipport" << std::endl; ++nmissing; }
     if (strlen(cs_cfg.mcastif) > 0)  g_cvo.setMcastIf(cs_cfg.mcastif);
+    else { g_log << "Error: missing parameter for mcastif" << std::endl; ++nmissing; }
+    if (nmissing > 0) {
+	g_log << "Error: server exiting due to mserv-specifig configuration errors" << std::endl;
+	exit (12);
+    }
 #endif
 
     /* Open the lockfile for exclusive use if lockfile is specified.*/

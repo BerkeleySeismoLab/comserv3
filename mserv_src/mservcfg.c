@@ -35,10 +35,10 @@
 
 extern void terminate (char *);
 
-static char *prog_section_name = "mserv";
 #ifdef COMSERV2
 static char *global_defaults_section_name = "netm";
 #else
+static char *prog_section_name = "mserv";
 static char *global_defaults_section_name = "global_defaults";
 #endif
 
@@ -302,11 +302,19 @@ int getmservcfg(struct mserv_cfg *out_cfg, char *server_name)
     if (status != QSERV_SUCCESS) return status;
 
     /* 
-     * Finally read program-specifci server info in the STATION_INI file.
+     * Finally read program-specific server info in the STATION_INI file.
      * The "source=" general section will be read by comserv's config routines.
      */
+#ifdef COMSERV2
+    // In COMSERV2 there was no separate prog_section_name for mserv.
+    // All info for mserv was in the comlink section.
+    // Initialize ipport string to some non-zero value to avoid interim error condition.
+    // The true value of ipport will be read and used from the comlink section.
+    strcpy (out_cfg->ipport, "1");
+#else
     GetServerParamsFromStationIni(out_cfg, prog_section_name);
     if (status != QSERV_SUCCESS) return status;
+#endif
 
     return QSERV_SUCCESS;
 }
