@@ -1,0 +1,9 @@
+make.*
+install.*
+bin.*
+*.o
+*.a
+*~
+*.bak
+*.ORIG
+\#*
