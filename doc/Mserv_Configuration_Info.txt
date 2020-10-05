@@ -1,0 +1,54 @@
+Mserv Configuration Info:
+       Doug Neuhauser, doug@seismo.berkeley.edu
+       2020/10/04
+
+The mserv server program reads multicasted MiniSEED records from a
+specified multicast addressa and port, and provides those MiniSEED
+records to its COMSERV3 clients.
+
+In addition to the [comserv] (or [comlink]) section in each
+server_instance's STATION_INI file, the mserv program requires an
+[mserv] section for configuration commands (or directives) for
+the mserv program in the STATION_INI file.
+
+The [mserv] configuration commands shown below.
+Commands prefixed with a "*" are mandatory.
+
+    logdir=Logging_directory
+	Pathname for all logfiles created by the this server.
+    logtype=logfile|stdout
+	The value "logfile: tells the server program create and output log message
+	to daily log files in the logdir directory.  The value "stdout" tells the
+	server program to write log messages to stdout.  When the server program is
+	started by netmon, netmon directs stdout to a logfile for the server_instance
+	in the logdir directory.
+  * mcastif=ip_address
+        The IP address of the network interface used to read multicasted MiniSEED
+	records.
+  * udpaddr=multicast_address
+        The multicast IP address used by mserv to read multicasted MiniSEED records.
+  * ipport=N
+    	The UPD port number used by mserv to read multicasted MiniSEED records.
+    statusinterval=
+	Specifies how often (in seconds) the server_instance's server program
+	should output data telemetry status info.
+    lockfile=pathname
+    	Pathname of the lockfile created by this instance of the server program.
+    startmsg=message
+    	Startup message written to the server program's logfile for this server_instance
+	of the server program.
+    verbosity=verbosity_tags
+    	Verbosity tags for controlling diagnostic messages from Quanterra's
+	data logger support library for this server program.
+    diagnostic=diagnostic_tags
+    	Diagnostic) tags for controlling diagnostic messages from the server's main code
+	for this server program.
+    loglevel=???
+	???
+    waitForClients=N
+	Specifies that the server program should wait N seconds for
+	netmon to start its clients before the server program resumes
+	reading multicasted MiniSEED records.  This can prevent the
+	server program from receiving too many MiniSEED packets before
+	blocking clients are started and register with the server
+	program's comserv subsystem.
