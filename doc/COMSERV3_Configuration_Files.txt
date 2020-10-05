@@ -1,0 +1,278 @@
+COMSERV3 Configuration Files:
+	 Doug Neuhauser, doug@seismo.berkeley.edu
+	 2020/10/04
+
+COMSERV3 Configuration files contains one or more sections, and each
+section contains 0 or more lines of configuration commands (or
+directives) per section.  A section begins with a section header line,
+and continues until the next section header line or the end-of-file.
+A section header line has the format:
+
+    [section_name]
+
+where the string within the brackets is the section name.
+A section name may NOT include any whitespace.
+
+A configuration line has the format 
+
+    keyword=value
+
+A keyword is a string with no whitespace that begins with an
+alphanumeric character.  Keywords are always case insensitive.  The
+value is the blank-trimmed remainader of the line after the "=" sign.
+Values with blanks do NOT have to be quoted.  If the value contains
+quote charaters, the quotes are considerd part of the value.  Many,
+but not all Keywords values are considered case-insensitive by the
+programs that read the configuration lines.  Values such as SEED
+station, SEED network, server description strings, command lines, etc
+may be case sensitive.
+
+Any line that does not begin with an alphanumeric character or "[" is
+treated as a comment line.  Comment lines can appear anywhere in a
+configuration file, and are ignored.
+
+The COMSERV3 system has 2 system-wide configuration files, and one
+configuration file for each instance of a server program (called a
+server_instance).
+
+I.  Systemwide files:
+
+1. /etc/stations.ini	(referred to as STATIONS_INI file)
+
+The STATION_INI file contains 1 section for each server_instance.
+The server_instance configuration commands are:
+
+    desc=string
+	Descriptive string for the server_instance.
+    dir=Pathname
+	Pathname of the directory containing the server_instance's station.ini file.
+    source=comserv|comlink
+	The value MUST be comserv (or comlink for comserv2 compatability).
+    station|site=SEED_station_code
+	The SEED station code in the MiniSEED data delivered by the server.
+	The station and site keywords are considered equivalent keywords.
+    network|net=SEED_network_code
+	The SEED network code in the MiniSEED data delivered by the server.
+	The network and net keyworkd are considered equivalent keywords.
+    group=group_name
+	The name of a group in which the server_instance should be included.
+	There may be multiple group configuration commands for a single server_instance.
+	Group_names are used by the netmon program to refer to a collection
+	of server_instances.
+
+Example:
+
+    [DSNQ8.BK]
+    * Q8 s/n 510614 at DSN home
+    dir=/home/doug/config/stations/all/DSNQ8.BK
+    desc=Q8 DSNQ8.BK 
+    source=comserv
+    station=DSNQ8
+    network=BK
+    group=primary
+    group=BK
+    group=q8
+
+    [1485.XX]
+    * Q330 s/n 1485 at McCone 298
+    dir=/home/doug/config/stations/all/1485.XX
+    desc=Q330 1485.XX
+    source=comserv
+    station=1485
+    network=XX
+    group=primary
+    group=XX
+    group=q330
+
+    [CMB.BK]
+    * Q330 at Columbia College, CA
+    dir=/home/doug/config/stations/all/CMB.BK
+    desc=Q330 CMB.BK
+    source=comserv
+    station=CMB
+    network=BK
+    group=primary
+    group=BK
+    group=mserv
+
+2.  /etc/network.ini	(referred to as NETWORK_INI file)
+
+The NETWORK_INI file contains a [netmon] section for the netmon
+program, and an optional [global_defaults] section for default
+configuration lines that may be used by multiple server_instance's
+program.  Any configuration line in the [global_defaults] section may
+be overriden by a configuration line in the server_instances's
+STATION_INI file.
+
+The [netmon] section can contain the following configuration lines:
+
+A.  The following parameters are use to control basic operations of
+the netmon program.
+
+    logdir=Logging_directory
+	Pathname for all logfiles created by the netmon program.
+	This include the logfile for netmon as well as the logfile
+	for all program spawned by netmon.
+    lockfile=pathname
+    	Pathname of the lockfile created by the background netmon
+    	monitoring daemon.
+    cmddir=Command_dir
+    	Pathname in which an interactive instance of netmon places
+	command files to be executed by the netmon background daemon.
+    poll_interval=N
+        Netmon's polling interval (in seconds).
+	This value must be >= CS_CHECK_INTERVAL defined in the file service.h.
+	Netmon may increase this paramter if it is smaller than the
+	CS_CHECK_INTERVAL used when compiling netmon.
+
+B.  The following parameters are used to control netmon's startup
+and shutdown of servers and clients.
+
+    server_startup_delay=N
+        Number of seconds that netmon allows for a server_instance program 
+	to start after it has been spawned.
+    client_startup_delay=N
+        Number of seconds that netmon allows for a client program 
+	to start after it has been spawned.
+    max_shutdown_wait=N
+        Number of seconds that netmon allows for client and server programs
+	to shut down after they have been signaled to shut down.
+    max_check_tries=N
+	Maximum number of times netmon will try to check for a program to
+	shut down before it will kill it "with prejudice".
+
+C.  The following paramters are used to control netmon's timeout
+notification for no data packets being inserted into the
+server_instance's comserv storage rings.  Most networks no longer
+use netmon to provide notification of data timeouts, as they have
+other methods of detecting data timeouts or hith data latencies.
+
+    notify_prog=commandline
+	Program command line used to notify the operations staff about data timeouts
+	for a server_instance program.  The server_instance name will be 
+	added as a command line parameter when the program is run.
+	If no notification is desires, specify the command "/bin/true",
+	which returns a 0 return code in all cases.
+    min_notify=N
+	Minimum number of seconds for a timeout condition for a
+	server_instance.  A timeout state is set of a server_instance
+	that has not received any MiniSEED data packets in this number
+	of seconds.
+    re_notify=N
+        How often netmon should re-notify operations staff if a
+	server_instance contines stays in a timeout state.
+    res_notify=0|1
+        Boolean value that specified whether netmon should notify
+	operations staff when a timeout condition has been cleared.
+
+The [global_defaults] section contains default parameters for one
+or more server_instances.  Any parameter in this section may be
+overriden by a corresponding parameter in a server_instance's section
+in its STATION_INI file.
+
+    logdir=Logging_directory
+	Pathname for the logfiles created by the station_instance' server program.
+    logtype=logfile|stdoug
+	Specifies whether the program should create and manage it's own daily
+	logfiles, or whether it should write log messages to stdout, which may
+	be redirected to a logfile by the netmon program.
+    contfiledir=/home/doug/config/state
+        Directory name in which the server_instance's program should read and
+	write continuity files.
+    statusinterval=N
+	Specifies how often (in seconds) the server_instance's server program
+	should output data telemetry status info.
+    waitforclients=N
+	Specifies in seconds how long the server_instance's server program 
+	should wait after program startup for clients to be started by netmon
+	before starting data telemetry from the data logger.
+
+B.  The following parameters are used to control whether low-latency data packets
+for channels are multicast.
+
+    multicastenabled=0|1
+	Boolean value to specify whether low-latency data packets should
+	be multicasted.
+    multicasthost=224.0.0.121
+	Multicast destincation IP address for low-latency data packets.
+    multicastchannellist=channel_list
+	Comma-delimited channel list specifying which channels should
+	have low-latency data multicasted.
+
+Example:
+
+    [netmon]
+    *
+    * Netmon daemon configuration parameters.
+    *
+    logtype=logfile
+    logdir=/home/doug/config/logs
+    cmddir=/home/doug/config/cmds
+    lockfile=/home/doug/config/lock/netmon.lock
+    poll_interval=5
+    *
+    * Default Startup/Shutdown parameters.
+    * Can be overridden on a per-station basis.
+    *
+    server_startup_delay=5
+    client_startup_delay=5
+    max_shutdown_wait=15
+    max_check_tries=5
+    *
+    * Default notification parameters.
+    * Can be overridden on a per-station basis.
+    *
+    #::notify_prog=/usr/bin/Mail -s "netmon notify" quanterra-mon
+    notify_prog=/bin/true
+    min_notify=900
+    re_notify=21600
+    res_notify=1
+
+    [global_defaults]
+    * Global defaults for all servers and netmon.
+    logtype=logfile
+    logdir=/home/doug/config/logs
+    contfiledir=/home/doug/config/state
+    statusinterval=30
+    waitforclients=0
+    multicastenabled=1
+    multicasthost=224.0.0.121
+    multicastchannellist=HHE,HHN,HHZ,HNE,HNN,HNZ
+
+
+II. Server configuration (one per server_instance):
+
+1.  station.ini		(referred to as STATION_INI file)a
+
+Each server_instance has a configuration file named station.ini
+located in the unique directory defined by the server_instance's DIR
+directive in the STATIONS_INI file.
+
+The STATION_INI file has at least multiple configuration sections.
+
+A.  Comserv_subsystem section.  See the comserv3_subsystem configuration
+info file for details.
+
+B.  Server_program section, based on the server_program's name.
+Currently supported COMSERV3 server_program program are:
+	[q330serv]
+	[q8serv]
+	[mserv]
+See the appropriate server program configuration info file for details.
+
+C.  Sections for each client run by netmon, as specified in the
+[netmon] section of the STATION_INI file.  The client sections are
+normally named according to the COMSERV3 clientname.  If there are
+multiple instances of a client run by nemon for for a single
+server_instance, each client must have a unique clientname.
+See the documenation file for each client.  Many clients have 
+the following configuration commands:
+
+    lockfile=lockfile_pathname
+	Pathname of the lock file for this client.
+	The client program is responsible for locking this file to ensure
+	that multiple instances of the clent for this server_instance
+	are not running simultaneously.
+    pidfile=pidfile_pathname
+	Pathname of the PID file for this client.
+	The PID file must be created by the client.

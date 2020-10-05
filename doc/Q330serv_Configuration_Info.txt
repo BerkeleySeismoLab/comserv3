@@ -1,0 +1,93 @@
+Q330serv Configuration Info:
+       Doug Neuhauser, doug@seismo.berkeley.edu
+       2020/10/04
+
+The q8serv server program connects to a Quanterra Q330-class data
+logger, receives data from the data logger, creates MiniSEED data
+records, and provides those MiniSEED records to its COMSERV3 clients.
+In addition, it optionally multicasts low-latency data in single
+channel uncompressed packets to clients for rapid use in real-time
+applications.
+
+In addition to the [comserv] (or [comlink]) section in each
+server_instance's STATION_INI file, the q330serv program requires a
+[q330serv] section for configuration commands (or directives) for
+the q330serv program in the STATION_INI file.
+
+The [q330serv] configuration commands are show below.
+Commands prefixed with a "*" are mandatory.
+
+    logdir=Logging_directory
+	Pathname for all logfiles created by the this server.
+    logtype=logfile|stdout
+	The value "logfile: tells the server program create and output log message
+	to daily log files in the logdir directory.  The value "stdout" tells the
+	server program to write log messages to stdout.  When the server program is
+	started by netmon, netmon directs stdout to a logfile for the server_instance
+	in the logdir directory.
+  * udpaddr=ip_address
+        The IP address of the Q330 data logger.
+  * baseport=ip_port
+	The baseport for the Q330 data logger.
+  * dataport=1|2|3|4
+	The logical data port number number to the Q330 data logger to which the
+	server program will connect.
+  * serialnumber=hex_sn
+	Specifies the hex serial number of the Q330 data logger.
+    authcode=code
+	Specifies the authdoe (Q330 priority string) for the Q330's data port.
+	Default value is 0.
+    contFileDir=pathname
+	The pathname of the directory used by the server program to store continuity
+	files that describe the initial and final connectivity information between
+	the server program and the data logger.  The state fiels allow the server_program
+	to resume data telemetry and MiniSEED creation based on the last data received
+	by the previous connection to the data logger.
+    statusinterval=
+	Specifies how often (in seconds) the server_instance's server program
+	should output data telemetry status info.
+    lockfile=pathname
+    	Pathname of the lockfile created by this instance of the server program.
+    startmsg=message
+    	Startup message written to the server program's logfile for this server_instance
+	of the server program.
+    verbosity=verbosity_tags
+    	Verbosity tags for controlling diagnostic messages from Quanterra's
+	data logger support library for this server program.
+    diagnostic=diagnostic_tags
+    	Diagnostic) tags for controlling diagnostic messages from the server's main code
+	for this server program.
+    loglevel=???
+	???
+    datarateinterval=???
+	???
+    failedregistrationsbeforesleep=N
+	How many times the server program can fail to register with the data logger 
+	before it sleeps.
+    minutestosleepbeforeretry=N
+	How many seconds the server program sleeps after failing to register with the 
+	data logger.
+    dutycycle_maxconnecttime=N
+	???
+    dutycycle_sleeptime=N
+	???
+    dutycycle_bufferlevel=N
+	???
+    waitForClients=N
+	Specifies that the server program should wait N seconds for 
+	netmon to start its clients before the server program resumes
+	data telemetry from the data logger.  This can prevent the server
+	program from receiving too many MiniSEED packets before blocking
+	clients are started and register with the server program's comserv
+	subsystem.
+    multicastEnabled=0|1
+	Boolean value to specify whether low-latency data packets should
+	be multicasted.
+    multicastPort=N
+	IP port number for multicasting low-latency data packets from this server_instance.
+    multicastHost=
+	Multicast destincation IP address for low-latency data packets.
+    multicastChannelList=
+	Comma-delimited channel list specifying which channels should
+	have low-latency data multicasted.
+

@@ -1,0 +1,51 @@
+Comserv Subsystem  Configuration Info:
+       Doug Neuhauser, doug@seismo.berkeley.edu
+       2020/10/04
+
+The configuration parameters for the comserv subsystem is contained
+in each server_instance's STATION_INI file.  The name of the section
+([comserv] or [comlink]) is the value of the "source" directive in
+the server_instance's section of the STATIONS_INI file.
+
+The [comserv] (or [comlink]) directive are:
+    segid=N
+	Shared memory ID for the server's comserv shared memory segment.
+	This must be a unique shared memory id among all server_instances
+	on the system.
+    station=SEED_station_name
+	The SEED station code in the MiniSEED data delivered by the server.
+    verbosity=0|1|2
+	Verbosity setting for diagnostic messages from the comserv code.
+    pollusec=N
+    	How often the comserv server subsystem in microsecions should poll
+	its clients.  Recommended values is 200000.  The lower the number,
+	the more CPU will be be used by the server_instance program.
+    databufs=N
+    	Number of MiniSEED records in the comserv queue for DATA records.
+    detbufs=N
+    	Number of MiniSEED records in the comserv queue for EVENT DETECTION records.
+    timbufs=N
+    	Number of MiniSEED records in the comserv queue for Timing (ACE) records.
+    calbufs=N
+    	Number of MiniSEED records in the comserv queue for Calibration records.
+    msgbufs=N
+    	Number of MiniSEED records in the comserv queue for LOG records.
+    blkbufs=N
+    	Number of MiniSEED records in the comserv queue for Opaque Data records
+	(XML station configuration records for q8serv, binary configuration records
+	for q330serv).
+  A numbered client directive for each client managed by netmon:
+    clientN=clientname[,blocking_timeout]
+	Definition for client N (there can be 1 to 16 client).  The
+	value is the client name, and optionally a blocking time which
+	defines the client as a blocking client.  Client names must be
+	unique among all clients for this server_instance.  If the
+	client is a blocking client, then the blocking_time is the
+	number of second that the comserv_system will hold a record in
+	an attempt to deliver it to the client.  If any of the queues
+	for the MiniSEED records get filled due to the inability to
+	deliver the record to the client, the server may either stop
+	receiving data from the data logger, or discard any new record
+	for that queue until there is space in the queue.
+    uidN=uid
+        Not currently used.

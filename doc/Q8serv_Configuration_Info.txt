@@ -1,0 +1,117 @@
+Q8serv Configuration Info:
+       Doug Neuhauser, doug@seismo.berkeley.edu
+       2020/10/04
+
+The q8serv server program connects to a Quanterra Qantix Q8 data
+logger, receives data from the data logger, creates MiniSEED data
+records, and provides those MiniSEED records to its COMSERV3 clients.
+In addition, it optionally multicasts low-latency data in single
+channel uncompressed packets to clients for rapid use in real-time
+applications.
+
+In addition to the [comserv] (or [comlink]) section in each
+server_instance's STATION_INI file, the q8serv program requires a
+[q8serv] section for configuration commands (or directives) for
+the q8serv program in the STATION_INI file.
+
+The [q8serv] configuration commands shown below.
+Commands prefixed with a "*" are mandatory.
+
+    logdir=Logging_directory
+	Pathname for all logfiles created by the this server.
+    logtype=logfile|stdout
+	The value "logfile: tells the server program create and output log message
+	to daily log files in the logdir directory.  The value "stdout" tells the
+	server program to write log messages to stdout.  When the server program is
+	started by netmon, netmon directs stdout to a logfile for the server_instance
+	in the logdir directory.
+  * udpaddr=ip_address
+        The IP address of the Q8 data logger.
+  * baseport=ip_port
+	The baseport for the Q8 data logger.
+  * priority=1|2|3|4
+	The output priority connection number to the Q8 data logger.
+  * password=data_priority_passphrase
+	Specifies the passphrase (Q8 priority string) for the data connection to the
+	Q8 for the specified priority connection number.
+  * serialnumber=hex_sn
+	Specifies the hex serial number of the Q8 data logger.
+    startmsg=message
+    	Startup message written to the server program's logfile for this server_instance
+	of the server program.
+    lockfile=pathname
+    	Pathname of the lockfile created by this instance of the server program.
+    contfiledir=pathname
+	The pathname of the directory used by the server program to store continuity
+	files that describe the initial and final connectivity information between
+	the server program and the data logger.  The state fiels allow the server_program
+	to resume data telemetry and MiniSEED creation based on the last data received
+	by the previous connection to the data logger.
+    statusinterval=N
+	Specifies how often (in seconds) the server_instance's server program
+	should output data telemetry status info.
+    verbosity=verbosity_tags
+    	Verbosity tags for controlling diagnostic messages from Quanterra's
+	data logger support library for this server program.
+    diagnostic=diagnostic_tags
+    	Diagnostic) tags for controlling diagnostic messages from the server's main code
+	for this server program.
+    loglevel=???
+	???
+    failedRegistrationsBeforeSleep=N
+	How many times the server program can fail to register with the data logger 
+	before it sleeps.
+    minutesToSleepBeforeRetry=N
+	How many seconds the server program sleeps after failing to register with the 
+	data logger.
+    dutycycle_maxConnectTime=N
+	???
+    dutycycle_sleepTime=N
+	???
+    limitBackfill=N
+	The server program normally uses the server_instance's
+	continuity files to instruct the data logger to resume sending
+	data based on the last data that it previously received from
+	this data logger's priority port.  If the value of the
+	parameter is > 0, the server program limits the backfilling of
+	old data to at most N seconds before current time.
+    waitForClients=N
+	Specifies that the server program should wait N seconds for 
+	netmon to start its clients before the server program resumes
+	data telemetry from the data logger.  This can prevent the server
+	program from receiving too many MiniSEED packets before blocking
+	clients are started and register with the server program's comserv
+	subsystem.
+    multicastEnabled=0|1
+	Boolean value to specify whether low-latency data packets should
+	be multicasted.
+    multicastPort=N
+	IP port number for multicasting low-latency data packets from this server_instance.
+    multicastHost=
+	Multicast destincation IP address for low-latency data packets.
+    multicastChannelList=
+	Comma-delimited channel list specifying which channels should
+	have low-latency data multicasted.
+
+  Example q8serv configuration section:
+
+	[q8serv]
+	logdir=/home/doug/config/logs
+	logtype=logfile
+	* q8serv config parameters
+	udpaddr=172.18.254.11
+	baseport=7330
+	priority=1
+	password=Data Priority 1
+	serialnumber=0x0123456789abcdef
+	startmsg=Q8 BK.DSNQ8 Prioriyy 1 to host rodgers
+	lockfile=/home/doug/config/lock/DSNQ8.BK.comserv.lock
+	contfiledir=/home/doug/config/state
+	verbosity=VB, RM, SD, SM, PD
+	limitbackfill=0
+	waitforclients=0
+	*
+	multicastenabled=1
+	multicasthost=224.0.0.121
+	multicastport=8193
+	multicastchannellist=HHE,HHN,HHZ,HNE,HNN,HNZ
