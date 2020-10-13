@@ -29,17 +29,18 @@ LDLIBS	= $(CSULIB)
 #
 LD	 = $(CXX)
 INCL	 = -I$(CSINCL)
-CXXFLAGS = -m$(NUMBITS) $(DEBUG) $(COPT) $(INCL) $(OSDEFS) $(ENDIAN)
-CFLAGS	 = -m$(NUMBITS) $(DEBUG) $(COPT) $(INCL) $(OSDEFS) $(ENDIAN)
+CPPFLAGS = $(INCL) $(OSDEFS) $(ENDIAN)
+CXXFLAGS = -m$(NUMBITS) $(DEBUG) $(COPT)
+LDFLAGS	 = -m$(NUMBITS) $(DEBUG)
 
 ########################################################################
 
-files = cs2mcast.C multicast_utils.C
+srcfiles = cs2mcast.C multicast_utils.C
 
 headers = RetCodes.h
 
-sources = $(headers) $(files)
-objects = $(files:.C=.o)
+files	= $(srcfiles) $(headers)
+objects = $(srcfiles:.C=.o)
 
 program = cs2mcast
 
@@ -47,13 +48,11 @@ ALL	= $(program)
 
 all: 		$(ALL)
 
-$(program):	$(objects) $(files) $(CSULIB)
-		$(LD) $(CXXFLAGS) $(objects) -o $@ $(LDLIBS)
+$(program):	$(objects) $(CSULIB)
+		$(LD) $(LDFLAGS) $(objects) -o $@ $(LDLIBS)
 
-#implicit rules for converting C and c files to object files
-#
-.C.o:
-		$(CXX) $(CXXFLAGS) -c $<
+%.o:		%.C $(headers)
+		$(CXX) $(CXXFLAGS) $(CPPFLAGS) -c $<
 
 $(CSULIB):	FORCE
 		( cd $(CSUDIR); make -f $(MAKEFILE) )

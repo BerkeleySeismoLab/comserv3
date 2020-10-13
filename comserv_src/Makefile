@@ -33,7 +33,8 @@ CSULIB	= $(CSUDIR)/libcsutil.a
 ########################################################################
 # Linux definitions
 LD	= $(CC)
-CFLAGS	= -m$(NUMBITS) $(DEBUG) $(COPT) -I$(CSINCL) -DMYIPADDR $(OSDEFS) $(ENDIAN)
+CPPFLAGS = -I$(CSINCL) $(OSDEFS) $(ENDIAN) -DMYIPADDR 
+CFLAGS	= -m$(NUMBITS) $(DEBUG) $(COPT) 
 LDFLAGS	= -m$(NUMBITS) $(DEBUG)
 LDLIBS	= $(CSULIB)
 
@@ -51,23 +52,23 @@ $(program):	server.o cscfg.o buffers.o comlink.o commands.o $(CSULIB)
 
 server.o:	$(CSINCL)/dpstruc.h $(CSINCL)/quanstrc.h $(CSINCL)/service.h \
 		$(CSINCL)/cfgutil.h $(CSINCL)/stuff.h $(CSINCL)/server.h server.c
-		$(CC) -c $(CFLAGS) server.c
+		$(CC) $(CFLAGS) $(CPPFLAGS) -c server.c
 
 cscfg.o:	$(CSINCL)/dpstruc.h $(CSINCL)/quanstrc.h $(CSINCL)/service.h \
 		$(CSINCL)/cfgutil.h $(CSINCL)/stuff.h $(CSINCL)/server.h cscfg.c
-		$(CC) -c $(CFLAGS) cscfg.c
+		$(CC) $(CFLAGS) $(CPPFLAGS) -c cscfg.c
 
 buffers.o:	$(CSINCL)/dpstruc.h $(CSINCL)/quanstrc.h $(CSINCL)/service.h \
 		$(CSINCL)/stuff.h $(CSINCL)/server.h buffers.c
-		$(CC) -c $(CFLAGS) buffers.c
+		$(CC) $(CFLAGS) $(CPPFLAGS) -c buffers.c
 
 comlink.o:	$(CSINCL)/dpstruc.h $(CSINCL)/quanstrc.h $(CSINCL)/service.h \
 		$(CSINCL)/stuff.h $(CSINCL)/server.h comlink.c
-		$(CC) -c $(CFLAGS) comlink.c
+		$(CC) $(CFLAGS) $(CPPFLAGS) -c comlink.c
 
 commands.o:	$(CSINCL)/dpstruc.h $(CSINCL)/quanstrc.h $(CSINCL)/service.h \
 		$(CSINCL)/stuff.h $(CSINCL)/server.h commands.c
-		$(CC) -c $(CFLAGS) commands.c
+		$(CC) $(CFLAGS) $(CPPFLAGS) -c commands.c
 
 $(CSULIB):	FORCE
 		( cd $(CSUDIR); make -f $(MAKEFILE) )

@@ -22,13 +22,14 @@ CSDIR	= ../..
 CSINCL	= $(CSDIR)/include
 CSUDIR	= $(CSDIR)/libcsutil
 CSULIB	= $(CSUDIR)/libcsutil.a
-LD_RUN_PATH = 
 
 ########################################################################
 # LINUX definitions
-INCL	= -I$(CSINCL) -I$(QLIB2_INCL)
-CFLAGS	= -m$(NUMBITS) $(DEBUG) $(COPT) $(INCL) $(OSDEFS) $(ENDIAN)
-LDLIBS	= -m$(NUMBITS) $(DEBUG) $(CSULIB) $(QLIB2_LIB) -lm
+INCL	 = -I$(CSINCL) -I$(QLIB2_INCL)
+CPPFLAGS = $(INCL) $(OSDEFS) $(ENDIAN)
+CFLAGS	 = -m$(NUMBITS) $(DEBUG) $(COPT)
+LDFLAGS	 = -m$(NUMBITS) $(DEBUG)
+LDLIBS	 = $(CSULIB) $(QLIB2_LIB) -lm
 
 ########################################################################
 
@@ -42,17 +43,17 @@ ALL	= $(P1)
 all:		$(ALL)
 
 $(P1):		$(OBJS1) $(CSULIB)
-		$(CC) $(CFLAGS) -o $@ $(OBJS1) $(LDLIBS)
+		$(CC) $(LDFLAGS) -o $@ $(OBJS1) $(LDLIBS)
 
 datalog.o:	datalog.c $(CSINCL)/datalog.h datalog_utils.h \
 		$(CSINCL)/dpstruc.h $(CSINCL)/seedstrc.h $(CSINCL)/stuff.h \
 		$(CSINCL)/timeutil.h $(CSINCL)/service.h $(CSINCL)/cfgutil.h 
-		$(CC) $(CFLAGS) -c $<
+		$(CC) $(CFLAGS) $(CPPFLAGS) -c $<
 
 datalog_utils.o: datalog_utils.c $(CSINCL)/datalog.h datalog_utils.h \
 		$(CSINCL)/dpstruc.h $(CSINCL)/seedstrc.h $(CSINCL)/stuff.h \
 		$(CSINCL)/timeutil.h $(CSINCL)/service.h $(CSINCL)/cfgutil.h 
-		$(CC) $(CFLAGS) -c $<
+		$(CC) $(CFLAGS) $(CPPFLAGS) -c $<
 
 $(CSULIB):	FORCE
 		(cd $(CSUDIR); make -f $(MAKEFILE))

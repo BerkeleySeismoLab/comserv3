@@ -22,14 +22,14 @@ CSDIR	= ..
 CSINCL	= $(CSDIR)/include
 CSUDIR	= $(CSDIR)/libcsutil
 CSULIB	= $(CSUDIR)/libcsutil.a
-LD_RUN_PATH = 
 
 ########################################################################
 # LINUX definitions
-INCL	= -I$(CSINCL)
-CFLAGS	= -m$(NUMBITS) $(DEBUG) $(COPT) $(INCL) $(OSDEFS) $(ENDIAN)
-LDFLAGS	= -m$(NUMBITS) $(DEBUG)
-LDLIBS	= $(CSULIB) -lm
+INCL	 = -I$(CSINCL)
+CPPFLAGS = $(INCL) $(OSDEFS) $(ENDIAN)
+CFLAGS	 = -m$(NUMBITS) $(DEBUG) $(COPT)
+LDFLAGS	 = -m$(NUMBITS) $(DEBUG)
+LDLIBS	 = $(CSULIB) -lm
 
 ########################################################################
 
@@ -50,16 +50,16 @@ msgmon:		msgmon.o $(CSULIB)
 		$(CC) $(LDFLAGS) -o msgmon msgmon.o $(CSULIB) $(LDLIBS)
 
 config.o:	config.c $(CSINCL)/dpstruc.h $(CSINCL)/service.h $(CSINCL)/cfgutil.h $(CSINCL)/stuff.h
-		$(CC) -c $(CFLAGS) config.c
+		$(CC) -c $(CFLAGS) $(CPPFLAGS) config.c
 
 dataread.o:	$(CSINCL)/dpstruc.h $(CSINCL)/service.h $(CSINCL)/seedstrc.h $(CSINCL)/stuff.h $(CSINCL)/timeutil.h dataread.c
-		$(CC) -c $(CFLAGS) dataread.c
+		$(CC) -c $(CFLAGS) $(CPPFLAGS) dataread.c
 
 dpda.o:		dpda.c $(CSINCL)/dpstruc.h $(CSINCL)/service.h 	$(CSINCL)/cfgutil.h $(CSINCL)/stuff.h
-		$(CC) -c $(CFLAGS) dpda.c
+		$(CC) -c $(CFLAGS) $(CPPFLAGS) dpda.c
 
 msgmon.o:	msgmon.c $(CSINCL)/dpstruc.h $(CSINCL)/service.h $(CSINCL)/cfgutil.h $(CSINCL)/stuff.h
-		$(CC) -c $(CFLAGS) msgmon.c
+		$(CC) -c $(CFLAGS) $(CPPFLAGS) msgmon.c
 
 $(CSULIB):	FORCE
 		( cd $(CSUDIR); make -f $(MAKEFILE) )

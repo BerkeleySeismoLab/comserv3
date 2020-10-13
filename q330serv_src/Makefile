@@ -33,13 +33,14 @@ LIB330LIB = $(LIB330DIR)/lib330.a
 
 ########################################################################
 # Linux definitions
-LD	= $(CXX)
-INCL	= -I$(LIB330DIR) -I$(SSDIR) -I$(CSINCL) 
+LD	 = $(CXX)
+INCL	 = -I$(LIB330DIR) -I$(SSDIR) -I$(CSINCL)
 L330DEFS = -DUSE_GCC_PACKING
-CFLAGS	 = -m$(NUMBITS) $(DEBUG) $(COPT) $(INCL) -DMYIPADDR $(L330DEFS) $(OSDEFS) $(ENDIAN)
-CXXFLAGS = -m$(NUMBITS) $(DEBUG) $(COPT) $(INCL) -DMYIPADDR $(L330DEFS) $(OSDEFS) $(ENDIAN)
-LDFLAGS	=  -m$(NUMBITS) $(DEBUG)
-LDLIBS	= $(SSLIB) $(LIB330LIB) $(CSULIB) -lpthread
+CPPFLAGS = $(INCL) $(OSDEFS) $(ENDIAN) $(L330DEFS) -DMYIPADDR
+CFLAGS	 = -m$(NUMBITS) $(DEBUG) $(COPT)
+CXXFLAGS = -m$(NUMBITS) $(DEBUG) $(COPT)
+LDFLAGS	 = -m$(NUMBITS) $(DEBUG)
+LDLIBS	 = $(SSLIB) $(LIB330LIB) $(CSULIB) -lpthread
 
 ########################################################################
 
@@ -65,11 +66,11 @@ all:		$(ALL)
 $(program): 	$(objects) $(sourcefiles) $(SSLIB) $(LIB330LIB) $(CSULIB)
 		$(LD) $(LDFLAGS) -o $@ $(objects) $(LDLIBS)
 
-.C.o:
-		$(CXX) $(CXXFLAGS) -c $<
+%.o:		%.C
+		$(CXX) $(CXXFLAGS) $(CPPFLAGS) -c $<
 
-.c.o:
-		$(CC) $(CFLAGS) -c $<
+%.o:		$.c
+		$(CC) $(CFLAGS) $(CPPFLAGS) -c $<
 
 $(CSULIB):	FORCE
 		( cd $(CSUDIR); make -f $(MAKEFILE) )
