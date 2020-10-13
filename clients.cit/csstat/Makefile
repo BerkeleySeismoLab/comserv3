@@ -30,8 +30,9 @@ SSLIB	= $(SSDIR)/libcomserv.a
 #
 LD	 = $(CXX)
 INCL	 = -I$(CSINCL) -I$(SSDIR) -I$(QLIB2_INCL)
-CXXFLAGS = -m$(NUMBITS) $(DEBUG) $(COPT) $(INCL) $(OSDEFS) $(ENDIAN)
-CFLAGS	 = -m$(NUMBITS) $(DEBUG) $(COPT) $(INCL) $(OSDEFS) $(ENDIAN)
+CPPFLAGS = $(INCL) $(OSDEFS) $(ENDIAN)
+CXXFLAGS = -m$(NUMBITS) $(DEBUG) $(COPT)
+LDFLAGS	 = -m$(NUMBITS) $(DEBUG)
 LDLIBS	 = $(CSULIB) $(SSLIB) $(QLIB2_LIB) -lm
 
 ########################################################################
@@ -50,12 +51,12 @@ ALL	= $(program)
 all: 		$(ALL)
 
 $(program):	$(objects) $(files) $(CSULIB) $(SSLIB)
-		$(LD) $(CXXFLAGS) $(objects) -o $@ $(LDLIBS)
+		$(LD) $(LDFLAGS) $(objects) -o $@ $(LDLIBS)
 
 #implicit rules for converting C and c files to object files
 #
-.C.o:
-		$(CXX) $(CXXFLAGS) -c $<
+%.o:		%.C
+		$(CXX) $(CXXFLAGS) $(CPPFLAGS) -c $<
 
 $(CSULIB):	FORCE
 		( cd $(CSUDIR); make -f $(MAKEFILE) )

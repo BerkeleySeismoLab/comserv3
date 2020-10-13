@@ -32,13 +32,14 @@ LIBMSMCASTLIB = $(LIBMSMCASTDIR)/libmsmcast.a
 
 ########################################################################
 # Linux definitions  IGD
-LD	= $(CXX)
-INCL	= -I$(LIBMSMCASTDIR) -I$(SSDIR) -I$(CSINCL) 
-LMSMCASTDEFS = 
-CFLAGS	 = -m$(NUMBITS) $(DEBUG) $(COPT) $(INCL) -DMYIPADDR $(LMSMCASTDEFS) $(OSDEFS) $(ENDIAN) -DUSE_GCC_PACKING
-CXXFLAGS = -m$(NUMBITS) $(DEBUG) $(COPT) $(INCL) -DMYIPADDR $(LMSMCASTDEFS) $(OSDEFS) $(ENDIAN) -DUSE_GCC_PACKING
-LDFLAGS	 = -m$(NUMBITS) $(DEBUG) 
-LDLIBS	= $(SSLIB) $(LIBMSMCASTLIB) $(CSULIB) -lpthread
+LD	 = $(CXX)
+INCL	 = -I$(LIBMSMCASTDIR) -I$(SSDIR) -I$(CSINCL) 
+LIBMSMCASTDEFS = -DUSE_GSS_PACKING
+CPPFLAGS = $(INCL) $(OSDEFS) $(ENDIAN) $(LIBMSMCASTDEFS) -DMYIPADDR
+CFLAGS	 = -m$(NUMBITS) $(DEBUG) $(COPT)
+CXXFLAGS = -m$(NUMBITS) $(DEBUG) $(COPT)
+LDFLAGS	 = -m$(NUMBITS) $(DEBUG)
+LDLIBS	 = $(SSLIB) $(LIBMSMCASTLIB) $(CSULIB) -lpthread
 
 ########################################################################
 
@@ -63,10 +64,11 @@ all:		$(program)
 $(program):	$(objects) $(SSLIB) $(CSULIB) $(LIB660LIB)
 		$(LD) $(LDFLAGS) -o $@ $(objects) $(LDLIBS) 
 
-.C.o:
-		$(CXX) $(CXXFLAGS) -c $<
-.c.o:
-		$(CC) $(CFLAGS) -c $<
+%.o:		%.C
+		$(CXX) $(CXXFLAGS) $(CPPFLAGS) -c $<
+
+%.o:		$.c
+		$(CC) $(CFLAGS) $(CPPFLAGS) -c $<
 
 $(CSULIB):	FORCE
 		( cd $(CSUDIR); make -f $(MAKEFILE) )

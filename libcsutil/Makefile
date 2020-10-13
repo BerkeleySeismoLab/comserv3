@@ -23,9 +23,11 @@ CSINCL	= $(CSDIR)/include
 
 ########################################################################
 # Linux definitions
-INCL	= -I$(CSINCL)
-CFLAGS	= -m$(NUMBITS) $(DEBUG) $(COPT) $(INCL) $(OSDEFS) $(ENDIAN)
-RANLIB	= ranlib 
+INCL	 = -I$(CSINCL)
+CPPFLAGS = $(INCL) $(OSDEFS) $(ENDIAN)
+CFLAGS	 = -m$(NUMBITS) $(DEBUG) $(COPT)
+LDFLAGS	 = -m$(NUMBITS) $(DEBUG)
+RANLIB	 = ranlib 
 
 ########################################################################
 
@@ -42,27 +44,27 @@ $(LIB):		$(LIB)($(OBJECTS))
 
 timeutil.o:	$(CSINCL)/dpstruc.h $(CSINCL)/quanstrc.h $(CSINCL)/service.h \
 		$(CSINCL)/stuff.h timeutil.c
-		$(CC) -c $(CFLAGS) timeutil.c
+		$(CC) $(CFLAGS) $(CPPFLAGS) -c timeutil.c
 
 seedutil.o:	$(CSINCL)/dpstruc.h $(CSINCL)/quanstrc.h $(CSINCL)/service.h \
 		$(CSINCL)/seedstrc.h $(CSINCL)/stuff.h seedutil.c
-		$(CC) -c $(CFLAGS) seedutil.c
+		$(CC) $(CFLAGS) $(CPPFLAGS) -c seedutil.c
 
 service.o:	$(CSINCL)/dpstruc.h $(CSINCL)/service.h $(CSINCL)/stuff.h \
 		service.c
-		$(CC) -c $(CFLAGS) service.c
+		$(CC) $(CFLAGS) $(CPPFLAGS) -c service.c
 
 cfgutil.o:	$(CSINCL)/dpstruc.h cfgutil.c $(CSINCL)/stuff.h
-		$(CC) -c $(CFLAGS) cfgutil.c
+		$(CC) $(CFLAGS) $(CPPFLAGS) -c cfgutil.c
 
 stuff.o:	$(CSINCL)/dpstruc.h stuff.c
-		$(CC) -c $(CFLAGS) stuff.c
+		$(CC) $(CFLAGS) $(CPPFLAGS) -c stuff.c
 
 logging.o:	$(CSINCL)/logging.h logging.c
-		$(CC) -c $(CFLAGS) logging.c
+		$(CC) $(CFLAGS) $(CPPFLAGS) -c logging.c
 
 portingtools.o:	portingtools.c
-		$(CC) -c $(CFLAGS) portingtools.c
+		$(CC) $(CFLAGS) $(CPPFLAGS) -c portingtools.c
 
 clean:
 		-rm -f *.o *~ core core.* $(ALL)

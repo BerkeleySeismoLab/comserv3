@@ -33,13 +33,14 @@ LIB660LIB = $(LIB660DIR)/lib660.a
 
 ########################################################################
 # Linux definitions  IGD
-LD	= $(CXX)
-INCL	= -I$(LIB660DIR) -I$(Q660UTILDIR) -I$(SSDIR) -I$(CSINCL) 
+LD	 = $(CXX)
+INCL	 = -I$(LIB660DIR) -I$(Q660UTILDIR) -I$(SSDIR) -I$(CSINCL) 
 L660DEFS = -DUSE_GCC_PACKING -DBSL
-CFLAGS	 = -m$(NUMBITS) $(DEBUG) $(COPT) $(INCL) -DMYIPADDR $(L660DEFS) $(OSDEFS) $(ENDIAN)
-CXXFLAGS = -m$(NUMBITS) $(DEBUG) $(COPT) $(INCL) -DMYIPADDR $(L660DEFS) $(OSDEFS) $(ENDIAN)
+CPPFLAGS = $(INCL) $(OSDEFS) $(ENDIAN) $(L660DEFS) -DMYIPADDR
+CFLAGS	 = -m$(NUMBITS) $(DEBUG) $(COPT)
+CXXFLAGS = -m$(NUMBITS) $(DEBUG) $(COPT)
 LDFLAGS	 = -m$(NUMBITS) $(DEBUG) 
-LDLIBS	= $(SSLIB) $(LIB660LIB) $(CSULIB) -lpthread
+LDLIBS	 = $(SSLIB) $(LIB660LIB) $(CSULIB) -lpthread
 # NOTE: Do not need to build or load libq660util.a since the required
 #	file from q660util are included in lib660.a by lib660's Makefile.
 
@@ -47,11 +48,11 @@ LDLIBS	= $(SSLIB) $(LIB660LIB) $(CSULIB) -lpthread
 
 program	=  q8serv
 
-CXXfiles = q8serv.C ConfigVO.C Verbose.C ReadConfig.C lib660Interface.C # PacketQueue.C
+CXXfiles = q8serv.C ConfigVO.C Verbose.C ReadConfig.C lib660Interface.C
 Cfiles	=  q8servcfg.c
 
 headers = q8serv.h ConfigVO.h Verbose.h ReadConfig.h global.h \
-          lib330Interface.h file_callback.h q8servcfg.h # PacketQueue.h
+          lib330Interface.h file_callback.h q8servcfg.h
 
 sources = $(headers) $(files)
 CXXobjects = $(CXXfiles:.C=.o)
@@ -66,10 +67,11 @@ all:		$(program)
 $(program):	$(objects) $(SSLIB) $(CSULIB) $(LIB660LIB)
 		$(LD) $(LDFLAGS) -o $@ $(objects) $(LDLIBS) 
 
-.C.o:
-		$(CXX) $(CXXFLAGS) -c $<
-.c.o:
-		$(CC) $(CFLAGS) -c $<
+%.o:		%.C
+		$(CXX) $(CXXFLAGS) $(CPPFLAGS) -c $<
+
+%.o:		%.c
+		$(CC) $(CFLAGS) $(CPPFLAGS) -c $<
 
 $(CSULIB):	FORCE
 		( cd $(CSUDIR); make -f $(MAKEFILE) )
