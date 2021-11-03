@@ -83,6 +83,7 @@ int verify_server_name (char *server_name)
 {
     config_struc cfg ;
     int rc;
+    memset (&cfg, 0, sizeof(cfg));
     rc = open_cfg(&cfg, STATIONS_INI, server_name);
     close_cfg(&cfg);
     return rc;
@@ -103,6 +104,7 @@ int getLogParamsFromNetwork(csconfig *cs_cfg)
     char str1[SECWIDTH], str2[SECWIDTH];
 
     /* Scan network initialization file.                                */
+    memset (&network_cfg, 0, sizeof(network_cfg));
     if (open_cfg(&network_cfg,NETWORK_INI,GLOBAL_DEFAULTS))
     {
         fprintf (stderr, "Warning: Could not find [%s] section in network file %s\n", 
@@ -150,6 +152,7 @@ int getCSServerInfo(csconfig *cs_cfg, char *server_name)
     char str1[SECWIDTH], str2[SECWIDTH];
 
     /* Get selected station info from stations file. */
+    memset (&stations_cfg, 0, sizeof(stations_cfg));
     if (open_cfg(&stations_cfg,STATIONS_INI,server_name))
     {
         fprintf (stderr, "Could not find [%s] section in file %s\n", 
@@ -211,6 +214,7 @@ int getCSServerParams (csconfig *cs_cfg, char *server_dir, char *section)
 
     sprintf (filename, "%s/%s", server_dir, STATION_INI);
     /* Get selected station info from station file. */
+    memset (&station_cfg, 0, sizeof(station_cfg));
     if (open_cfg(&station_cfg,filename,section))
     {
         fprintf (stderr, "Could not find [%s] section in file %s\n", 

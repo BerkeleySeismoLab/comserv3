@@ -47,12 +47,13 @@ Date     who	Version	Modifications.
 			Modified for 15 character station and client names.
 			Command line argument for Station list consists of 
 			wildcarded station or station.net entries.
+2021.117   DSN  1.6.1   Initialize config_struc structure before open_cfg call.
  ************************************************************************/
 
 #include <stdio.h>
 #include <stdlib.h>
 
-#define	VERSION	"1.6.0 (2020.273)"
+#define	VERSION	"1.6.1 (2021.117)"
 
 #ifdef COMSERV2
 #define	DEFAULT_CLIENT	"DSOC"
@@ -70,7 +71,7 @@ char *syntax[] = {
 "			on unit 0 (from inetd).",
 "	-p passwd	Password required from remote connection.",
 "	-P passwdfile	File containing password required from remote system.",
-"	-c client_name	Comserv client name.  Default is '" DEFAULT_CLIENT "'.",
+"	-c client_name	Comserv client name.  Default name is " DEFAULT_CLIENT ".",
 "	-v n		Set verbosity level to n.",
 "	-h		Help - prints syntax message.",
 "	-i		Interactive - get station and channel list from port.",

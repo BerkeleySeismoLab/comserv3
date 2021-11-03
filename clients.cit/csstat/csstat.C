@@ -21,11 +21,12 @@ Modification History:
     0.0.3 2004-11-09 	added in statistics output to a separate file if specified
     1.1.0 2020-09-29 DSN Updated for comserv3.
 			Modified for 15 character station and client names.
+    1.1.1 2021-04-27 DSN Initialize config_struc structures before use.
 
 Usage Notes:
 
 **********************************************************/
-#define VERSION	"1.1.0 (2020.273)"
+#define VERSION	"1.1.1 (2021.117)"
 
 #ifdef COMSERV2
 #define CLIENT_NAME	"CSST"
@@ -78,15 +79,19 @@ const int MAX_CHARS_IN_SELECTOR_LIST = 300;
 typedef std::map<const char *, ChanLocStat *, LessStr, std::allocator<std::pair<const char *, ChanLocStat *> > > ChanLocMap;
 
 const char *syntax[] = {
-"    [-?] [-h] [-v n] [-f statfile]  [-t n] -T d,e -C Channel1,ChannelN  STA",
+"    [-?] [-h] [-v n] [-f statfile]  [-t n] -T d,e -C Channel1,ChannelN server_name",
 "    where:",
-"	-?		       Help - prints syntax message.",
-"	-h		       Help - prints syntax message.",
-"	-v n		   Set verbosity level to n.",
-"       -f statfile        Send all statistics output from HUP or -t to this file ",
-"	-t n		   Set the status report interval (seconds) Default is OFF",
-"       -T d,e,c,t,m,b or *    Sets the type of data to be monitored",
-"       -C ?H?  or BHZ,BHN,BHE or *    Sets the channels to be monitored",
+"	-?			Help - prints syntax message.",
+"	-h			Help - prints syntax message.",
+"	-v n			Set verbosity level to n.",
+"	-f statfile		Send all statistics output from HUP or -t to this file.",
+"	-t n			Set the status report interval (seconds). Default is OFF.",
+"	-T d,e,c,t,m,b or *	Sets the type of data to be monitored.",
+"	-C channel_list		Sets the channels to be monitored.",
+"				Examples are: ?H? or BHZ,BHN,BHE or *",
+"				Wildcard characters must be quoted.",
+"	server_name		Comserv server_name.",
+"    Client name is " CLIENT_NAME ".",
 NULL };
 
 const int TIMESTRLEN  = 40;
@@ -103,7 +108,7 @@ FILE *info = stdout;		/* Default FILE for messages.		*/
 char	*cmdname;		/* Program name.			*/
 short data_mask = 0;		/* data mask for cs_setup.		*/
 static tclientname name = CLIENT_NAME ;	/* Default client name		*/
-tservername sname = "*" ;		/* Default station list.		*/
+tservername sname = "*" ;		/* Default station list.	*/
 tstations_struc stations ;
 typedef char char23[24] ;
 typedef char char5[6] ;
@@ -124,7 +129,7 @@ void terminate_program (int error);
 static int terminate_proc;
 static int flush_statistics;
 int verbosity;
-int debug = 1;
+int debug = 0;
 static pclient_struc me = NULL;
 
 extern int save_selectors(int , char *);
@@ -152,7 +157,8 @@ static SEL sel[NUMQ];
 void print_syntax(char* cmd)
 {
     int i;
-    std::cout << cmd << "Version v"<< VERSION << std::endl;
+    std::cout << cmd << " Version "<< VERSION << std::endl;
+    std::cout << cmd;
     for (i=0; syntax[i] != NULL; i++) 
     {
 	std::cout << syntax[i] << std::endl;
@@ -272,7 +278,7 @@ int main (int argc, char *argv[])
     else
     {
 	fprintf (stderr, "csstat: Version %s\n", VERSION);
-	fprintf (stderr, "Missing station name\n");
+	fprintf (stderr, "Missing server name\n");
 	exit(1);
     }
     upshift(sname) ;
@@ -290,9 +296,11 @@ int main (int argc, char *argv[])
 
 /* open the stations list and look for that station */
     strcpy (filename, "/etc/stations.ini") ;
+    memset (&cfg, 0, sizeof(cfg));
     if (open_cfg(&cfg, filename, sname))
     {
-	fprintf (stderr,"Could not find station %s in /etc/stations.ini file\n", sname) ;
+	fprintf (stderr,"%s Could not find server %s in file '%s'\n",
+		 localtime_string(dtime()), sname, filename);
 	exit(1);
     }
 /* Try to find the station directory, source, and description */
@@ -326,16 +334,17 @@ int main (int argc, char *argv[])
     close_cfg(&cfg) ;
 
     if (station_dir[0] == '\0') {
-        fprintf (info, "%s Could not find station %s in stations.ini file\n",
-                 sname, localtime_string(dtime()));
+        fprintf (info, "%s Could not find DIR entry for server %s in file '%s'\n",
+		 localtime_string(dtime()), sname, filename);
         exit(1);
     }
 
 /* read the station.ini and get the lockfile and pidfile */
     /* Open and read station config file.                               */
     strcat(station_dir, "/station.ini");
+    memset (&cfg, 0, sizeof(cfg));
     if (open_cfg(&cfg, station_dir, name)) {
-        fprintf (info, "%s Could not find program %s in file named '%s'\n",
+        fprintf (info, "%s Could not find [%s] section in file '%s'\n",
                  localtime_string(dtime()), name, station_dir);
 	fprintf (info, "No Lockfile or PIDfile will be created\n");
     } 

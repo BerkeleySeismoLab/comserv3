@@ -18,13 +18,17 @@ Edit History:
     6 16 Jul 96 WHO Put back in the initialization of "tries" in skipto,
                     it disapeared somehow.
     7  3 Nov 97 WHO Larger configuration sizes. Add VER_CFGUTIL.
-    8  9 Nov 99 IGD Porting to SuSE 6.1 LINUX begins
-                        IGD  In version 7 which I have read_cfg () expression "if     (feof(cs->cfgfile))"
-                                 was "if feof(cs->cfgfile)" causing a compiler parsing error. Fixed.
+    8  9 Nov 99 IGD Porting to SuSE 6.1 LINUX begins.
+                    Changed "if feof(cs->cfgfile)" to "if (feof(cs->cfgfile))"
+		    to avoid compiler parsing error.
     9  4 Jan 2011 Paulf  - added @include directive handling
    10 17 Feb 2012 DSN Fixed read_cfg() to not close top level cfg file on EOF.
    11 29 Sep 2020 DSN Updated for comserv3.
-   12 29 Sep 2020 DSN Updated for comserv3.
+   12 30 Apr 2021 DSN Check for max depth of include files.
+		      Add cstypes.h and cfgutil.h include files.
+		      Remove duplicate definition of config_struc.
+		      Fixed include file handling to allow include file at
+		      any place in the configuration files.
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -34,6 +38,8 @@ Edit History:
 #include <fcntl.h>
 #include <sys/types.h>
 #include <ctype.h>
+#include "cstypes.h"
+#include "cfgutil.h"
 #include "stuff.h"
 
 /* type definitions needed to use this module */
@@ -42,31 +48,47 @@ Edit History:
 
 #define COMSERV_PARAMS_ENV "COMSERV_PARAMS"	/* the params dir where @ included file will be found */
 
-short VER_CFGUTIL = 10 ;
+short VER_CFGUTIL = 12 ;
 
+#define SUCCESS 0
+#define FAILURE 1
 
-#define MAX_INDIRECTION 10
-typedef struct
+/* Open the specified configuration file.  
+   The file may be either a primary or include configuration file.
+   Return SUCCESS on success, FAILURE otherwise. */
+static short _open_cfg (config_struc *cs, pchar fname)
 {
-    char lastread[CFGWIDTH];
-    FILE *cfgfile[MAX_INDIRECTION];
-    int current_file;
-    char *current_section;
-} config_struc;
+    if (cs->cfg_init == 0)
+    {
+ 	/* We have uninitialized cfg struct and this is first open call. */
+        cs->cfg_init = 1;
+        cs->current_file = -1;
+    } 
+    cs->current_file++; /* new file */
 
-int cfg_init = 0; /* used to detect new cfg struct, for initialization purposes */
-config_struc *cfg_init_ptr = NULL; /* the cfg structure that cfg_init refers to */
+    /* Ensure we do not exceed the maximum deptch of include files. */
+    if (cs->current_file >= MAX_INDIRECTION) {
+	fprintf (stderr, "util/open_cfg(): Fatal Warning: include file level exceeds %d, skipping %s\n",
+		 MAX_INDIRECTION, fname);
+	cs->current_file--;
+	return FAILURE;
+    }
 
-/* declarations for funcs in this file used in by other funcs */
-short open_cfg (config_struc *cs, pchar fname, pchar section); 
-void close_cfg (config_struc *cs);
+    cs->cfgfile[cs->current_file] = fopen(fname, "r") ;
+    if (cs->cfgfile[cs->current_file] == NULL)
+    {
+	fprintf(stderr, "util/open_cfg(): Fatal Warning: file at path %s could not be opened, skipping\n", fname);
+	cs->current_file--; /* did not open file successfully! */
+	if (cs->current_file < 0) cs->cfg_init = 0;
+	return FAILURE ;
+    }
+    cs->lastread[0] = '\0' ; /* there is no next section */
+    return SUCCESS;
+}
 
-/* handles the @include file opening
-   returns TRUE if there is a problem with include file
-
-   input: in_section if NULL indicates we are in a section already skip'ed to
-*/
-int _include_cfg(config_struc *cs, char *in_section)
+/* Open an include configuration file.
+   Return SUCCESS if successful, FAILURE otherwise. */
+static int _open_include_cfg(config_struc *cs)
 {                
     pchar path;
     pchar file;
@@ -90,31 +112,50 @@ int _include_cfg(config_struc *cs, char *in_section)
 	/* also just use the filename as is verbatim */
 	strcat(filename, file);
     }
-    return (open_cfg(cs, filename, in_section));
+    return (_open_cfg(cs, filename));
 }
    
-/* skip to the specified section 
- *   returns FALSE if section found!
- *   returns TRUE if section not found or problem with file */
+/* Close an include configuration file. */
+static void _close_include_cfg (config_struc *cs)
+{
+    if (cs->cfg_init == 0 || cs->current_file == -1 || cs->cfgfile[cs->current_file] == NULL) 
+    { 
+	cs->cfg_init = 0;
+	return;
+    }
+    /* Close the current include files. */
+    if (cs->current_file > 0) {
+	fclose(cs->cfgfile[cs->current_file]) ;
+	cs->cfgfile[cs->current_file] = NULL;
+	cs->current_file--;
+    }
+}
+
+/* Skip to the specified section.
+ * Do NOT close the main config file if section is not found.
+ * Return SUCCESS if desired section is found.
+ * Return FAILURE if section not found or problem with file. */
 short skipto (config_struc *cs, pchar section)
 {
     char s[SECWIDTH] ;
     short tries ;
     pchar tmp ;
 
+    /* Check for initial error conditions. */
     if (section == NULL) 
     {
-	/* this is an @include file inside a section already, return all is OK....FALSE */
-	return FALSE;
+	/* No section is specified. */
+	return FAILURE;
     } 
     if (cs->current_file == -1) 
     {
-	/* we closed this file out on a previous read of the config file */
-	return TRUE;
+	/* No configuration file open. */
+	return FAILURE;
     }
    
-    /* repeat up to twice if looking for a specific section, or once
-       if looking for any section "*" */
+
+    /* Process the main configuration file up to twice if looking for a */
+    /* specific section, or until EOF if looking for a "*" (any) section. */
     tries = 0 ;
     do
     {
@@ -122,91 +163,81 @@ short skipto (config_struc *cs, pchar section)
 	strcpy(s, "[") ;
 	strcat(s, section) ;
 	strcat(s, "]") ;
+
 	/* If the last line read is the section desired or if the section
-	   is "*" and the line is any section start then return with FALSE
-	   status */
+	   is "*" and the line is any section start, then return SUCCESS. */
 	if ((strcasecmp((pchar)&cs->lastread, (pchar)&s) == 0) ||
 	    ((strcmp(section, "*") == 0) && (cs->lastread[0] == '[')))
-	    return FALSE ;
-	/* read lines (removing trailing spaces) until either the desired
+	    return SUCCESS ;
+
+	/* Read lines (removing trailing spaces) until either the desired
 	   section is found, or if the section is "*" and the new line is
-	   any section start. If found, return FALSE */
+	   any section start. If found, return SUCCESS.
+	   Process any include_file lines encountered. */
 	do
 	{
+	    /* Read the next line in the current config file. */
 	    tmp = fgets(cs->lastread, CFGWIDTH-1, cs->cfgfile[cs->current_file]);
 	    untrail (cs->lastread);
-	    if (cs->lastread[0] == '@') 
+	    if (tmp == NULL && cs->current_file > 0)
 	    {
-		if (_include_cfg(cs, section) == TRUE) 
+		/* Close include file and continue reading open config file. */
+		_close_include_cfg (cs);
+		/* Force the loop to continue with the open config file. */
+		tmp = strcpy(cs->lastread,"");
+		continue;
+	    }
+	    if (tmp != NULL && cs->lastread[0] == '@') 
+	    {
+		/* Open include file, and continue reading include file. */
+		if (_open_include_cfg(cs) == SUCCESS) 
 		{
-		    continue; /* go back and read next line from this file, 
-				 included one did not have desired section,  
-				 or had fatal error opening */
+		    continue;	/* Continue reading from include file. */
 		}
 		else
 		{
-		    return FALSE; /* we found it in the included file */
+		    return FAILURE ; /* Error opening the include file. */
 		}
 	    }
 	}
 	while ((tmp != NULL) && (strcasecmp((pchar)&cs->lastread, (pchar)&s) != 0) &&
 	       ((strcmp(section, "*") != 0) || (cs->lastread[0] != '['))) ;
             
-	/* if eof(cfgfile) */
-	if (tmp == NULL)
-	{
-	    tries++ ;
-	    rewind(cs->cfgfile[cs->current_file]) ;
-	    cs->lastread[0] = '\0' ;
+	/* If we found the specified section, return SUCCESS. */
+	if (tmp != NULL) {
+	    return SUCCESS;
 	}
-	else
-	    return FALSE ;
+
+	/* We are at EOF on the top level config file. */
+	/* Rewind the file and increment the number of tries through */
+	/* at least a portion of the file looking for the specified section. */
+	rewind(cs->cfgfile[cs->current_file]) ;
+	cs->lastread[0] = '\0' ;
+	tries++ ;
     }
     while ((tries <= 1) && (strcmp(section, "*") != 0)) ;
-    /* if tmp == NULL then we went through the whole file, we should close it  */
-    if (tmp == NULL) 
-    {
-	close_cfg(cs);
-    }
-    return TRUE ; /* no good */    
+    return FAILURE ; /* Failure to find specified section. */    
 }
 
-/* open the configuration file, return TRUE if the file cannot be opened
-   or the section is not found */
+/* Open the configuration file and search for the specified section.
+   Return SUCCESS if the file is opened AND the specified section if found.
+   Return FAILURE otherwise. */
 short open_cfg (config_struc *cs, pchar fname, pchar section)
 {
-    if (cfg_init == 0 && cs != cfg_init_ptr) 
-    {
- 	/* we have uninitialized cfg struct and this is first open call */
-        cfg_init = 1;
-        cfg_init_ptr = cs;
-        cs->current_file = -1;
-    } 
-    else if (cfg_init == 1 && cs != cfg_init_ptr) 
-    {
-        /* we have a second config opened before a prior one closed...could be problematic! degenerate case: init anyway */
-        cfg_init_ptr = cs;
-        cs->current_file = -1;
+    if (_open_cfg (cs, fname) != SUCCESS) {
+	return FAILURE; /* Error opening config file. */
     }
-
-    cs->current_file++; /* new file */
-
-    cs->cfgfile[cs->current_file] = fopen(fname, "r") ;
-    if (cs->cfgfile[cs->current_file] == NULL)
-    {
-	fprintf(stderr, "util/open_cfg(): Fatal Warning: file at path %s could not be opened, skipping\n", fname);
-	cs->current_file--; /* did not open file successfully! */
-	return TRUE ;
+    else {
+	cs->lastread[0] = '\0' ; /* there is no next section */
+	cs->current_section = section;
+	return skipto(cs, section) ; /* Skip to specified section. */
     }
-    cs->lastread[0] = '\0' ; /* there is no next section */
-    cs->current_section = section;
-    return skipto(cs, section) ; /* skip to section */
 }
 
-
-/* Returns the part to the left of the "=" in s1, upshifted. Returns the
-   part to the right of the "=" in s2, not upshifted. Returns with s1
-   a null string if no more strings in the section */
+/* Read and parse the next configuration directive.
+   Returns the part to the left of the "=" in s1, upshifted. 
+   Returns the part to the right of the "=" in s2, not upshifted. 
+   Returns s1=NULL if no more directives in the section. */
 void read_cfg (config_struc *cs, pchar s1, pchar s2)
 {
     pchar tmp;
@@ -216,40 +247,53 @@ void read_cfg (config_struc *cs, pchar s1, pchar s2)
     *s2 = '\0' ;
     do
     {
+	/* Ensure we have an open configuration file. */
 	if (cs->current_file == -1) 
 	{
-	    return; /* something closed the file */
+	    return; /* No configuration file is open */
 	}
+
+	/* Handle EOF on both include and main configuration files. */
 	if  (feof(cs->cfgfile[cs->current_file]))
 	{
-	    if (cs->current_file > 0)	/* only close include files on EOF */
-	    {
-		close_cfg(cs);	/* close the include file */
+	    if (cs->current_file > 0)	    {
+		/* Close this include file and continue with outer file. */
+		_close_include_cfg(cs);
 		continue;
 	    }
-	    return; /* we have reached the last file in the stack */
+	    else {
+		/* We are at EOF of the main configuration file. */
+		return; 
+	    }
 	}
-/* read a line and remove trailing spaces */
+
+	/* Read the next line and remove trailing spaces */
 	tmp = fgets(cs->lastread, CFGWIDTH-1, cs->cfgfile[cs->current_file]) ;
 	untrail (cs->lastread) ;
+
+	/* If we read a non-empty line, examine the line. */
 	if ((tmp != NULL) && (cs->lastread[0] != '\0'))
 	{
-/* if starts with a '@', it is file to include and start reading instead */
+	    /* If line starts with a '@', it specified an include file. */
 	    if (cs->lastread[0] == '@')
 	    {
-		if (_include_cfg(cs, NULL) == TRUE) {
-		    continue; /* section was not found in included file */
+		if (_open_include_cfg(cs) == SUCCESS ) {
+		    continue; /* Continue reading in the include file. */
 		}
 	    }
-/* if starts with a '[', it is start of new section, return */
+	    /* If line starts with a '[', it is start of new section, */
+	    /* which means the no more directives in the current section. */
 	    if (cs->lastread[0] == '[')
 		return ;
-/* if first character in a line is A-Z or 0-9, then process line */
+	    /* If first character in the line is A-Z or 0-9, then process the line */
 	    if (isalnum(cs->lastread[0]))
 		break ;
 	}
     }
     while (1) ;
+
+    /* We have a presumed configuration directive line. */
+    /* Parse the line into keyword (s1) and value (s2) fields. */
     strcpy(s1, cs->lastread) ;
     tmp = strchr(s1, '=') ;
     if (tmp)
@@ -260,14 +304,25 @@ void read_cfg (config_struc *cs, pchar s1, pchar s2)
     upshift(s1) ;
 }
 
+/* Close all files (including any included files) opend with this config_struct. */
 void close_cfg (config_struc *cs)
 {
-    if (cs->current_file == -1 || cs->cfgfile[cs->current_file] == NULL) 
+    if (cs->cfg_init == 0 || cs->current_file == -1 || cs->cfgfile[cs->current_file] == NULL) 
     { 
+	cs->cfg_init = 0;
 	return;
     }
-    fclose(cs->cfgfile[cs->current_file]) ;
-    cs->current_file--;
+    /* Close all include files. */
+    while (cs->current_file > 0) {
+	_close_include_cfg(cs);
+    }
+    /* Close initial config file. */
+    if (cs -> current_file == 0) {
+	fclose(cs->cfgfile[cs->current_file]) ;
+	cs->cfgfile[cs->current_file] = NULL;
+	cs->current_file--;
+	cs->cfg_init = 0;
+    }
 }
 
 /* Find the separator character in the source string, the portion to the

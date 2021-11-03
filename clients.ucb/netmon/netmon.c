@@ -24,10 +24,12 @@
 
     2006.017 PAF 1.1.8  modified execve  to pass current environment
     2020-09-29 DSN Updated for comserv3.
-		ver 1.2.0 Modified for 15 character station and client names.
+    2020.273 DSN ver 1.2.0	Modified for 15 character station and client names.
+    2021.117 DSN ver 1.2.1	Initialize config_struc structures before use.
+    2021.140 DSN ver 1.2.2	Unlink files opened with tmpfile_open.
 */
 
-#define	VERSION		"1.2.0 (2020.273)"
+#define	VERSION		"1.2.2 (2021.140)"
 
 #ifdef COMSERV2
 #define	CLIENT_NAME	"NETM"
@@ -116,6 +118,7 @@ char *syntax[] = {
 " Notes",
 " 1.  The CS_CHECK_INTERVAL is " STRING(CS_CHECK_INTERVAL) " seconds.",
 "     ALL comserv clients and servers must be compiled with the same value.",
+" 2.  Client name is " CLIENT_NAME ".",
 NULL };
 
 #define	NETWORK_FILE	"/etc/network.ini"
@@ -749,6 +752,7 @@ STATION_INFO *collect_station_info (char *station_name)
     }
 
     /* Scan station list.						*/
+    memset (&master_cfg, 0, sizeof(master_cfg));
     if (open_cfg(&master_cfg,STATIONS_FILE,station_name)) {
 	fprintf (info, "Could not find station %s\n", station_name);
 	exit(1);
@@ -806,6 +810,7 @@ STATION_INFO *collect_station_info (char *station_name)
 
 	/* Open the station config file, and look for source section.	*/
 	sprintf (station_cfg_file, "%s/%s", s->dir, STATION_INI_FILE);
+	memset (&station_cfg, 0, sizeof(station_cfg));
 	if (open_cfg(&station_cfg,station_cfg_file,s->source)) {
 	    fprintf (info, "Unable to find section %s in station file %s\n",
 		     s->source, s->dir);
@@ -2013,6 +2018,7 @@ int timeout_notify(char *station, char *notify_prog, double timeout_started,
 	sprintf (cmd, "%s < %s", notify_prog, namebuf);
 	status = system (cmd);
     }
+    unlink (namebuf);
     return (status);
 }
 
@@ -2054,6 +2060,7 @@ int resume_notify(char *station, char *notify_prog, double timeout_started,
 	    sprintf (cmd, "%s < %s", notify_prog, namebuf);
 	    status = system (cmd);
     }
+    unlink (namebuf);
     return (status);
 }
 
@@ -2191,6 +2198,7 @@ void read_network_cfg (char *config_file, char *section)
     int fatal = 0;
 
     /* Scan network initialization file.				*/
+    memset (&network_cfg, 0, sizeof(network_cfg));
     if (open_cfg(&network_cfg,config_file,section)) {
 	fprintf (info, "Could not find [%s] section in network file %s\n", section, config_file);
 	exit(1);
@@ -2321,6 +2329,7 @@ int collect_group_info (char *group)
     char *station_name = "*";
 
     /* Scan station list.						*/
+    memset (&master_cfg, 0, sizeof(master_cfg));
     if (open_cfg(&master_cfg,STATIONS_FILE,station_name)) {
 	fprintf (info, "Could not find station %s\n", station_name);
 	exit(1);
@@ -2355,5 +2364,6 @@ int collect_group_info (char *group)
 	    }
 	}
     }
+    close_cfg(&master_cfg);
     return (groupsize);
 }

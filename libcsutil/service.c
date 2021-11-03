@@ -91,7 +91,7 @@ short cs_svc (pclient_struc client, short station_number)
     }
     if (srvr->init != 'I')
     {
-	sleep (srvr->client_wait) ;
+	usleep (srvr->client_wait) ;
 	if (srvr->init != 'I')
 	    return CSCR_INIT ;
     }
@@ -191,6 +191,7 @@ void cs_setup (pstations_struc stations, pchar name, pchar sname, boolean shared
 
 /* open the stations list and look for any station */
     strcpy (filename, "/etc/stations.ini") ;
+    memset(&cfg,0,sizeof(cfg));
     if (open_cfg(&cfg, filename, sname))
     {
 	close_cfg (&cfg) ; /* no stations */

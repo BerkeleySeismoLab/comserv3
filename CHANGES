@@ -2,15 +2,38 @@ COMSERV3 changes:
 
 =========================================================================================
 Doug Neuhauser, doug@seismo.berkeley.edu
+2021/04/29
+
+Release 1.0.0
+
+1. Updated multiple programs to ensure that any config_struc structures is initialized
+to all zeros before initial use.  Required due to comserv3 changes that allow
+calls to open_cfg() with different config_struc structures in order to allow multiple
+config files to be open concurrently (eg stations.ini, network.ini, station.ini files).
+2. Added missing lockfile directive to [q8serv] section of station.ini.
+Server lockfile directives are now in the server-specific sections rather than
+the common [comserv] (aka [comlink] section.
+3. Changed PacketQueue.C to disable enable debugging output.
+4. Changed cs2mcast and csstat to disable command line debugging output.
+5. Updated help and debugging output from various programs.
+6. Update run_netmon script to rotate netmon logfile.
+7. Misc other changes, such as ensuring various clients now support both the
+pidfile and lockfile directives.
+
+=========================================================================================
+Doug Neuhauser, doug@seismo.berkeley.edu
 2020/10/01
 
-Initial release of the COMSERV3 system, an enhancement and ugprade
+Initial beta release of the COMSERV3 system, an enhancement and ugprade
 to the original Quanterra COMSERV system and user_contributed
 COMSERV2 updates.
 
 1.  Changed the original COMSERV client-server protocol from 4 char
 client_name and 4 char station_name fields to 32 char client and 32
 char server_named strings (31 char plus null-termination). 
+NOTE:  THIS MEANS THAT YOU SHOULD NOT MIX COMSERV3 AND COMSERV2
+PROGRAMS ON THE SAME SYSTEM, SINCE THE MEMORY STRUCTURES FOR CLIENT-SERVER
+COMMUNICATION HAVE CHANGED.
 
 The COMSERV3 server_name used for each instance of a server program is now
 completely decoupled from the SEED station name of the data from the
@@ -35,11 +58,12 @@ of the server programs.
 name, the following directives MUST be provided in each server_name section
 in the STATIONS_INI file
 	NET=seed_network_code
+or	NETWORK=seed_network_code
 	SITE=seed_station_code
 or	STATION=seed_station_code 
 Examples are:
 	STATION=CMB
-	NET=BK
+	NETWORK=BK
 The full 5 character SEED station names is now supported.
 
 3.  Now that client names are no longer limited to 4 characters,
@@ -77,7 +101,7 @@ client/server subsystem.  The config sections are named the same as the programs
 	[q8serv]
 
 8.  Created the [global_defaults] section in NETWORK_INI file.
-All server program (or netmon client) now read at the [global_defaults] 
+All server programs (and netmon client) now read at the [global_defaults] 
 section for default parameter setting that may be overridden
 by settings in the server section of the station file (or the netmon,
 the [netmon] section in the NETWORK_INI file).
@@ -122,8 +146,8 @@ supported as a synonym for [COMSERV] section name.
 for program parameters that can be applied to any instance of the server program.
 These parameters can then be overridden by parameter settings in the
 program's section of the STATION_INI file for the specific server_name.
-Note that the order of precedence has changed from older COMSERV2 distribution,
-where the global info in the NETWORK_INI fie overrode configuration parameters
+Note that the order of precedence has changed from the COMSERV2 distribution,
+where the global info in the NETWORK_INI file overrode configuration parameters
 in the STATION_INI files.
 
 ================================================================================

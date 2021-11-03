@@ -11,8 +11,10 @@
  * The liss2ew sources were used as a template, thanks Pete Lombard.
  *
  * Modification History:
- *  2020-09-29 DSN Updated for comserv3.
+ *  2020-09-29 DSN ver 1.04 (2020.?) Updated for comserv3.
  *		Updated for comserv extended length server and client names.
+ *  2021-04-27 DSN ver 1.4.1 (2021.117)
+ *		Initialize config_struc structure before open_cfg call.
  ***************************************************************************/
 
 /* System includes */
@@ -42,7 +44,7 @@
 
 #include "retcodes.h"
 
-#define VERSION "1.04 (2020.273)"
+#define VERSION "1.4.1 (2021.117)"
 
 #ifdef COMSERV2
 #define	CLIENT_NAME	"SL2M"
@@ -284,6 +286,7 @@ int main (int argc, char **argv)
 	/* Look for info in the station.ini file.           */
 	/* open the stations list and look for that station */
 	strcpy (filename, "/etc/stations.ini") ;
+	memset (&cfg, 0, sizeof(cfg));
 	if (open_cfg(&cfg, filename, sname)) {
 	    fprintf (stderr,"Could not find station\n") ;
 	    exit(1);

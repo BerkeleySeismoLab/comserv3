@@ -3,11 +3,13 @@
  *
  * Modification History:
  *  2020-09-29 DSN Updated for comserv3.
+ *  2021-04-27 ver 1.2.1 (2021.117) DSN 
+ *	Initialize config_struc structure before open_cfg call.
  ************************************************************************/
 
 #include <stdio.h>
 
-#define VERSION	"1.02 (2020.273)"
+#define VERSION	"1.2.1 (2021.117)"
 
 #ifdef COMSERV2
 #define CLIENT_NAME	"2RNG"
@@ -17,7 +19,7 @@
 
 char *syntax[] = {
 "%s   version " VERSION,
-"%s - write MSEED data records from comserv server or datsock socket to ringserver.",
+"%s - write MSEED data records from comserv server or datasock socket to ringserver.",
 "Syntax:",
 "%s  [-H host] [-S service] [-p passwd] [-P passwdfile] [-R]",
 "    [-o station.net] [-n client_name] [-v n] [-h] station_list",

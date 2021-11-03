@@ -2,15 +2,37 @@
 # Start netmon as a background client and server management daemon.
 # Add the -b option to clear pid files as boot time.
 
-# Uncomment and set an appropriate path for BINDIR
-# export BINDIR=/home/doug/config/bin
+# Uncomment and set an appropriate path for BINDIR and LOGDIR.
+BINDIR=/home/u1/doug/config/bin
+LOGDIR=/home/u1/doug/config/logs
+
+# CLIENTNAME is the comserv client name defined for the netmon program.
+# Netmon creates a log file with this prefix.
+# For comserv3, this is NETMON.  For comserv2, it is NETM.
+CLIENTNAME=NETMON
 
 if [ -z "$BINDIR" ] ; then
     echo "Error in $0: BINDIR variable not set."
     exit 1
 fi
 
+# Rotate the netmon log file.
+LOGFILE=${LOGDIR}/${CLIENTNAME}.log
+if [ -f ${LOGFILE} ]; then
+    TODAY=$(date +%Y-%m-%d)
+    SAVEFILE=${LOGDIR}/${CLIENTNAME}.${TODAY}.log
+    if [ -f $SAVEFILE ]; then
+	cat ${LOGFILE} >> ${SAVEFILE}
+	/bin/rm ${LOGFILE}
+    else
+	mv ${LOGFILE} ${SAVEFILE}
+    fi
+fi
+
 ulimit -c unlimited
 cd $BINDIR
 export PATH=$BINDIR:$PATH
-netmon -D -B -l $argv 0</dev/null &
+
+# If you use systemd to run this script, do NOT run netmon in the background.
+# If you use init to run this script, run netmon in the background.
+netmon -D -B -l $* 0</dev/null &

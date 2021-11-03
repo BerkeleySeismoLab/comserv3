@@ -54,9 +54,9 @@ int init_multicast_socket(char    *mif,
   // Establish the socket as a Datagram socket
   //
 
-  minfo.soket = socket(AF_INET,SOCK_DGRAM,0);
+  minfo.socket_fd = socket(AF_INET,SOCK_DGRAM,0);
 
-  if(minfo.soket == -1)
+  if(minfo.socket_fd == -1)
   {
     perror("Error opening socket");
     return(TN_FAILURE);
@@ -67,14 +67,14 @@ int init_multicast_socket(char    *mif,
   // Now establish the multicast output interface
   //
 
-  if  (setsockopt(minfo.soket,
+  if  (setsockopt(minfo.socket_fd,
 		  IPPROTO_IP,
                   IP_MULTICAST_IF, 
                   (char *)&minfo.multicast_interface.s_addr,
                   sizeof(minfo.multicast_interface.s_addr) ) == -1)
   {
     perror("Set Socket Opt IP_MULTICAST_IF error");
-    close_multicast_socket(minfo.soket);
+    close_multicast_socket(minfo.socket_fd);
     return(TN_FAILURE);
   }
 
@@ -99,7 +99,7 @@ int multicast_packet(struct Multicast_Info& minfo,
   name.sin_port    = htons( (unsigned short) minfo.multicast_port);
   name.sin_addr.s_addr = minfo.multicast_address.s_addr;
 
-  lensent = sendto(minfo.soket,
+  lensent = sendto(minfo.socket_fd,
                    (char *) packet,
                    nbytes,
                    0,
@@ -118,8 +118,8 @@ int multicast_packet(struct Multicast_Info& minfo,
 }
 
 
-void close_multicast_socket(int soko)
+void close_multicast_socket(int socket_fd)
 {
-  close(soko);
+  close(socket_fd);
   return;
 }

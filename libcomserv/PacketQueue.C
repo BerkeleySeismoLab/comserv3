@@ -9,6 +9,8 @@
 #include "PacketQueue.h"
 #include "Logger.h"
 
+int DEBUG_PQ = 0;
+
 extern Logger g_log;
 
 QueuedPacket::QueuedPacket(char *packetData, int packetSize, short packetType) {
@@ -56,10 +58,23 @@ PacketQueue::~PacketQueue() {
 
 
 void PacketQueue::enqueuePacket(char *data, int dataSize, short packetType) {
+  // Ensure that we are enqueueing a proper packet with dataSize > 0.
+  if (dataSize <= 0) {
+      g_log << "XXX Error: Attempting to enqueue packet with datasize = " << dataSize << std::endl;
+    return;
+  }
   pthread_mutex_lock(&(this->queueLock));
+  // Determine whether we are lapping the queue (ie overwritting a QueuedPacket).
+  if(this->queue[this->queueTail].dataSize != 0) {
+    if (DEBUG_PQ) {
+      g_log << "XXX Packet queue lapped (oldest unread packet lost)" << std::endl;
+    }
+  }
   this->queue[this->queueTail].update(data, dataSize, packetType);
   this->advanceTail();
-  //g_log << "ENQUEUE: head:" << this->queueHead << " tail:" << this->queueTail << std::endl;
+  if (DEBUG_PQ) {
+    g_log << "ENQUEUE: head:" << this->queueHead << " tail:" << this->queueTail << std::endl;
+  }
   pthread_mutex_unlock(&(this->queueLock));
 }
 
@@ -69,12 +84,17 @@ QueuedPacket PacketQueue::dequeuePacket() {
   QueuedPacket ret = this->queue[this->queueHead];
   QueuedPacket *ptr = &this->queue[this->queueHead];
   ptr->clear();
+  // We ALWAYS return a packet to the caller.
+  // If the queue was empty, the returned packet's datasize is 0.
+  // Don't advance the head if the queue was empty, because we are
+  // not returning a real packet.
   if(ret.dataSize) {
-    // don't advance the head if this was empty to begin with
     this->advanceHead();
   }  
   pthread_mutex_unlock(&(this->queueLock));
-  //g_log << "DEQUEUE: head:" << this->queueHead << " tail:" << this->queueTail << std::endl;
+  if (DEBUG_PQ) {
+    g_log << "DEQUEUE: head:" << this->queueHead << " tail:" << this->queueTail << std::endl;
+  }
   return ret;
 }
 
@@ -104,10 +124,16 @@ void PacketQueue::advanceTail() {
     this->queueTail = 0;
   }
 
+  // Determine whether the queue is full.
+  // If so, ensure queuehead points to the new queuetail.
   if(this->queue[this->queueTail].dataSize != 0) {
-    g_log << "XXX Packet queue lapped" << std::endl;
-    // reset the head to where the tail is now, since this
-    // is the new head
+    // The queue is full.
+    // Reset qheadhead to the new value of queuetail.
+    // The queueHead will be the index of the oldest packet in the queue.
+    //
+    if (DEBUG_PQ) {
+      g_log << "XXX Packet queue full" << std::endl;
+    }
     this->queueHead = this->queueTail;
     this->nqueued = PACKETQUEUE_QUEUE_SIZE;
   }
@@ -121,7 +147,7 @@ void PacketQueue::advanceHead() {
   if(this->queueHead == PACKETQUEUE_QUEUE_SIZE) {
     this->queueHead = 0;
   }
-   --this->nqueued;
+  --this->nqueued;
 }
   
 /**

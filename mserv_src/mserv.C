@@ -26,7 +26,9 @@
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
  *
- * 2020-09-29 DSN Updated for comserv3.
+ * Modification History:
+ *  2020-09-29 DSN Updated for comserv3.
+ *  2021-04-27 DSN Initialize config_struc structures before use.
  */
 
 #include <iostream>

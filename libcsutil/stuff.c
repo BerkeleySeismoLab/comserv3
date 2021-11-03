@@ -27,6 +27,7 @@ Edit History:
    10  5 Mar 01 IGD Add float flip_float(float) byte-swapping routine
    11 24 Aug 07 DSN Port to LINUX, and separate ENDIAN_LITTLE from LINUX logic.
    12 29 Sep 2020 DSN Updated for comserv3.
+   13 20 May 2021 DSN Remove unlink call in tmpfile_open.
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -41,7 +42,7 @@ Edit History:
 #include <ctype.h>
 #include "dpstruc.h"
 
-short VER_STUFF = 11 ;
+short VER_STUFF = 13 ;
 
 /* Return seconds (and parts of a second) since 1970 */
 double dtime (void) 
@@ -103,7 +104,7 @@ FILE *tmpfile_open(char *namebuf, const char *mode)
     {
 	// call unlink so that whenever the file is closed or the
 	// program exits the temporary file is deleted
-	unlink(namebuf);
+	// unlink(namebuf);
     }
     return fp;
 }

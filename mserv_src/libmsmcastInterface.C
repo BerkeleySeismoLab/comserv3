@@ -335,7 +335,7 @@ void LibmsmcastInterface::miniseed_callback(pointer p) {
 	int nfree = packetQueue.numFree();
 	if (nfree < throttle_free_packet_threshold) {
 	    if (! throttling) {
-		g_log << "XXX Limited space in intermedate queue. Start delay in miniseed_callback" << std::endl;
+		g_log << "XXX Limited space in intermediate queue. Start delay in miniseed_callback" << std::endl;
 		++throttling;
 	    }
 	    nanosleep(&t, NULL);

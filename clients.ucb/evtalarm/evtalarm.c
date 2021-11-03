@@ -16,9 +16,10 @@ Edit History:
     0 14 JUL 95 DSN First created (from Quanterra demo program).
     2020.273 DSN Updated for comserv3.
 		ver 1.1.0 Modified for 15 character station and client names.
+    2021.140 DSN ver 1.1.1	Unlink file created with tmpfile_open.
  ************************************************************************/
 
-#define	VERSION		"1.1.0 (2020.273)"
+#define	VERSION		"1.1.1 (2021.140)"
 
 #ifdef COMSERV2
 #define	CLIENT_NAME	"EVTA"
@@ -646,6 +647,7 @@ int output (char *msgbuf)
 	n++;
     }
 
+    unlink (namebuf);
     return (n);
 }
 

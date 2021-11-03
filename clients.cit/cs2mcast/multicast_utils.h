@@ -39,7 +39,7 @@ struct Multicast_Info {
  struct in_addr multicast_interface;
  struct in_addr multicast_address;
  int            multicast_port;
- int		soket;
+ int		socket_fd;
 };
 
 
@@ -52,4 +52,4 @@ int multicast_packet(struct Multicast_Info& minfo,
 		     char*  packet,
 		     int    nbytes);
 
-void close_multicast_socket(int socket);
+void close_multicast_socket(int socket_fd);

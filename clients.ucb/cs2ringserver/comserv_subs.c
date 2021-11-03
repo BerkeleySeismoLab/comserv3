@@ -263,6 +263,7 @@ int fill_from_comserv (char *station)
 
 /* open the stations list and look for that station */
     strcpy (filename, "/etc/stations.ini") ;
+    memset(&cfg, 0, sizeof(cfg));
     if (open_cfg(&cfg, filename, station)) {
 	fprintf (stderr,"Could not find station %s\n", station) ;
 	return FAILURE;
@@ -290,6 +291,7 @@ int fill_from_comserv (char *station)
     addslash (station_dir);
     strcpy (filename, station_dir);
     strcat (filename, "station.ini");
+    memset(&cfg, 0, sizeof(cfg));
     if (open_cfg(&cfg, filename, client_name)) {
 	fprintf (stderr, "Error: Could not find [%s] section in for server %s in station.ini file\n",
 		 client_name, station);

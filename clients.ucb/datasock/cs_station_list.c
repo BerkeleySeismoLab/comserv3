@@ -65,6 +65,7 @@ int cs_station_list (STATCHAN **pcs,	/* ptr to comserv statchan struc*/
     int ncs = *pncs;
     int nwc = *pnwc;
     int status = 0;
+    memset (&cfg, 0, sizeof(cfg));
     if (open_cfg (&cfg, STATIONS_LIST, "*") != 0) {
 	close_cfg (&cfg);
 	return (-1);	/* error */
