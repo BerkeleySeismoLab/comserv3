@@ -24,6 +24,7 @@
  * Modification History:
  *  2020-05-10 DSN Initial creation.
  *  2020-09-29 DSN Updated for comserv3.
+ *  2021-04-27 DSN Initialize config_struc structures before use.
  */
 
 #include <iostream>

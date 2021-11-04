@@ -248,7 +248,9 @@ static boolean open_socket (pmsmcast msmcast)
     if (msmcast->cpath == INVALID_SOCKET)
     {
         err = errno ;
-        sprintf (s, "%d on MSMCAST port", err) ;
+        sprintf (s, "%d opening socket on Multicast Address %s",
+		 err, msmcast->par_register.msmcastif_address) ;
+
         libmsgadd(msmcast, LIBMSG_SOCKETERR, s) ;
         return TRUE ;
     }
@@ -260,7 +262,8 @@ static boolean open_socket (pmsmcast msmcast)
     if ( err )
     {
 	err = errno ;
-	sprintf (s, "%d setsockopt SO_REUSEADDR for MSMCASTID", err) ;
+	sprintf (s, "%d setsockopt SO_REUSEADDR on Multicast Address %s", 
+		 err, msmcast->par_register.msmcastif_address) ;
 	libmsgadd(msmcast, LIBMSG_SOCKETERR, s) ;
 	close_socket(msmcast) ;
 	return TRUE ;
@@ -283,7 +286,8 @@ static boolean open_socket (pmsmcast msmcast)
     if ( err )
     {
 	err = errno ;
-	sprintf (s, "%d setsockopt IP_MULTICAST_IF for MSMCASTIF", err) ;
+	sprintf (s, "%d setsockopt IP_MULTICAST_IF for socket on Multicast Address %s",
+		 err, msmcast->par_register.msmcastif_address) ;
 	libmsgadd(msmcast, LIBMSG_SOCKETERR, s) ;
 	close_socket(msmcast) ;
 	return TRUE ;
@@ -314,7 +318,8 @@ static boolean open_socket (pmsmcast msmcast)
     if ( err )
     {
 	err = errno ;
-	sprintf (s, "%d bind socket for MSMCASTID", err) ;
+	sprintf (s, "%d bind port %hd for socket on Multicast Address %s",
+		 err, htons(port), msmcast->par_register.msmcastif_address) ;
 	libmsgadd(msmcast, LIBMSG_SOCKETERR, s) ;
 	close_socket(msmcast) ;
 	return TRUE ;
@@ -328,7 +333,8 @@ static boolean open_socket (pmsmcast msmcast)
     if ( err )
     {
 	err = errno ;
-	sprintf (s, "%d setsockopt SO_RCVBUF %d for MSMCASTID", err, recv_buf_bytes) ;
+	sprintf (s, "%d setsockopt SO_RCVBUF %d on Multicast Address %s", 
+		 err, recv_buf_bytes, msmcast->par_register.msmcastif_address) ;
 	libmsgadd(msmcast, LIBMSG_SOCKETERR, s) ;
 	close_socket(msmcast) ;
 	return TRUE ;
@@ -352,7 +358,8 @@ static boolean open_socket (pmsmcast msmcast)
     if ( err )
     {
 	err = errno ;
-	sprintf (s, "%d setsockopt IP_ADD_MEMBERSHIPF for MSMCASTID", err) ;
+	sprintf (s, "%d setsockopt IP_ADD_MEMBERSHIPF for Multicast Address %s",
+		 err, msmcast->par_register.msmcastif_address) ;
 	libmsgadd(msmcast, LIBMSG_SOCKETERR, s) ;
 	close_socket(msmcast) ;
 	return TRUE ;
@@ -370,7 +377,8 @@ static boolean open_socket (pmsmcast msmcast)
         if ((err != EWOULDBLOCK) && (err != EINPROGRESS))
 	{
 	    close_socket (msmcast) ;
-	    sprintf (s, "%d on MSMCAST port", err) ;
+	    sprintf (s, "%d on Multicast Address %s",
+		 err, msmcast->par_register.msmcastif_address) ;
 	    libmsgadd(msmcast, LIBMSG_SOCKETERR, s) ;
 	    return TRUE ;
 	}

@@ -25,11 +25,13 @@ Modification History:
 				Also added versioning v0.0.3
     2020-09-29  Doug Neuhauser  Updated for comserv3.
 				Modified for 15 character station and client names.
+    2021-04-27  Doug Neuhauser  Initialize config_struc structures before use.
+				Change socket variable name to socket_fd.  
 Usage Notes:
 
 **********************************************************/
 
-#define VERSION "1.1.0 (2020.273)"
+#define VERSION "1.1.1 (2021.117)"
 
 #ifdef COMSERV2
 #define CLIENT_NAME	"CS2M"
@@ -75,16 +77,20 @@ Usage Notes:
 const int MAX_CHARS_IN_SELECTOR_LIST = 300;
 
 const char *syntax[] = {
-"    [-?] [-h] [-v n] -M ip_addr -I ip_addr -P port_num -T d,e -C Channel1,ChannelN",
+"    [-?] [-h] [-v n] -M ip_addr -I ip_addr -P port_num -T d,e -C Channel1,ChannelN server_name",
 "    where:",
-"	-?		       Help - prints syntax message.",
-"	-h		       Help - prints syntax message.",
-"	-v n		   Set verbosity level to n.",
-"       -I 131.215.65.34       Set's the multicast interface to use as output",
-"       -A 192.0.0.100         Sets the multicast address to send the data to",
-"       -P 10000               Sets the multicast port to multicast ",
-"       -T d,e,c,t,m,b or *    Sets the type of data to be multicast",
-"       -C BHZ,BHN,BHE or *    Sets the channels to be multicast",
+"	-?		 	Help - prints syntax message.",
+"	-h			Help - prints syntax message.",
+"	-v n			Set verbosity level to n.",
+"	-I 131.215.65.34	Sets the multicast interface to use as output.",
+"	-A 192.0.0.100		Sets the multicast address to send the data to.",
+"	-P 10000		Sets the multicast port to multicast.",
+"	-T d,e,c,t,m,b or *	Sets the type of data to be multicast.",
+"	-C channel_list		Sets the channels to be multicast.",
+"				Examples are: ?H? or BHZ,BHN,BHE or *",
+"				Wildcard characters must be quoted.",
+"	server_name		Comserv server_name.",
+"    Client name is " CLIENT_NAME "." ,
 NULL };
 
 const int TIMESTRLEN  = 40;
@@ -117,7 +123,7 @@ void finish_handler(int sig);
 void terminate_program (int error);
 static int terminate_proc;
 int verbosity;
-int debug = 1;
+int debug = 0;
 static pclient_struc me = NULL;
 
 extern int save_selectors(int , char *);
@@ -145,7 +151,8 @@ static SEL sel[NUMQ];
 void print_syntax(char* cmd)
 {
     int i;
-    std::cout << cmd << "Version v"<< VERSION << std::endl;
+    std::cout << cmd << " Version "<< VERSION << std::endl;
+    std::cout << cmd;
     for (i=0; syntax[i] != NULL; i++) 
     {
 	std::cout << syntax[i] << std::endl;
@@ -252,19 +259,21 @@ int main (int argc, char *argv[])
     else
     {
 	fprintf (stderr, "cs2mcast: Version %s\n", VERSION);
-	fprintf (stderr, "Missing station name\n");
+	fprintf (stderr, "Missing server name\n");
 	exit(1);
     }
     upshift(sname) ;
 
 /* open the stations list and look for that station */
     strcpy (filename, "/etc/stations.ini") ;
+    memset (&cfg, 0, sizeof(cfg));
     if (open_cfg(&cfg, filename, sname))
     {
-	fprintf (stderr,"Could not find station\n") ;
+	fprintf (stderr,"%s Could not find server %s in file '%s'\n",
+                 localtime_string(dtime()), sname, filename);
 	exit(1);
     }
-/* Try to find the station directory, source, and description */
+/* Try to find the server directory, source, and description */
     do
     {
 	read_cfg(&cfg, str1, str2) ;
@@ -287,17 +296,18 @@ int main (int argc, char *argv[])
     close_cfg(&cfg) ;
 
     if (station_dir[0] == '\0') {
-        fprintf (info, "%s Could not find station %s in stations.ini file\n",
-                 sname, localtime_string(dtime()));
+        fprintf (info, "%s Could not find DIR entry for server %s in file '%s'\n",
+                 localtime_string(dtime()), sname, filename);
         exit(1);
     }
 
 /*  read the station.ini and get the lockfile and pidfile */
     /* Open and read station config file.                               */
     strcat(station_dir, "/station.ini");
+    memset (&cfg, 0, sizeof(cfg));
     if (open_cfg(&cfg, station_dir, name)) {
-        fprintf (info, "%s Could not find station.ini file\n",
-                 localtime_string(dtime()));
+        fprintf (info, "%s Could not find [%s] section in file '%s'\n",
+                 localtime_string(dtime()), name, station_dir);
         exit(1);
     }	
     while (read_cfg(&cfg, str1, str2), (int)strlen(str1) > 0) {
@@ -311,7 +321,9 @@ int main (int argc, char *argv[])
 /* fill pidfile if it is set*/
     if(pidfile[0] != '\0') {
 	if ((fp = fopen(pidfile,"w")) == NULL) {
-            fprintf (info, "Unable to open pid file: %s\n", pidfile);
+            fprintf (info, "%s Unable to open pid file: %s\n", 
+                     localtime_string(dtime()),
+		     pidfile);
         }
         else {
             fprintf (fp, "%d\n",(int)getpid());
@@ -417,7 +429,7 @@ int main (int argc, char *argv[])
 	    if (alert)
 	    {
 		strcpy(time_str, localtime_string(dtime()));
-		fprintf (info, "%s - New status on station %s is %s\n",
+		fprintf (info, "%s - New status on server %s is %s\n",
 			 time_str,
 			 sname_str_cs(thist->name), (char *)(stats[thist->status])) ;
 		fflush (info);
@@ -534,7 +546,7 @@ void terminate_program (int error)
     strcpy(time_str, localtime_string(dtime()));
     fprintf (info, "%s - Terminated\n", time_str);
 
-    close_multicast_socket(minfo.soket);
+    close_multicast_socket(minfo.socket_fd);
     if (lockfd) close(lockfd);
 
     std::cout << "Exiting through signal handler" << std::endl;
@@ -650,11 +662,15 @@ void scan_types(short* data_msk,
     {
 	token_list[tok_num] = tok;
 	tok_num++; 
-	printf("tok = `%s'\n", tok);
+	if (debug) {
+	    printf("tok = `%s'\n", tok);
+	}
 	tok=strtok(0, ",");
     } while(tok);
 
-    std::cout << "Number_of_Tokens Found : " << tok_num << std::endl;
+    if (debug) {
+	std::cout << "Number_of_Tokens Found : " << tok_num << std::endl;
+    }
 
     for (int i = 0 ; i < tok_num; i++)
     {

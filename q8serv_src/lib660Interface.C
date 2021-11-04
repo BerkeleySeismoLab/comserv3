@@ -4,6 +4,7 @@
  * Modification History:
  *  2020-04-08 DSN Initial coding derived from lib330interface.C
  *  2020-09-29 DSN Updated for comserv3.
+ *  2021-03-13 DSN Fixed creating and matching multicast channel+location list.
  */
 
 #include <unistd.h>
@@ -367,6 +368,7 @@ void Lib660Interface::onesec_callback(pointer p) {
     char *tp;
   
     // Translate tonesec_call to onesec_pkt;
+    memset(&msg, 0, sizeof(msg));
     memset(temp, 0, sizeof(temp));
     strncpy(temp,src->station_name,9);
     tp = strtok((char*)temp,(char*)"-");
@@ -384,6 +386,11 @@ void Lib660Interface::onesec_callback(pointer p) {
     strcpy(msg.station,strtok(NULL,(char*)"-"));
     strcpy(msg.channel,src->channel);
     strcpy(msg.location,src->location);
+    // Ensure that channel is 3 characters, and location is 2 characters, blank padded.
+    int lc = strlen(msg.channel);
+    int ll = strlen(msg.location);
+    if (lc < 3) strncat(msg.channel,"   ", 3-lc);
+    if (ll < 2) strncat(msg.location,"  ", 2-ll);
     msg.rate = htonl((int)src->rate);
 
 #ifdef DEBUG_Lib660Interface
@@ -498,7 +505,7 @@ void Lib660Interface::miniseed_callback(pointer p) {
 	int nfree = packetQueue.numFree();
 	if (nfree < throttle_free_packet_threshold) {
 	    if (! throttling) {
-		g_log << "XXX Limited space in intermedate queue. Start delay in miniseed_callback" << std::endl;
+		g_log << "XXX Limited space in intermediate queue. Start delay in miniseed_callback" << std::endl;
 		++throttling;
 	    }
 	    nanosleep(&t, NULL);
@@ -908,6 +915,9 @@ bool Lib660Interface::build_multicastChannelList(char * input) {
 
     int nc = sizeof(multicastChannelList[0].channel);
     int nl = sizeof(multicastChannelList[0].location);
+    int mc = 3; // max length of SEED channel.
+    int ml = 2; // max length of SEED location.
+    int lc, ll;
 
     num_multicastChannelEntries = 0;
     memset(multicastChannelList, 0, sizeof(multicastChannelList));
@@ -932,20 +942,31 @@ bool Lib660Interface::build_multicastChannelList(char * input) {
 	if (loc) {
 	    // We have a channel.location token.
 	    *loc++ = '\0';
-	    strncpy(multicastChannelList[n].location,tok,nc-1);
+	    lc = strlen(tok);
+	    ll = strlen(loc);
+	    // Copy the channel.  Blank pad it to mc number of characters.
+	    strncpy(multicastChannelList[n].channel,tok,nc-1);
+	    if (lc < mc) strncat(multicastChannelList[n].channel, "   ", mc-lc);
 	    // An empty, "-", or "--" location string means blank location code.
 	    if (*loc == '\0' || *loc == '-') {
-		strncpy(multicastChannelList[n].channel,"  ",nl-1);
+		strncpy(multicastChannelList[n].location,"  ",nl-1);
 	    }
 	    else {
-		strncpy(multicastChannelList[n].channel,loc,nl-1);
+		// Copy the location.  Blank pad it to lc number of characters.
+		strncpy(multicastChannelList[n].location,loc,nl-1);
+		if (ll < ml) strncat(multicastChannelList[n].location, "  ", ml-ll);
 	    }
 	}
 	else {
 	    // We have just a channel token.  Assume all location codes.
+	    lc = strlen(tok);
 	    strncpy(multicastChannelList[n].channel,tok,nc-1);
+	    if (lc < mc) strncat(multicastChannelList[n].channel, "   ", mc-lc);
 	    strncpy(multicastChannelList[n].location,"??",nl-1);
 	}
+	// Ensure that we null-terminated entries of maximal SEED component lengths.
+	multicastChannelList[n].channel[mc] = '\0';
+	multicastChannelList[n].location[ml] = '\0';
 	++n;
 	num_multicastChannelEntries = n;
 	tok = strtok(NULL, ",");

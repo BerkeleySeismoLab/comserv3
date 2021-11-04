@@ -25,6 +25,7 @@ Edit History:
 #define MAX_INDIRECTION 10
 typedef struct
 {
+    int cfg_init;
     char lastread[CFGWIDTH];
     FILE *cfgfile[MAX_INDIRECTION];
     int current_file;

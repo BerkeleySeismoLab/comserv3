@@ -1,0 +1,31 @@
+Doug Neuhauser, 2020-12-94
+
+The showsize program illustrates why it is required to use the compiler flag
+	-DUSE_GCC_PACKING 
+which applies the C/C++ attribute
+       __attribute__ ((__packed__))
+to some variables and datatypes.
+
+The server libraries 
+	lib330
+	lib660 
+	libmsmcast (for consistency)
+AND the servers
+	q330serv
+	q8serv
+	mserv (for consistency)
+MUST be compiled with this compiler option to properly function with
+the remote data loggers.  
+
+If the libraries and servers are not compiled with this flag, some
+data objects in the libraries used for communicating with the remote
+data loggers will have incorrect sizes.  This can affect the offset of
+objects within structures, and the overall size of structures.
+
+Since Quanterra wrote and supports the lib330 and lib660 libraries,
+and their libraries require this compiler, you must use this option when
+compiling code that communicated with these libraries.
+This includes the code for all comserv3 server programs:
+	q330serv
+	q8serv
+	mserv

@@ -2,7 +2,7 @@
  *  Datalog - log packets from comserv to disk files.
  *
  *  Douglas Neuhauser, UC Berkeley Seismological Laboratory
- *	Copyright (c) 1995-2020
+ *	Copyright (c) 1995-2021
  *	The Regents of the University of California.
  *
  *  Based on sample client program written by:
@@ -13,10 +13,12 @@
 /* Modification History:
 ------------------------------------------------------------------------
     2020.273 DSN 2020-09-29 DSN Updated for comserv3.
-		ver 1.6.0 Modified for 15 character station and client names.
+	ver 1.6.0 Modified for 15 character station and client names.
+    2021-04-27 DSN ver 1.6.1 (2021.117)
+    	Initialize config_struc structure before open_cfg call.
 */
 
-#define	VERSION		"1.6.0 (2020.273)"
+#define	VERSION		"1.6.1 (2021.117)"
 
 #ifdef COMSERV2
 #define	CLIENT_NAME	"DLOG"
@@ -180,6 +182,7 @@ int main (int argc, char **argv)
     if (configfile[0] == '\0') {
 	/* Look for station entry in master station file.		*/
 	strcpy (configfile, "/etc/stations.ini");
+	memset(&cfg, 0, sizeof(cfg));
 	if (open_cfg(&cfg, configfile, station)) {
 	    fprintf (info,"%s Error: Could not find station\n",
 		     localtime_string(dtime()));
@@ -213,6 +216,7 @@ int main (int argc, char **argv)
 	    station, station_desc);
 
     /* Open and read station config file.				*/
+    memset(&cfg, 0, sizeof(cfg));
     if (open_cfg(&cfg, configfile, client_name)) {
 	fprintf (info, "%s Could not find station.ini file\n",
 		 localtime_string(dtime()));

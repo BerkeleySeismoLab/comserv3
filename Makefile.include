@@ -13,6 +13,7 @@ NUMBITS	?= 64
 CC	= gcc
 CXX	= g++
 DEBUG	= -g
+# DEBUG	= -g -pg	# Use if you want to use gprof profiling.
 COPT	= -Wall
 
 OSDEFS	= -DLINUX -Dlinux

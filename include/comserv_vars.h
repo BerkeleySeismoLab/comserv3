@@ -84,6 +84,7 @@ EXTERN byte cmd_seq ;
 EXTERN linkstat_rec linkstat ;
 EXTERN char station_desc[CFGWIDTH] ;
 EXTERN double curtime ;
+EXTERN config_struc cfg ;
 #endif
 
 /***********************************************************************
@@ -92,7 +93,6 @@ EXTERN double curtime ;
 
 EXTERN tring rings[NUMQ] ;                /* Access structure for rings */
 EXTERN pserver_struc base ;
-EXTERN config_struc cfg ;
 EXTERN tuser_privilege user_privilege ;
 EXTERN char str1[CFGWIDTH] ;
 EXTERN char str2[CFGWIDTH] ;

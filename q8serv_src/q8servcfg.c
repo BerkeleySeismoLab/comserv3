@@ -68,6 +68,7 @@ int GetServerParamsFromStationsIni(struct q8serv_cfg *out_cfg, char *server_name
     char str1[SECWIDTH], str2[SECWIDTH];
 
     /* Get selected station info from stations file. */
+    memset (&stations_cfg, 0, sizeof(stations_cfg));
     if (open_cfg(&stations_cfg,STATIONS_INI,server_name))
     {
         fprintf (stderr, "Could not find [%s] section in file %s\n", 
@@ -123,6 +124,7 @@ int GetGlobalParamsFromNetworkIni(struct q8serv_cfg* out_cfg)
     char str1[CFGWIDTH], str2[CFGWIDTH];
 
     /* Scan network initialization file.                                */
+    memset (&network_cfg, 0, sizeof(network_cfg));
     if (open_cfg(&network_cfg,NETWORK_INI,global_defaults_section_name))
     {
         fprintf (stderr, "Warning: Could not find [%s] section in network file %s\n", 
@@ -204,6 +206,7 @@ int GetServerParamsFromStationIni(struct q8serv_cfg* out_cfg, char *section_name
 
     /* Try to open the STATION_INI file in this station's directory */
     sprintf (filename, "%s/%s", out_cfg->server_dir, STATION_INI);
+    memset (&cfg, 0, sizeof(cfg));
     if (open_cfg(&cfg, filename, section_name))
     {
 	fprintf (stderr, "Warning: Could not find a [%s] section in %s\n", section_name, filename);
@@ -267,6 +270,11 @@ int GetServerParamsFromStationIni(struct q8serv_cfg* out_cfg, char *section_name
 	if (strcmp(str1, "PASSWORD") == 0)
 	{
 	    strcpy(out_cfg->password, str2) ;
+	    continue;
+	}
+	if (strcmp(str1, "LOCKFILE") == 0)
+	{
+	    strcpy(out_cfg->lockfile, str2) ;
 	    continue;
 	}
 	if (strcmp(str1, "STARTMSG") == 0)
