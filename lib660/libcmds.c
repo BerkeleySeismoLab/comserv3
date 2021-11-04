@@ -50,7 +50,7 @@ Edit History:
                      add various debugging, default off.
                      shorten longesst entries in RETRY_TAB                     
    13 2020-03-10 jms assure that tcpidx and lastidx are zeroed at start of XML dialog.
-					 to prevent reading stale data after incomplete prior registration.
+                     to prevent reading stale data after incomplete prior registration.
                      added handling of "Not Ready" error from BE660 that may occur now
                      on an XDL connection prior to BE660 startup complete. reduces
                      connection time, since this case is distinguished from other errors.

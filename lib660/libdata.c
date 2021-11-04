@@ -24,6 +24,8 @@ Edit History:
     1 2018-06-26 rdr Remove Ext GPS current, change Ext GPS voltage to antenna volts.
     2 2018-05-14 rdr For IB_CALEVT handling set calstat in LCQS.
     3 2019-06-26 rdr Add GPS Data Stream processing
+    4 2020-05-28 jms prevent runaway string on phase error
+    5 2021-01-06 jms do same in more places. remove spurious mutex lock.
 */
 #include "libdata.h"
 #include "libclient.h"
@@ -215,7 +217,7 @@ begin
                 if (fabs(t - q660->lasttime - 1.0) > 0.5)
                   then
                     begin
-                      sprintf (s1, "%9.6f", t - q660->lasttime - 1.0) ; /* conv if needed */
+                      sprintf (s1, "%.7g", t - q660->lasttime - 1.0) ; /* conv if needed */
                       if (lnot seqgap_occurred)
                         then
                           begin
@@ -235,17 +237,13 @@ begin
                             sprintf (s, "%d usec", (integer)diff) ;
                             libdatamsg(q660, LIBMSG_TIMEJMP, s) ;
                           end
-                      lock (q660) ;
                       if (abs(diff) >= JUMP_THRESH)
                         then
                           begin
-                            sprintf (s1, "%9.6f", t - q660->lasttime - 1.0) ; /* conv if needed */
-                            unlock (q660) ;
+                            sprintf (s1, "%.7g", t - q660->lasttime - 1.0) ; /* conv if needed */
                             log_clock (q660, CE_JUMP, s1) ;
                             update_ok = FALSE ;
                           end
-                        else
-                          unlock (q660) ;
                     end
               end
           q660->lasttime = t ;
@@ -488,7 +486,7 @@ begin
               loadbyte (addr(p)) ;
               loadword (addr(p)) ;
               t = loaddouble (addr(p)) ;
-              sprintf (s, "%8.6f Seconds", t) ;
+              sprintf (s, "%.7g Seconds", t) ;
               libdatamsg (q660, LIBMSG_PHASERANGE, s) ;
               dlth = 12 ;
               break ;
@@ -564,4 +562,5 @@ begin
       p = (pbyte)((pntrint)pstart + (pntrint)dlth) ;
     end
 end
+
 

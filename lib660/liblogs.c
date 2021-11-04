@@ -25,6 +25,8 @@ Edit History:
     2 2017-07-16 rdr Use correct pointer for loadcalstart.
     3 2018-09-04 rdr Handle sine calibrations of 2Hz or greater. Fix cal abort
                      blockette handling.
+    4 2021-01-06 jms fix incorrect use of "addr" operator that resulted in stack
+                        corruption when time jump > 250us occurred.
 */
 #ifndef liblogs_h
 #include "liblogs.h"
@@ -39,6 +41,8 @@ Edit History:
 #include "libarchive.h"
 #include "libseed.h"
 #include "readpackets.h"
+
+
 
 /* copy string "s" to fixed width right padded field "b" */
 void lib660_padright (pchar s, pchar b, integer fld)
@@ -177,7 +181,7 @@ begin
     then
       begin
         p = (pbyte)addr(pcom->ring->rec) ;
-        storeseedhdr (addr(p), (pvoid)addr(phdr), FALSE) ;
+        storeseedhdr (addr(p), phdr, FALSE) ;
         storetiming (addr(p), ptim) ;
         inc(q->records_generated_session) ;
         q->last_record_generated = secsince () ;

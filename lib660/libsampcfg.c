@@ -30,7 +30,13 @@ Edit History:
     6 2019-09-26 rdr Add init_ll_lcq.
     7 2010-01-28 jms allocated LL buffer for 100sps and above.
     8 2020-03-17 jms fix use of loc codes with dplcq channels
+    9 2021-01-06 jms remove unused code. block admin DP channels on IDL
 */
+
+#define OMITADMINCHANNELSONIDL
+
+
+
 #include "libsampcfg.h"
 #include "xmlseed.h"
 #include "libmsgs.h"
@@ -544,6 +550,26 @@ begin
   count = 0 ;
   while (pch)
     begin
+
+#ifdef OMITADMINCHANNELSONIDL
+       if (strstr(q660->par_register.q660id_address, "@IDL")) {
+            /* skip administrative DP channels on IDL */
+            switch ((enum tlogfld)pch->sub_field) 
+            {
+              case LOGF_MSGS :
+                break ;
+              case LOGF_CFG :
+                break ;
+              case LOGF_TIME :
+                break ;
+              default :
+                // fprintf(stderr,"SKIPPING: %s\n",pch->seedname);
+                pch = pch->link ;
+                continue;
+            }
+       }
+#endif
+
       strcpy(snamecpy,pch->seedname) ;
       pc = strchr(snamecpy, '-') ;
       if (pc)
@@ -579,14 +605,6 @@ begin
                 q660->dplcqs = extend_link (q660->dplcqs, cur_lcq) ;
           end
       cur_lcq->def = pch ;
-      if (pch->rate > 0.99)
-        then
-          cur_lcq->rate = lib_round(pch->rate) ;
-      else if (pch->rate != 0.0)
-        then
-          cur_lcq->rate = -lib_round(1.0 / pch->rate) ;
-        else
-          cur_lcq->rate = 0 ;
       setup_names (cur_lcq, pch->seedname) ;
       cur_lcq->delay = pch->delay ;
       cur_lcq->gen_src = pch->gen_src ;
