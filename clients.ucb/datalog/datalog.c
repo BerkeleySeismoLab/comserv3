@@ -16,9 +16,13 @@
 	ver 1.6.0 Modified for 15 character station and client names.
     2021-04-27 DSN ver 1.6.1 (2021.117)
     	Initialize config_struc structure before open_cfg call.
+    2021-01-20 DSN ver 1.6.2 (2022.020)
+	Added optional debugging info for packets written to disk.
+    2022-02-29 DSN ver 1.6.3 (2022.059)
+	Allow environment override of STATIONS_INI pathname.
 */
 
-#define	VERSION		"1.6.1 (2021.117)"
+#define	VERSION		"1.6.3 (2022.038)"
 
 #ifdef COMSERV2
 #define	CLIENT_NAME	"DLOG"
@@ -33,8 +37,8 @@ char *syntax[] = {
 "%s    [-v n] [-c configfile] [-n name] [-h] station",
 "    where:",
 "	-v n	    Verbosity setting",
-"		    1 = print receipt line for each packet.",
-"		    2 = display polling info.",
+"		    1 = print mSEED header for each packet written to disk.",
+"		    2 = print receipt line for each packet and display polling info.",
 "	-c configfile",
 "		    Specify an alternative datalog config file.",
 "		    Default config file is the station config file.",
@@ -81,10 +85,14 @@ pchar seednamestring (seed_name_type *sd, location_type *loc);
 #include "datalog_utils.h"
 
 #define	TIMESTRLEN  	40
-#define	CFGSTRLEN	160
+#define	CFGSTRLEN	CFGWIDTH
 #define	DEFAULT_DATA_MASK \
 	(CSIM_DATA | CSIM_EVENT | CSIM_CAL | CSIM_TIMING | CSIM_MSG | CSIM_BLK)
 #define	MAX_SELECTORS	CHAN+2
+
+#define ANNOUNCE(cmd,fp)							\
+    ( fprintf (fp, "%s - Using STATIONS_INI=%s NETWORK_INI=%s\n", \
+	      cmd, get_stations_ini_pathname(), get_network_ini_pathname()) )
 
 /************************************************************************
  *  Externals required in multiple files or routines.
@@ -134,7 +142,7 @@ int main (int argc, char **argv)
     config_struc cfg;
     char str1[CFGSTRLEN], str2[CFGSTRLEN];
     char station_dir[CFGSTRLEN], station_desc[CFGSTRLEN], source[CFGSTRLEN];
-    char configfile[256];
+    char configfile[CFGSTRLEN];
     char time_str[TIMESTRLEN];
     int i;
 
@@ -152,11 +160,11 @@ int main (int argc, char **argv)
     while ( (c = getopt(argc,argv,"hv:c:n:")) != -1)
 	switch (c) {
 	case '?':
-        case 'h':   print_syntax(cmdname,syntax,info); exit(0);
+        case 'h':   ANNOUNCE(cmdname,info); print_syntax(cmdname,syntax,info); exit(0);
 	case 'v':   verbosity=atoi(optarg); break;
 	case 'c':   
-	    strncpy(configfile,optarg,255); 
-	    configfile[255] = '\0'; 
+	    strncpy(configfile,optarg,CFGSTRLEN); 
+	    configfile[CFGSTRLEN-1] = '\0'; 
 	    break;
 	case 'n':   
 	    strncpy(client_name,optarg,CLIENT_NAME_SIZE);
@@ -179,9 +187,11 @@ int main (int argc, char **argv)
     }
     upshift(station);
 
+    ANNOUNCE(cmdname,info);
     if (configfile[0] == '\0') {
 	/* Look for station entry in master station file.		*/
-	strcpy (configfile, "/etc/stations.ini");
+	strncpy(configfile, get_stations_ini_pathname(), CFGSTRLEN);
+	configfile[CFGSTRLEN-1] = '\0';
 	memset(&cfg, 0, sizeof(cfg));
 	if (open_cfg(&cfg, configfile, station)) {
 	    fprintf (info,"%s Error: Could not find station\n",
@@ -305,7 +315,7 @@ int main (int argc, char **argv)
 		for (k = 0; k < this->valdbuf; k++) {
 		    char seqno[7];
 		    pseed = (pvoid) &pdat->data_bytes;
-		    if (verbosity & 1) {
+		    if (verbosity & 2) {
 			printf("%s [%s] <%2d> %s recvtime=%s ",
 			       localtime_string(dtime()),
 			       sname_str_cs(this->name), k, 

@@ -22,6 +22,19 @@ Edit History:
 #include "cslimits.h"
 //#include "stuff.h"
 
+/* Comserv global config files */
+/* Originally in various files. */
+#ifndef _OSK
+#define DEFAULT_STATIONS_INI	"/etc/stations.ini"
+#else
+#define DEFAULT_STATIONS_INI	"/r0/stations.ini"
+#endif
+#define DEFAULT_NETWORK_INI	"/etc/network.ini"
+
+/* Names of environment variables that can override the global config files. */
+#define STATIONS_INI_VARNAME	"STATIONS_INI"
+#define NETWORK_INI_VARNAME	"NETWORK_INI"
+
 #define MAX_INDIRECTION 10
 typedef struct
 {
@@ -64,6 +77,24 @@ extern "C" {
     void close_cfg (config_struc *cs) ;
     
     void comserv_split (pchar src, pchar right, char sep) ;
+
+/* 
+ * Initialize global pathnames used by comserv3.
+ * Allow override by environmental variables.
+ */
+    int init_global_ini_pathnames (void);
+
+/*
+ * Return station_ini pathname used by comserv3.
+ * Allow override by environmental variables.
+*/
+    char *get_stations_ini_pathname (void);
+
+/*
+ * Return network_ini pathname used by comserv3.
+ * Allow override by environmental variables.
+*/
+    char *get_network_ini_pathname (void);
 
 #ifdef __cplusplus
 }

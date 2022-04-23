@@ -21,6 +21,7 @@
  *  28 March 2002
  *  2015/09/25 - DSN - Added close_cfg() calls to close all config files.
  *  2020-09-29 DSN Updated for comserv3.
+ *  2022-03-16 DSN Added support for TCP connection to Q330/baler.
  */
 
 #include "q330servcfg.h"
@@ -55,7 +56,7 @@ void clearConfig(struct q330serv_cfg* out_cfg)
  *	Retrieve and return staion config parameters from STATIONS_INI.
  *	server_dir	Directory containing the STATION_INI file.
  *	server_desc	Stations description string.
- *	server_source	Station comserv config section in STATION_INIF file.
+ *	server_source	Station comserv config section in STATION_INI file.
  *	seed_station	SEED station code.
  *	seed_network	SEED network code.
  **********************************************************************/  
@@ -64,13 +65,15 @@ int GetServerParamsFromStationsIni(struct q330serv_cfg *out_cfg, char *server_na
 {
     config_struc stations_cfg;           /* structure for config file.   */
     char str1[SECWIDTH], str2[SECWIDTH];
+    char *stations_ini;
 
     /* Get selected station info from stations file. */
     memset (&stations_cfg, 0, sizeof(stations_cfg));
-    if (open_cfg(&stations_cfg,STATIONS_INI,server_name))
+    stations_ini = get_stations_ini_pathname();
+    if (open_cfg(&stations_cfg,stations_ini,server_name))
     {
         fprintf (stderr, "Could not find [%s] section in file %s\n", 
-		 server_name, STATIONS_INI);
+		 server_name, stations_ini);
 	return (QSERV_FAILURE);
     }
     while (1)
@@ -120,13 +123,15 @@ int GetGlobalParamsFromNetworkIni(struct q330serv_cfg* out_cfg)
 {
     config_struc network_cfg;           /* structure for config file op */
     char str1[CFGWIDTH], str2[CFGWIDTH];
+    char *network_ini;
 
     /* Scan network initialization file.                                */
     memset (&network_cfg, 0, sizeof(network_cfg));
-    if (open_cfg(&network_cfg,NETWORK_INI,global_defaults_section_name))
+    network_ini = get_network_ini_pathname();
+    if (open_cfg(&network_cfg,network_ini,global_defaults_section_name))
     {
         fprintf (stderr, "Warning: Could not find [%s] section in network file %s\n", 
-		 global_defaults_section_name, NETWORK_INI);
+		 global_defaults_section_name, network_ini);
 	return QSERV_FAILURE;
     }
     while (1)
@@ -251,6 +256,11 @@ int GetServerParamsFromStationIni(struct q330serv_cfg* out_cfg, char *section_na
 	    strcpy(out_cfg->udpaddr, str2) ;
 	    continue;
 	}
+	if (strcmp(str1, "TCPADDR") == 0)
+	{
+	    strcpy(out_cfg->tcpaddr, str2) ;
+	    continue;
+	}
 	if (strcmp(str1, "BASEPORT") == 0)
 	{
 	    strcpy(out_cfg->baseport, str2) ;
@@ -274,6 +284,11 @@ int GetServerParamsFromStationIni(struct q330serv_cfg* out_cfg, char *section_na
 	if (strcmp(str1, "VERBOSITY") == 0)
 	{
 	    strcpy(out_cfg->verbosity, str2) ;
+	    continue;
+	}
+	if (strcmp(str1, "LOGLEVEL") == 0)
+	{
+	    strcpy(out_cfg->loglevel, str2) ;
 	    continue;
 	}
 	if (strcmp(str1, "DIAGNOSTIC") == 0)

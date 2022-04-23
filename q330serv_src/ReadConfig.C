@@ -21,6 +21,7 @@
  * Modification History:
  *   4 April 2002
  *  2020-09-29 DSN Updated for comserv3.
+ *  2022-03-16 DSN Added support for TCP connection to Q330/baler.
  */
 
 #include <iostream>
@@ -64,19 +65,26 @@ bool readConfigFile(char* server_name)
 
 bool validateQ330servConfig(const struct q330serv_cfg& aCfg)
 {
-    int len;
+    int len, len2;
     // Required fields are:
-    // udpaddr
+    // udpaddr OR tcpaddr
     // baseport
     // dataport
     // serial number
     // authcode
  
     len = strlen(aCfg.udpaddr);
-    if (len < 1)
+    len2 = strlen(aCfg.tcpaddr);
+    if (len < 1 && len2 < 1)
     {
 	g_log << 
-	    "xxx Configuration file is missing value for udpaddr:" << std::endl;
+	    "xxx Configuration file is missing value for udpaddr and tcpaddr:" << std::endl;
+	return false;
+    }
+    if (len >= 1 && len2 >= 1)
+    {
+	g_log << 
+	    "xxx Configuration file specifies both udpaddr and tcpaddr:" << std::endl;
 	return false;
     }
 

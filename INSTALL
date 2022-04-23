@@ -18,6 +18,9 @@ included in this ditribution.
 3.  libdali (from IRIS), required for client
 	cs2ringserver
 
+Read the instructions on acquiring and building these
+libraries in the file README.external_libs.
+
 In order to build the entire COMSERV3 software, do the following:
 
 1.  First download and build these libraries.  It is recommended that

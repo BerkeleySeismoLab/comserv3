@@ -18,7 +18,7 @@ cs_site_map::cs_site_map(char *config) {
 cs_site_map::cs_site_map() {
 
 	char *cptr;
-	cptr = new char[strlen(STATIONS_LIST)+1];
+	cptr = new char[strlen("SITE_MAP")+1];
 	_init(cptr);
 	delete cptr;
 }
@@ -33,7 +33,7 @@ void cs_site_map::_init(char *config) {
 
 	initialized=false;
 	config_struc cfg;
-	if (open_cfg (&cfg, (char *)STATIONS_LIST, (char *)"*") != 0) {
+	if (open_cfg (&cfg, (char *)get_stations_ini_pathname(), (char *)"*") != 0) {
         	close_cfg (&cfg);
         	return;    /* error */
     	}

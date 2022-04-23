@@ -27,9 +27,11 @@
     2020.273 DSN ver 1.2.0	Modified for 15 character station and client names.
     2021.117 DSN ver 1.2.1	Initialize config_struc structures before use.
     2021.140 DSN ver 1.2.2	Unlink files opened with tmpfile_open.
+    2022.059 DSN ver 1.2.3	Allow environment override of NETWORK_INI and 
+				STATIONS_INI pathnames.
 */
 
-#define	VERSION		"1.2.2 (2021.140)"
+#define	VERSION		"1.2.3 (2022.059)"
 
 #ifdef COMSERV2
 #define	CLIENT_NAME	"NETM"
@@ -73,6 +75,10 @@
 
 #define	QUOTE(x)	#x
 #define	STRING(x)	QUOTE(x)
+
+#define ANNOUNCE(cmd,fp)							\
+    ( fprintf (fp, "%s - Using STATIONS_INI=%s NETWORK_INI=%s\n", \
+	      cmd, get_stations_ini_pathname(), get_network_ini_pathname()) )
 
 char *syntax[] = {
 "%s version " VERSION,
@@ -121,8 +127,6 @@ char *syntax[] = {
 " 2.  Client name is " CLIENT_NAME ".",
 NULL };
 
-#define	NETWORK_FILE	"/etc/network.ini"
-#define	STATIONS_FILE	"/etc/stations.ini"
 #define	STATION_INI_FILE "station.ini"
 #define STARTUP_STRING	"start"
 #define SHUTDOWN_STRING	"shutdown"
@@ -315,6 +319,7 @@ int main(int argc, char **argv)
     struct stat sb;
     struct dirent *dirent;
     DIR *dirp;
+    char *network_ini;
 
     /* Variables needed for getopt. */
     extern char	*optarg;
@@ -327,7 +332,7 @@ int main(int argc, char **argv)
     while ( (ch = getopt(argc,argv,"hBDbvlstrd:g:")) != -1)
 	switch (ch) {
 	case '?':
-	case 'h':   print_syntax(cmdname,syntax,info); exit(1);
+	case 'h':   ANNOUNCE(cmdname,info); print_syntax(cmdname,syntax,info); exit(1);
 	case 'B':   background_flag = 1; break;
 	case 'D':   daemon_flag = 1; break;
 	case 'b':   boot_flag=DAEMON_BOOT; break;
@@ -357,7 +362,7 @@ int main(int argc, char **argv)
 
     if (boot_flag + start_flag + term_flag + reconfig_flag > 1) {
 	fprintf (info, "Too many flags set\n");
-	print_syntax(cmdname,syntax,info);
+
 	exit(1);
     }
 
@@ -373,7 +378,8 @@ int main(int argc, char **argv)
 	exit(1);
     }
 
-    read_network_cfg (NETWORK_FILE, CLIENT_NAME);
+    network_ini = get_network_ini_pathname();
+    read_network_cfg (network_ini, CLIENT_NAME);
 
     if (daemon_flag + background_flag + boot_flag > 0 && strlen(lockfile) > 0) {
 	/* Perform preliminary lock on lockfile to see if another copy	*/
@@ -402,6 +408,9 @@ int main(int argc, char **argv)
 	fflush (stderr);
 	dup2 (1,2);
 	info = stderr;
+    }
+    if (daemon_flag) {
+	ANNOUNCE(cmdname,info);
     }
 
     /* Spawn child if daemon flag is set. */
@@ -742,6 +751,7 @@ STATION_INFO *collect_station_info (char *station_name)
     char *p;
     char station_cfg_file[256];
     config_struc master_cfg;		/* Master station file cfg.	*/
+    char *stations_ini;
 
     /* If this is a rescan of all stations, reset state of existing	*/
     /* stations to ignore.						*/
@@ -753,7 +763,8 @@ STATION_INFO *collect_station_info (char *station_name)
 
     /* Scan station list.						*/
     memset (&master_cfg, 0, sizeof(master_cfg));
-    if (open_cfg(&master_cfg,STATIONS_FILE,station_name)) {
+    stations_ini = get_stations_ini_pathname();
+    if (open_cfg(&master_cfg,stations_ini,station_name)) {
 	fprintf (info, "Could not find station %s\n", station_name);
 	exit(1);
     }
@@ -2140,6 +2151,7 @@ void set_initial_states (STATION_INFO *s, int flag)
 void reconfig_daemon() 
 {
     STATION_INFO *s;
+    char *network_ini;
 
     /* Determine if reconfiguration is allowed at this point.		*/
     /* If not, defer until later.					*/
@@ -2159,7 +2171,8 @@ void reconfig_daemon()
 	free (s);
     }
     /* Read network configuration file.					*/
-    read_network_cfg (NETWORK_FILE, CLIENT_NAME);
+    network_ini = get_network_ini_pathname();
+    read_network_cfg (network_ini, CLIENT_NAME);
 
     /* Reopen the logfile.						*/
     if (daemon_flag && log_to_file) {
@@ -2248,7 +2261,7 @@ void read_network_cfg (char *config_file, char *section)
     }
     close_cfg(&network_cfg);
     if (strlen(logdir) == 0) {
-	fprintf (info, "Missing LOGDIR entry in %s\n", NETWORK_FILE);
+	fprintf (info, "Missing LOGDIR entry in %s\n", config_file);
 	++fatal;
     }
     else {
@@ -2258,7 +2271,7 @@ void read_network_cfg (char *config_file, char *section)
 	}
     }
     if (strlen(cmddir) == 0) {
-	fprintf (info, "Missing CMDDIR entry in %s\n", NETWORK_FILE);
+	fprintf (info, "Missing CMDDIR entry in %s\n", config_file);
 	++fatal;
     }
     else {
@@ -2327,10 +2340,12 @@ int collect_group_info (char *group)
     config_struc master_cfg;		/* Master station file cfg.	*/
     int groupsize = 0;
     char *station_name = "*";
+    char *stations_ini;
 
     /* Scan station list.						*/
     memset (&master_cfg, 0, sizeof(master_cfg));
-    if (open_cfg(&master_cfg,STATIONS_FILE,station_name)) {
+    stations_ini = get_stations_ini_pathname();
+    if (open_cfg(&master_cfg,stations_ini,station_name)) {
 	fprintf (info, "Could not find station %s\n", station_name);
 	exit(1);
     }

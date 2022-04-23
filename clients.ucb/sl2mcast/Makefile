@@ -22,6 +22,10 @@ CSDIR	= ../..
 CSINCL	= $(CSDIR)/include
 CSUDIR	= $(CSDIR)/libcsutil
 CSULIB	= $(CSUDIR)/libcsutil.a
+#SLINK_DIR = $(CSDIR)/libslink
+#SLINK_INCL = $(SLINK_DIR)
+#SLINK_LIB = $(SLINK_DIR)/libslink.a
+
 
 ########################################################################
 # LINUX definitions

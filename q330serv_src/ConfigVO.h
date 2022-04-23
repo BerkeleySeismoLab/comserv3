@@ -19,6 +19,7 @@
  * Modification History:
  *  27 July 2002
  *  2020-09-29 DSN Updated for comserv3.
+ *  2022-03-16 DSN Added support for TCP connection to Q330/baler.
  */
 
 #ifndef _ConfigVO_H
@@ -49,6 +50,7 @@ public:
     char *   getLogDir() const;
     char *   getLogType() const;
     char *   getQ330UdpAddr() const;
+    char *   getQ330TcpAddr() const;
     uint32_t getQ330BasePort() const;
     uint32_t getQ330DataPortNumber() const; // 1-4
     uint64_t getQ330SerialNumber() const;
@@ -80,6 +82,7 @@ public:
     void setLogDir(char *input);
     void setLogType(char *input);
     void setQ330UdpAddr(char * input);
+    void setQ330TcpAddr(char * input);
     void setQ330BasePort(char * input);
     void setQ330DataPortNumber(char * input);
     void setQ330SerialNumber(char * input);
@@ -120,6 +123,7 @@ private:
     char p_logdir[256];
     char p_logtype[256];
     char     p_q330_udpaddr[255];
+    char     p_q330_tcpaddr[255];
     uint16_t p_q330_base_port;
     uint16_t p_q330_data_port;
     uint64_t p_q330_serial_number;

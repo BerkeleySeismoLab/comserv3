@@ -27,6 +27,7 @@
 #include <ctype.h>
 #include <math.h>
 double log2(double);
+void print_mseed_hdr (char * packet, int nbytes);
 
 off_t lseek (int fd, off_t offset, int whence);
 
@@ -237,6 +238,13 @@ int store_seed (seed_record_header *pseed)
 	    break;
 	}
 	status = 1;
+    }
+
+    if (verbosity & 1) {
+	char str[1024];
+	dump_hdr (hdr, str, JULIAN_FMT);
+	fprintf (info, "%s", str);
+	fflush (info);
     }
     if (hdr) free_data_hdr(hdr);
     return(status);

@@ -3,6 +3,8 @@
 #ifndef CSLIMITS_H
 #define CSLIMITS_H
 
+#include <sys/param.h>
+
 /*
  * 29 Sep 2020 DSN Updated for comserv3.
  */
@@ -27,4 +29,5 @@
 #define CFGWIDTH 512
 #define SECWIDTH 256
 
+#define CSMAXFILELEN	MAXPATHLEN
 #endif

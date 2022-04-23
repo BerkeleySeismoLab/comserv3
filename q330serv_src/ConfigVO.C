@@ -17,6 +17,7 @@
  *
  * Modification History:
  *  2020-09-29 DSN Updated for comserv3.
+ *  2022-03-16 DSN Added support for TCP connection to Q330/baler.
  */
 
 #include <stdlib.h>
@@ -51,6 +52,7 @@ ConfigVO::ConfigVO(q330serv_cfg cfg) {
     setLogDir(cfg.logdir);
     setLogType(cfg.logtype);
     setQ330UdpAddr(cfg.udpaddr);
+    setQ330TcpAddr(cfg.tcpaddr);
     setQ330BasePort(cfg.baseport);
     setQ330DataPortNumber(cfg.dataport);
     setQ330SerialNumber(cfg.serialnumber);
@@ -88,6 +90,7 @@ ConfigVO::ConfigVO()
     memset(p_logdir, 0, sizeof(p_logdir));
     memset(p_logtype, 0, sizeof(p_logtype));
     strcpy(p_q330_udpaddr, "");
+    strcpy(p_q330_tcpaddr, "");
     p_q330_base_port = 5330;
     p_q330_data_port = 1;
     p_q330_serial_number = 0x00;
@@ -162,6 +165,11 @@ char * ConfigVO::getLogType() const
 char * ConfigVO::getQ330UdpAddr() const
 {
     return (char *)p_q330_udpaddr; 
+}
+
+char * ConfigVO::getQ330TcpAddr() const
+{
+    return (char *)p_q330_tcpaddr; 
 }
 
 uint32_t ConfigVO::getQ330BasePort() const
@@ -306,6 +314,11 @@ void ConfigVO::setQ330UdpAddr(char* input)
 {
 
     strcpy(p_q330_udpaddr, input);
+}
+void ConfigVO::setQ330TcpAddr(char* input)
+{
+
+    strcpy(p_q330_tcpaddr, input);
 }
  
 void ConfigVO::setQ330BasePort(char* input)

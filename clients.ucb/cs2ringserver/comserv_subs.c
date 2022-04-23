@@ -3,6 +3,7 @@
  * 
  * Modification History:
  *  2020-09-29 DSN Updated for comserv3.
+ *  2022-02-07 DSN Updated to allow enviromental override of STATIONS_INI.
  ************************************************************************/
 
 #include <stdio.h>
@@ -81,8 +82,8 @@ typedef struct _filter {
 static SEL sel[NUMQ];
 static FILTER save [NUMQ];	/* save filtering info for each type.	*/
 
-char lockfile[160];			/* Name of optional lock file.	*/
-char pidfile[160];
+char lockfile[CFGWIDTH];			/* Name of optional lock file.	*/
+char pidfile[CFGWIDTH];
 
 int save_this_record (seed_record_header *pseed);
 int parse_cfg (char *str1, char *str2);
@@ -251,9 +252,9 @@ int fill_from_comserv (char *station)
     int lockfd;				/* Lockfile file desciptor.	*/
 
     config_struc cfg;
-    char str1[160], str2[160], station_dir[160];
-    char station_desc[60], source[160];
-    char filename[160];
+    char str1[CFGWIDTH], str2[CFGWIDTH], station_dir[CFGWIDTH];
+    char station_desc[60], source[CFGWIDTH];
+    char filename[CFGWIDTH];
     char time_str[TIMESTRLEN];
     int status;
 
@@ -262,7 +263,8 @@ int fill_from_comserv (char *station)
     pidfile[0] = '\0';
 
 /* open the stations list and look for that station */
-    strcpy (filename, "/etc/stations.ini") ;
+    strncpy(filename, get_stations_ini_pathname(), CFGWIDTH);
+    filename[CFGWIDTH-1] = '\0';
     memset(&cfg, 0, sizeof(cfg));
     if (open_cfg(&cfg, filename, station)) {
 	fprintf (stderr,"Could not find station %s\n", station) ;

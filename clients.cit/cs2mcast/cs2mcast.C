@@ -27,11 +27,14 @@ Modification History:
 				Modified for 15 character station and client names.
     2021-04-27  Doug Neuhauser  Initialize config_struc structures before use.
 				Change socket variable name to socket_fd.  
+    2022-01-20  Doug Neuhauser  Added optional debugging info for multicast packets. 
+    2022-02-07  Doug Neuhauser  v1.1.2 (2022.038)
+				Allow environment override of STATIONS_INI pathname.
 Usage Notes:
 
 **********************************************************/
 
-#define VERSION "1.1.1 (2021.117)"
+#define VERSION "1.1.2 (2022.038)"
 
 #ifdef COMSERV2
 #define CLIENT_NAME	"CS2M"
@@ -72,7 +75,9 @@ Usage Notes:
 #include "multicast_utils.h"
 #define MAX_SELECTORS CHAN+2
 
-#define CSMAXFILELEN 1024
+#define ANNOUNCE(cmd,fp)							\
+    ( fprintf (fp, "%s - Using STATIONS_INI=%s NETWORK_INI=%s\n", \
+	      cmd, get_stations_ini_pathname(), get_network_ini_pathname()) )
 
 const int MAX_CHARS_IN_SELECTOR_LIST = 300;
 
@@ -82,6 +87,8 @@ const char *syntax[] = {
 "	-?		 	Help - prints syntax message.",
 "	-h			Help - prints syntax message.",
 "	-v n			Set verbosity level to n.",
+"				1 = print mSEED header for each packet multicast.",
+"				2 = print receipt line for each packet and display polling info.",
 "	-I 131.215.65.34	Sets the multicast interface to use as output.",
 "	-A 192.0.0.100		Sets the multicast address to send the data to.",
 "	-P 10000		Sets the multicast port to multicast.",
@@ -225,7 +232,7 @@ int main (int argc, char *argv[])
 	switch (c) 
 	{
 	case '?':
-	case 'h':   print_syntax (cmdname); exit(0);
+	case 'h':   ANNOUNCE(cmdname,info); print_syntax (cmdname); exit(0);
 	case 'v':   verbosity=atoi(optarg); break;
 	case 'I':   strcpy(m_interface,optarg); break;
 	case 'A':   strcpy(m_address,optarg); break;
@@ -253,6 +260,7 @@ int main (int argc, char *argv[])
 
     if (argc > 0)
     {
+	ANNOUNCE(cmdname,info);
 	strncpy(sname, argv[argc-1], SERVER_NAME_SIZE) ;
 	sname[SERVER_NAME_SIZE-1] = '\0' ;
     }
@@ -265,7 +273,8 @@ int main (int argc, char *argv[])
     upshift(sname) ;
 
 /* open the stations list and look for that station */
-    strcpy (filename, "/etc/stations.ini") ;
+    strncpy(filename, get_stations_ini_pathname(), CSMAXFILELEN);
+    filename[CSMAXFILELEN-1] = '\0';
     memset (&cfg, 0, sizeof(cfg));
     if (open_cfg(&cfg, filename, sname))
     {
@@ -440,7 +449,7 @@ int main (int argc, char *argv[])
 		for (k = 0 ; k < thist->valdbuf ; k++)
 		{
 		    pseed = (seed_record_header*) &pdat->data_bytes ;
-		    if (verbosity & 1)
+		    if (verbosity & 2)
 		    {
 			fprintf (info, "[%s] <%2d> %s recvtime=%s ",
 				 sname_str_cs(thist->name), k, 
@@ -457,7 +466,7 @@ int main (int argc, char *argv[])
 
 		    int nbytes = thist->dbufsize - timehdrinfo;
 
-		    if(verbosity & 1)
+		    if(verbosity & 2)
 		    {
 
 			char myseqno[7];

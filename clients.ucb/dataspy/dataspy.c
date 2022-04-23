@@ -15,6 +15,7 @@ Edit History:
     7 04 Jan 2012 DSN Work on both big and little endian systems.  Uses qlib2.
     8 2020-09-29  DSN Updated for comserv3.
 		ver 1.1.0 Modified for 15 character station and client names.
+    9 2020-02-59 DSN ver 1.1.1 	Allow environment override of STATIONS_INI pathname.
 */
 #include <stdint.h>
 #include <stdio.h>
@@ -38,9 +39,11 @@ Edit History:
 #include "stuff.h"
 #include "timeutil.h"
 #include "service.h"
+#include "cfgutil.h"
+
 pchar seednamestring (seed_name_type *sd, location_type *loc);
 
-#define VERSION "1.1.0 (2018.273)"
+#define VERSION "1.1.1 (2020.059)"
 
 #ifdef COMSERV2
 #define CLIENT_NAME	"DSPY"
@@ -66,6 +69,10 @@ char23 stats[13] = { "Good", "Enqueue Timeout", "Service Timeout", "Init Error",
 #define	DEFAULT_DATA_MASK \
 	(CSIM_DATA | CSIM_EVENT | CSIM_CAL | CSIM_TIMING | CSIM_MSG | CSIM_BLK)
 short data_mask = DEFAULT_DATA_MASK;	/* data mask for cs_setup.	*/
+
+#define ANNOUNCE(cmd,fp)							\
+    ( fprintf (fp, "%s - Using STATIONS_INI=%s NETWORK_INI=%s\n", \
+	      cmd, get_stations_ini_pathname(), get_network_ini_pathname()) )
 
 int swap_mseed_header (char *block);
 
@@ -160,6 +167,7 @@ int main (int argc, char *argv[])
 	    cname[3] = '\0' ;
 	}
     }
+    ANNOUNCE(argv[0],stdout);
     if (verbose)
 	printf("Processing station %s for chan %s\n", sname, cname);
 

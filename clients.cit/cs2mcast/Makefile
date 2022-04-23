@@ -22,15 +22,15 @@ CSDIR	= ../..
 CSINCL	= $(CSDIR)/include
 CSUDIR	= $(CSDIR)/libcsutil
 CSULIB	= $(CSUDIR)/libcsutil.a
-LDLIBS	= $(CSULIB)
+LDLIBS	= $(CSULIB) $(QLIB2_LIB)
 
 ########################################################################
 # Linux definitions
 #
 LD	 = $(CXX)
-INCL	 = -I$(CSINCL)
-CPPFLAGS = $(INCL) $(OSDEFS) $(ENDIAN)
-CXXFLAGS = -m$(NUMBITS) $(DEBUG) $(COPT)
+INCL	 = -I$(CSINCL) -I$(QLIB2_INCL)
+CPPFLAGS = $(INCL) $(OSDEFS) $(ENDIAN) -DDEBUG_CIT
+CXXFLAGS = -m$(NUMBITS) $(DEBUG) $(COPT) -DDEBUG_CIT
 LDFLAGS	 = -m$(NUMBITS) $(DEBUG)
 
 ########################################################################
@@ -49,7 +49,7 @@ ALL	= $(program)
 all: 		$(ALL)
 
 $(program):	$(objects) $(CSULIB)
-		$(LD) $(LDFLAGS) $(objects) -o $@ $(LDLIBS)
+		$(LD) -o $@ $(LDFLAGS) $(objects) $(LDLIBS)
 
 %.o:		%.C $(headers)
 		$(CXX) $(CXXFLAGS) $(CPPFLAGS) -c $<

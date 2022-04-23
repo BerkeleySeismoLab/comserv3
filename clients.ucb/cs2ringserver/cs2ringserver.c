@@ -5,11 +5,13 @@
  *  2020-09-29 DSN Updated for comserv3.
  *  2021-04-27 ver 1.2.1 (2021.117) DSN 
  *	Initialize config_struc structure before open_cfg call.
+ *  2022-02-28 ver 1.2.2 (2022.059) DSN
+ *	Updated to allow enviromental override of STATIONS_INI.
  ************************************************************************/
 
 #include <stdio.h>
 
-#define VERSION	"1.2.1 (2021.117)"
+#define VERSION	"1.2.2 (2022.059)"
 
 #ifdef COMSERV2
 #define CLIENT_NAME	"2RNG"
@@ -85,6 +87,10 @@ NULL };
 
 #define	SEED_BLKSIZE	512
 #define	SEED_MAX_BLKSIZE 8192
+
+#define ANNOUNCE(cmd,fp)							\
+    ( fprintf (fp, "%s - Using STATIONS_INI=%s NETWORK_INI=%s\n", \
+	      cmd, get_stations_ini_pathname(), get_network_ini_pathname()) )
 
 /************************************************************************
  *  Externals variables and functions.
@@ -299,7 +305,7 @@ int main (int argc, char **argv)
     while ( (c = getopt(argc,argv,"hRv:O:H:S:p:P:o:n:")) != -1)
 	switch (c) {
 	case '?':
-	case 'h':   print_syntax (cmdname,syntax,stdout); exit(0);
+	case 'h':   ANNOUNCE(cmdname,info); print_syntax (cmdname,syntax,stdout); exit(0);
 	case 'v':   verbosity=atoi(optarg); break;
 	case 'O':   strcpy(ringserver,optarg); break;
 	case 'H':   host = optarg; break;
@@ -334,6 +340,7 @@ int main (int argc, char **argv)
 	exit(1);
     }
 
+    ANNOUNCE(cmdname,info); 
     dl_loginit (verbosity, NULL, NULL, NULL, NULL);
 
     if (passwdfile) {

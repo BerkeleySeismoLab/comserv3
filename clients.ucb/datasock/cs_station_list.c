@@ -6,6 +6,7 @@
  *
  * Modification History:
  *  2020-09-29 DSN Updated for comserv3.
+ *  2022-02-07 DSN Allow environmental override of STATIONS_INI pathname;
  ************************************************************************/
 
 #include <stdio.h>
@@ -33,10 +34,8 @@ char hash_key[MAXHASH][8];
 char hash_data[MAXHASH][80];
 int nhash = 0;
 
-#define	LINELEN	256
+#define	LINELEN	CFGWIDTH
 char line[LINELEN];
-
-#define	STATIONS_LIST	"/etc/stations.ini"
 
 int add_channels (STATCHAN *cs, STATCHAN *wc);
 
@@ -65,14 +64,17 @@ int cs_station_list (STATCHAN **pcs,	/* ptr to comserv statchan struc*/
     int ncs = *pncs;
     int nwc = *pnwc;
     int status = 0;
+    char *stations_ini;
+
     memset (&cfg, 0, sizeof(cfg));
-    if (open_cfg (&cfg, STATIONS_LIST, "*") != 0) {
+    stations_ini = get_stations_ini_pathname();
+    if (open_cfg (&cfg, stations_ini, "*") != 0) {
 	close_cfg (&cfg);
 	return (-1);	/* error */
     }
 
     do {
-	/* Get the next station in the network config file.		*/
+	/* Get the next station in the STATIONS_INI config file.		*/
 	strcpy (this_station, &cfg.lastread[1]);
 	this_station[strlen(this_station)-1] = '\0';	/* remove [ ]	*/
 	upshift (this_station);

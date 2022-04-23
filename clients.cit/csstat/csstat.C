@@ -72,9 +72,11 @@ extern "C" {
 #include "cs_site_map.h"
 #define MAX_SELECTORS CHAN+2
 
-#define CSMAXFILELEN 1024
-
 const int MAX_CHARS_IN_SELECTOR_LIST = 300;
+
+#define ANNOUNCE(cmd,fp)							\
+    ( fprintf (fp, "%s - Using STATIONS_INI=%s NETWORK_INI=%s\n", \
+	      cmd, get_stations_ini_pathname(), get_network_ini_pathname()) )
 
 typedef std::map<const char *, ChanLocStat *, LessStr, std::allocator<std::pair<const char *, ChanLocStat *> > > ChanLocMap;
 
@@ -245,7 +247,7 @@ int main (int argc, char *argv[])
 	switch (c) 
 	{
 	case '?':
-	case 'h':   print_syntax (cmdname); exit(0);
+	case 'h':   ANNOUNCE(cmdname,info); print_syntax (cmdname); exit(0);
 	case 'v':   verbosity=atoi(optarg); break;
 	case 'f':   statfile=optarg; break;
 	case 't':   report_interval=atoi(optarg); break;
@@ -277,6 +279,7 @@ int main (int argc, char *argv[])
     }
     else
     {
+	ANNOUNCE(cmdname,info);
 	fprintf (stderr, "csstat: Version %s\n", VERSION);
 	fprintf (stderr, "Missing server name\n");
 	exit(1);
@@ -295,7 +298,8 @@ int main (int argc, char *argv[])
 //    }
 
 /* open the stations list and look for that station */
-    strcpy (filename, "/etc/stations.ini") ;
+    strncpy (filename, (const char *)get_stations_ini_pathname, CSMAXFILELEN);
+    filename[CSMAXFILELEN-1] = '\0';
     memset (&cfg, 0, sizeof(cfg));
     if (open_cfg(&cfg, filename, sname))
     {

@@ -20,12 +20,10 @@
 #define APP_IDENT_STRING "q8serv"
 #define MAJOR_VERSION 1
 #define MINOR_VERSION 0
-#define RELEASE_VERSION 2
-#define RELEASE_DATE "2021.133"
+#define RELEASE_VERSION 3
+#define RELEASE_DATE "2022.038"
 #define APP_VERSION_STRING APP_IDENT_STRING " v" STRING(MAJOR_VERSION) "." STRING(MINOR_VERSION) "." STRING(RELEASE_VERSION) " (" RELEASE_DATE ")"
 
-#define NETWORK_INI	"/etc/network.ini"
-#define STATIONS_INI	"/etc/stations.ini"
 #define STATION_INI	"station.ini"
 
 extern int log_inited;

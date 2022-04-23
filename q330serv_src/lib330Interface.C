@@ -7,6 +7,7 @@
  *  2015/09/25  - DSN - added log message when creating lib330 interface.
  *  2020-09-29 DSN Updated for comserv3.
  *  2021-03-13 DSN Fixed creating and matching multicast channel+location list.
+ *  2022-03-16 DSN Added support for TCP connection to Q330/baler.
  */
 
 #include <unistd.h>
@@ -516,9 +517,14 @@ void Lib330Interface::initializeRegistrationInfo(ConfigVO ourConfig) {
     memset (&this->registrationInfo, 0, sizeof(this->registrationInfo));
     uint64_t auth = ourConfig.getQ330AuthCode();
     memcpy(this->registrationInfo.q330id_auth, &auth, sizeof(uint64_t));
-    strcpy(this->registrationInfo.q330id_address, ourConfig.getQ330UdpAddr());
+    if (strlen(ourConfig.getQ330UdpAddr()) > 0) {
+	strcpy(this->registrationInfo.q330id_address, ourConfig.getQ330UdpAddr());
+    }
+    if (strlen(ourConfig.getQ330TcpAddr()) > 0) {
+	strcpy(this->registrationInfo.q330id_address, ourConfig.getQ330TcpAddr());
+	this->registrationInfo.host_mode = HOST_TCP;
+    }
     this->registrationInfo.q330id_baseport = ourConfig.getQ330BasePort();
-    this->registrationInfo.host_mode = HOST_ETH;
     strcpy(this->registrationInfo.host_interface, "");
     this->registrationInfo.host_mincmdretry = 5;
     this->registrationInfo.host_maxcmdretry = 40;

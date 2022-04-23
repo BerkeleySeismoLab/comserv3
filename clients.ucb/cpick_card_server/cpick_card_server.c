@@ -85,7 +85,6 @@ pchar seednamestring (seed_name_type *sd, location_type *loc);
 
 #define	CS_BLKSIZE  512
 #define	TIMESTRLEN  40
-#define	STATIONS_FILE	"/etc/stations.ini"
 #define	info		stdout
 #define	diag		stderr
 #define TEXT_FORMAT    0

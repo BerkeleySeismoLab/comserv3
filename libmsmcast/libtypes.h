@@ -127,7 +127,7 @@ enum tliberr {
 } ; 
 
 enum tlibstate {
-    LIBSTATE_IDLE, /* Not connected to Q330 */
+    LIBSTATE_IDLE, /* Not connected to datalogger / input_stream */
     LIBSTATE_TERM, /* Terminated */
     LIBSTATE_CONN, /* TCP Connect wait */
     LIBSTATE_REQ, /* Requesting Registration */
