@@ -306,7 +306,7 @@ int comserv_init (csconfig *cs_cfg, char* server_name)
     LogMessage (CS_LOG_TYPE_INFO, "      Cscfg Ver=%d, Buffers Ver=%d, Commands Ver=%d\n",
 		VER_CSCFG, VER_BUFFERS, VER_COMMANDS) ;
 
-    /* The stations.ini and network.ini file have already been read. */
+    /* The STATION_INI and NETWORK_INI files have already been read. */
     /* Set the required comserv global variables from the provide cs_cfg structure */
     strcpy (station_desc, cs_cfg->server_desc);
     if (strlen(cs_cfg->log_channel_id) > 0) {

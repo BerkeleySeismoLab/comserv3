@@ -854,7 +854,7 @@ begin
   /* Per Joe, disable these 3 lines:
   if (datahdr.offset_flag and DHOF_OFF)
     then
-      process_ll (q660, psave, chan_offset, seq) ; /* New lowish-latency handling */
+      process_ll (q660, psave, chan_offset, seq) ; New lowish-latency handling */
   
   q = q660->mdispatch[(datahdr.chan shr 4) + chan_offset][datahdr.chan and 0xF] ;
   if (q == NIL)

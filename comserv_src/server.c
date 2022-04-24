@@ -70,6 +70,7 @@ Edit History:
    35 12 Mar 09 DSN Another fix for reference through NULL pointer for dead client.
    36 24 Apr 2017 DSN Removed line terminator from LogMessage calls.
    37 29 Sep 2020 DSN Updated for comserv3.
+   38 07 Fev 2021 DSN Updated to allow environment variables override global pathnames.
 */           
 #include <stdio.h>
 #include <errno.h>
@@ -133,7 +134,7 @@ typedef struct {
 #define PRIVILEGED_WAIT 1000000 /* 1 second */
 #define NON_PRIVILEGED_WAIT 100000 /* 0.1 second */
 #define NON_PRIVILEGED_TO 60.0
-#define EDITION 36
+#define EDITION 39
 
 char seedformat[4] = { 'V', '2', '.', '3' } ;
 char seedext = 'B' ;
@@ -514,13 +515,10 @@ int main (int argc, char *argv[], char **envp)
 #endif
 
 /* open the stations list and look for that station */
-#ifdef _OSK
-    strcpy (filename, "/r0/stations.ini") ;
-#else
-    strcpy (filename, "/etc/stations.ini") ;
-#endif
+    strncpy (filename, get_station_ini_pathname(), CFGWIDTH);
+    filename[CFGWIDTH-1] = '\0';
     if (open_cfg(&cfg, filename, (pchar)station_name))
-	terminate ("Could not find station in stations.ini file\n") ;
+	terminate ("Could not find station in STATIONS_INI file\n") ;
 
 /* Try to find the station directory, source, and description */
     do

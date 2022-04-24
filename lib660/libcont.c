@@ -21,7 +21,12 @@ Edit History:
    Ed Date       By  Changes
    -- ---------- --- ---------------------------------------------------
     0 2017-06-08 rdr Created
+    1 2021-01-06 jms omit admin DP channels on IDL
 */
+
+#define OMITADMINCHANNELSONIDL
+
+
 #ifndef libcont_h
 #include "libcont.h"
 #endif
@@ -862,6 +867,25 @@ begin
                     build_fake_log_lcq (q660, TRUE) ;
                 return ;
               end
+
+#ifdef OMITADMINCHANNELSONIDL
+          if (strstr(q660->par_register.q660id_address, "@IDL")) {
+               /* skip administrative DP channels on IDL */
+               switch ((enum tlogfld) pdlsrc->dp_src) 
+               {
+                 case LOGF_MSGS :
+                   break ;
+                 case LOGF_CFG :
+                   break ;
+                 case LOGF_TIME :
+                   break ;
+                 default :
+                   inc(loops) ;
+                   continue;
+               }
+          }
+#endif              
+              
           getbuf (addr(q660->thrmem), (pvoid)addr(cur_lcq), sizeof(tlcq)) ;
           if (q660->dplcqs == NIL)
             then

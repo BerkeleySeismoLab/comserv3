@@ -13,7 +13,8 @@
 #include "service.h"
 
 #define MAXPROC 2 /* maximum number of service requests to process before checking serial port */
-#define MAXWAIT 10 /* maximum number of seconds for clients to wait */
+//:: #define MAXWAIT 10 /* maximum number of seconds for clients to wait */
+#define MAXWAIT 5 /* maximum number of seconds for clients to wait */
 #define PRIVILEGED_WAIT 1000000 /* 1 second */
 #define NON_PRIVILEGED_WAIT 100000 /* 0.1 second */
 #define NON_PRIVILEGED_TO 60.0
@@ -34,7 +35,8 @@
 #define EXTERN
 EXTERN int32_t blockmask = 0 ;
 EXTERN int32_t noackmask = 0 ;
-EXTERN int32_t polltime = 50000 ;
+//:: EXTERN int32_t polltime = 50000 ;
+EXTERN int32_t polltime = 20000 ;
 EXTERN int32_t grpsize = 1 ;
 EXTERN int32_t grptime = 5 ;
 EXTERN tclients clients[MAXCLIENTS] ;

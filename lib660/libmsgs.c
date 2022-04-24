@@ -92,10 +92,10 @@ begin
         case LIBMSG_SNR : strcpy(s, "Not Registered, Will retry registration in ") ; break ;
         case LIBMSG_INVREG : strcpy(s, "Invalid Registration Request, Will retry registration in ") ; break ;
         case LIBMSG_CONTIN : strcpy(s, "Continuity Error: ") ; break ;
-        case LIBMSG_DATATO : strcpy(s, "Data Timeout, Will retry registratin in ") ; break ;
+        case LIBMSG_DATATO : strcpy(s, "Data Timeout, Will retry registration in ") ; break ;
         case LIBMSG_CONCRC : strcpy(s, "Continuity CRC Error, Ignoring rest of file: ") ; break ;
         case LIBMSG_CONTNR : strcpy(s, "Continuity not restored") ; break ;
-        case LIBMSG_STATTO : strcpy(s, "Status Timeout, Will retry registratin in ") ; break ;
+        case LIBMSG_STATTO : strcpy(s, "Status Timeout, Will retry registration in ") ; break ;
         case LIBMSG_CONPURGE : strcpy(s, "Continuity was expired, Ignoring rest of file: ") ; break ;
         case LIBMSG_BADTIME : strcpy(s, "Requested Data Not Found") ; break ;
       end

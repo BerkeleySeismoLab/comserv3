@@ -43,6 +43,8 @@ Edit History:
    14 2010-12-22 rdr Add Sensor control blockette handling.
    15 2011-02-18 rdr Add handling of FE PLL blockettes.
    16 2013-08-09 rdr Check for missing timing blockette when moving to next second of data.
+   17 2022-04-18 dsn Remove 2 erroneous checks for dpath being open in send_dopen() and dack_out().
+                     Add Q330 TCP telemetry debugging with BSL_Q330_TCP_DEBUG conditional compilation.
 */
 #ifndef libtypes_h
 #include "libtypes.h"
@@ -198,9 +200,6 @@ begin
   if (q330->usesock)
     then
       begin
-        if (q330->dpath == INVALID_SOCKET)
-          then
-            return ;
         if (q330->tcp)
           then
             begin
@@ -211,6 +210,15 @@ begin
               pref = p ; /* save start of tcp packet */
               storeword (addr(p), 1) ; /* data port */
               storeword (addr(p), msglth) ; /* qdp length */
+#ifdef BSL_Q330_TCP_DEBUG
+              s[0] = '\0';
+              command_name (q330->recvhdr.command, addr(s1)) ;
+              strcat (s, s1) ;
+              sprintf(s1, ", TCPSendLth=%d Seq=%d Ack=%d", msglth+4, q330->recvhdr.sequence,
+                      q330->recvhdr.acknowledge) ;
+              strcat(s, s1) ;
+              libmsgadd(q330, LIBMSG_PKTOUT, addr(s)) ;
+#endif
               err = send(q330->cpath, (pchar)pref, msglth + 4, 0) ;
             end
           else
@@ -218,6 +226,15 @@ begin
               if (q330->dpath == INVALID_SOCKET)
                 then
                   return ;
+#ifdef BSL_Q330_TCP_DEBUG
+              s[0] = '\0';
+              command_name (q330->recvhdr.command, addr(s1)) ;
+              strcat (s, s1) ;
+              sprintf(s1, ", UDPSendtoLth=%d Seq=%d Ack=%d", msglth, q330->recvhdr.sequence,
+                      q330->recvhdr.acknowledge) ;
+              strcat(s, s1) ;
+              libmsgadd(q330, LIBMSG_PKTOUT, addr(s)) ;
+#endif
               err = sendto(q330->dpath, addr(q330->dataout.qdp), msglth, 0, addr(q330->dsockout), sizeof(struct sockaddr)) ;
             end
         if (err == SOCKET_ERROR)
@@ -1172,9 +1189,6 @@ begin
   if (q330->usesock)
     then
       begin
-        if (q330->dpath == INVALID_SOCKET)
-          then
-            return ;
         if (q330->tcp)
           then
             begin

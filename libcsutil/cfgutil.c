@@ -37,6 +37,7 @@ Edit History:
 #include <termios.h>
 #include <fcntl.h>
 #include <sys/types.h>
+#include <sys/param.h>
 #include <ctype.h>
 #include "cstypes.h"
 #include "cfgutil.h"
@@ -48,7 +49,7 @@ Edit History:
 
 #define COMSERV_PARAMS_ENV "COMSERV_PARAMS"	/* the params dir where @ included file will be found */
 
-short VER_CFGUTIL = 12 ;
+short VER_CFGUTIL = 13 ;
 
 #define SUCCESS 0
 #define FAILURE 1
@@ -342,4 +343,57 @@ void comserv_split (pchar src, pchar right, char sep)
     }
     else
 	right[0] = '\0' ;
+}
+
+static char *stations_ini_pathname;
+static char *network_ini_pathname;
+
+/*
+ * Initialize global pathnames used by comserv3.
+ * Allow override by environmental variables.
+*/
+int init_global_ini_pathnames (void)
+{
+    char *p;
+
+    if (stations_ini_pathname == NULL) {
+	p = getenv (STATIONS_INI_VARNAME);
+	if (p != NULL) {
+	    stations_ini_pathname = strndup (p, MAXPATHLEN-1);
+	}
+	else {
+	    stations_ini_pathname = strndup (DEFAULT_STATIONS_INI, MAXPATHLEN-1);
+	}
+    }
+    if (network_ini_pathname == NULL) {
+	p = getenv (NETWORK_INI_VARNAME);
+	if (p != NULL) {
+	    network_ini_pathname = strndup (p, MAXPATHLEN-1);
+	}
+	else {
+	    network_ini_pathname = strndup (DEFAULT_NETWORK_INI, MAXPATHLEN-1);
+	}
+    }
+    return 0;
+}
+
+/*
+ * Return station_ini pathname used by comserv3.
+ * Allow override by environmental variables.
+*/
+char *get_stations_ini_pathname (void)
+{
+    init_global_ini_pathnames();
+    return (stations_ini_pathname);
+}
+
+/*
+ * Return network_ini pathname used by comserv3.
+ * Allow override by environmental variables.
+*/
+
+char *get_network_ini_pathname (void)
+{
+    init_global_ini_pathnames();
+    return (network_ini_pathname);
 }

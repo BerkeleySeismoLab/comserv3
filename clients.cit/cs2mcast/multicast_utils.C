@@ -40,6 +40,12 @@ Usage Notes:
 #include "multicast_utils.h"
 #include "RetCodes.h"
 
+#include "qlib2.h"
+
+void print_mseed_hdr (char * packet, int nbytes);
+
+extern int verbosity;
+
 int init_multicast_socket(char    *mif,
 	                  char    *maddr,
 		          int      mport,
@@ -113,6 +119,9 @@ int multicast_packet(struct Multicast_Info& minfo,
   }
   else
   {
+    if (verbosity & 1) {
+      print_mseed_hdr ((char *) packet, nbytes);
+    }
     return(TN_SUCCESS);
   }
 }
@@ -122,4 +131,19 @@ void close_multicast_socket(int socket_fd)
 {
   close(socket_fd);
   return;
+}
+
+void print_mseed_hdr (char * packet, int nbytes)
+{
+  DATA_HDR *hdr;
+  char str[1024];
+  hdr = decode_hdr_sdr ((SDR_HDR *)packet, nbytes);
+  if (hdr == NULL) {
+      std::cout << "Error decoding packet header for logging" << std::endl;
+  }
+  dump_hdr (hdr, str, JULIAN_FMT);
+  int i = strlen(str);
+  if (i > 0) str[--i] = 0;    // Trim newline from str
+  std::cout << str << std::endl;
+  free_data_hdr(hdr);
 }

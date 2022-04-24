@@ -26,7 +26,8 @@ ENDIAN	= -DENDIAN_LITTLE -D_BIG_ENDIAN_HEADER
 # 2. Definitions for any external libraries that are required.
 
 # Paths MUST be fully-qualified path, NOT relative paths,
-# since Makefiles at different directory levels will use this file.
+# since Makefiles at different directory levels will use this 
+# include file.
 
 #---------------------------------------------------------------------
 # qlib2 definitions.
@@ -46,10 +47,10 @@ $(error Unknown value of NUMBITS)
 endif
 
 #---------------------------------------------------------------------
-# libslink definitions.
+# libslink definitions. NOTE:  Need to use libslink-2.7.0RC source or newer.
 
 # libslink source code directory, if building from source code directory.
-SLINK_DIR = /data/love/doug/git/external_libs/libslink
+SLINK_DIR = /data/love/doug/git/external_libs/libslink-2.7.0RC
 # libslink include directory.
 SLINK_INCL = $(SLINK_DIR)
 # libslink library pathname.   May be dependent on NUMBITS.

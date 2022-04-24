@@ -58,6 +58,7 @@
 #include "cstypes.h"
 #include "comserv_calls.h"
 #include "srvc.h"
+#include "cfgutil.h"
 
 extern "C" {
     void cs_sig_alrm (int signo);
@@ -93,7 +94,9 @@ char *my_endian_string = (char *)MY_ENDIAN_STRING;
 // *****************************************************************************
 
 void showVersion() {
-    g_log <<     APP_VERSION_STRING << " - " << my_endian_string << std::endl;
+    g_log <<     APP_VERSION_STRING << " - " << my_endian_string << " - "
+	  << " STATIONS_INI=" << get_stations_ini_pathname() 
+	  << " NETWORK_INI=" << get_network_ini_pathname() << std::endl;
 }
 
 // *****************************************************************************

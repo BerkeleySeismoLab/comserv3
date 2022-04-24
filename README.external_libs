@@ -1,0 +1,41 @@
+External libraries required for comserv3 servers and clients:
+
+1.  Download and build the following external libraries.
+I recommend that you install them in a directory named
+    external_libs
+at the same level as the comserv3 directory, or within
+the comserv3 directory.
+
+libdali-master
+	Download from https://github.com/iris-edu/libdali
+	unzip libdali-master.zip
+	cd libdali-master
+	env CFLAGS=-m32 make
+	mv libdali.a libdali_32.a
+	make clean
+	env CLFAGS=-m64 make
+	mv libdali.a libdali_64.a
+	make clean
+
+libslink
+	Download from https://github.com/iris-edu/libslink/archive/refs/tags/v2.7.0RC.tar.gz
+	YOU NEED TO USE AT LEAST v2.7.0RC - earlier versions will not work.
+	tar xvf v2.7.0RC.tar.gz
+	cd libslink-libslink-2.7.0RC
+	env CFLAGS=-m32 make
+	mv libslink.a libslink_32.a
+	make clean
+	env CLFAGS=-m64 make
+	mv libslink.a libslink_64.a
+	make clean
+
+qlib2
+	cvs co quanterra/qlib2
+	mv quanterra/qlib2 .
+	rm -rf quanterra
+	cd qlib2
+	make
+	# makes both 32-bit and 64-bit libs
+
+2.  Update the comserv3/Makefile.include file to specify the full pathname of
+these libraries.

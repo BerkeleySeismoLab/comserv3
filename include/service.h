@@ -77,14 +77,15 @@ Edit History:
 #endif
 
 /* Minimum interval for cs_check operations. */
-/* If this is redefined, you must rebuild ALL programs and libraries. */
+/* A smaller value can improve netmon response. */
+/* If this is redefined, you must rebuild ALL servers, clients, and libraries. */
 #ifdef COMSERV2
 #ifndef CS_CHECK_INTERVAL
 #define CS_CHECK_INTERVAL	10
 #endif
 #else
 #ifndef CS_CHECK_INTERVAL
-#define CS_CHECK_INTERVAL	5
+#define CS_CHECK_INTERVAL	2
 #endif
 #endif
 
@@ -339,7 +340,7 @@ extern "C" {
 
 /*
   This procedure will setup the tstations_struc for all comlink stations
-  found in the "/etc/stations.ini" file or the specified station. You can then
+  found in the STATIONS_INI file or the specified station. You can then
   customize stations to suit your needs if you desire. For each station it puts 
   in the default number of data buffers and selectors specified. If shared is TRUE,
   then there is one shared command input/output buffer for all stations (of size

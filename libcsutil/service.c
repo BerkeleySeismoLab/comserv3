@@ -190,7 +190,8 @@ void cs_setup (pstations_struc stations, pchar name, pchar sname, boolean shared
     stations->data_buffers = databufs ;
 
 /* open the stations list and look for any station */
-    strcpy (filename, "/etc/stations.ini") ;
+    strncpy(filename, (const char *)get_stations_ini_pathname(), CFGWIDTH);
+    filename[CFGWIDTH-1] = '\0';
     memset(&cfg,0,sizeof(cfg));
     if (open_cfg(&cfg, filename, sname))
     {

@@ -48,12 +48,13 @@ Date     who	Version	Modifications.
 			Command line argument for Station list consists of 
 			wildcarded station or station.net entries.
 2021.117   DSN  1.6.1   Initialize config_struc structure before open_cfg call.
+2022.059   DSN  1.6.2   Allow environmental override of STATIONS_INI pathname;
  ************************************************************************/
 
 #include <stdio.h>
 #include <stdlib.h>
 
-#define	VERSION	"1.6.1 (2021.117)"
+#define	VERSION	"1.6.2 (2022.059)"
 
 #ifdef COMSERV2
 #define	DEFAULT_CLIENT	"DSOC"
@@ -126,6 +127,10 @@ pchar seednamestring (seed_name_type *sd, location_type *loc);
 #define	TIMESTRLEN	40
 #define	POLLTIME	250000	/* microseconds to sleep.		*/
 #define TIMEOUT	EINTR
+
+#define ANNOUNCE(cmd,fp)							\
+    ( fprintf (fp, "%s - Using STATIONS_INI=%s NETWORK_INI=%s\n", \
+	      cmd, get_stations_ini_pathname(), get_network_ini_pathname()) )
 
 /************************************************************************
  *  Externals symbols.
@@ -202,7 +207,7 @@ int main (int argc, char *argv[], char **envp)
     while ( (c = getopt(argc,argv,"hip:P:S:M:m:c:v:")) != -1)
       switch (c) {
 	case '?':
-	case 'h':   print_syntax (cmdname,syntax,info); exit(0);
+	case 'h':   ANNOUNCE(cmdname,info); print_syntax (cmdname,syntax,info); exit(0);
 	case 'i':   interactive = 1; break;
 	case 'S':   port=atoi(optarg); break;
 	case 'p':   passwd = optarg; break;
@@ -214,6 +219,7 @@ int main (int argc, char *argv[], char **envp)
     /*	Skip over all options and their arguments.			*/
     argv = &(argv[optind]);
     argc -= optind;
+    ANNOUNCE(cmdname,info);
     if (port < 0) info = stderr;
     if (passwdfile) {
 	if ((fp = fopen (passwdfile, "r")) == NULL) {

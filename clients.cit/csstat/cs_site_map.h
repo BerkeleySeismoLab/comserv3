@@ -2,10 +2,6 @@
 #include "string.h"
 
 
-
-
-
-#define STATIONS_LIST   "/etc/stations.ini"       
 struct LessStr
 {
         bool operator() (const char* s1, const char *s2) const

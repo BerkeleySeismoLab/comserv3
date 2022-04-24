@@ -24,6 +24,7 @@
  *  2020-05-10
  *  2020-09-29 DSN Updated for comserv3.
  *  2021-04-27 DSN Initialize config_struc structures before use.
+ *  2022-03-16 DSN Added support for TCP connection to Q330/baler.
  */
 
 #include <iostream>
@@ -53,6 +54,7 @@
 #include "cstypes.h"
 #include "comserv_calls.h"
 #include "srvc.h"
+#include "cfgutil.h"
 
 extern "C" {
     void cs_sig_alrm (int signo);
@@ -88,7 +90,9 @@ char *my_endian_string = (char *)MY_ENDIAN_STRING;
 // *****************************************************************************
 
 void showVersion() {
-    g_log <<     APP_VERSION_STRING << " - " << my_endian_string << std::endl;
+    g_log <<     APP_VERSION_STRING << " - " << my_endian_string << " - "
+	  << " STATIONS_INI=" << get_stations_ini_pathname() 
+	  << " NETWORK_INI=" << get_network_ini_pathname() << std::endl;
 }
 
 // *****************************************************************************
@@ -166,6 +170,7 @@ int main(int argc, char *argv[]) {
     if (strlen(cs_cfg.logtype) > 0)  g_cvo.setLogType(cs_cfg.logtype);
     if (strlen(cs_cfg.lockfile) > 0) g_cvo.setLockFile(cs_cfg.lockfile);
     if (strlen(cs_cfg.udpaddr) > 0)  g_cvo.setQ330UdpAddr(cs_cfg.udpaddr);
+    if (strlen(cs_cfg.tcpaddr) > 0)  g_cvo.setQ330TcpAddr(cs_cfg.tcpaddr);
 #endif
 
     /* Open the lockfile for exclusive use if lockfile is specified.*/

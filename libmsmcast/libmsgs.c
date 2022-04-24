@@ -70,14 +70,14 @@ pchar lib_get_msg (word code, pchar result)
     case 2 : /* success code */
       switch (code) {
         case LIBMSG_CREATED : strcpy(s, "Station Thread Created") ; break ;
-        case LIBMSG_REGISTERED : strcpy(s, "Registered with Q660 ") ; break ;
+        case LIBMSG_REGISTERED : strcpy(s, "Registered with multicast socket") ; break ;
         case LIBMSG_DEALLOC : strcpy(s, "De-Allocating Data Structures") ; break ;
-        case LIBMSG_DEREG : strcpy(s, "De-Registered with Q660") ; break ;
+        case LIBMSG_DEREG : strcpy(s, "De-Registered with multicast socket") ; break ;
         case LIBMSG_XMLREAD : strcpy(s, "XML loaded, size=") ; break ;
         case LIBMSG_POCRECV : strcpy(s, "POC Received: ") ; break ;
         case LIBMSG_WRCONT : strcpy(s, "Writing Continuity File: ") ; break ;
         case LIBMSG_SOCKETOPEN : strcpy(s, "Socket Opened ") ; break ;
-        case LIBMSG_CONN : strcpy(s, "Connected to Q660") ; break ;
+        case LIBMSG_CONN : strcpy(s, "Connected to multicast socket") ; break ;
       }
       break ;
     case 3 : /* converted Q660 blockettes */
@@ -179,7 +179,7 @@ pchar lib_get_statestr (enum tlibstate state, pchar result)
 
   strcpy(s, "Unknown State") ;
   switch (state) {
-    case LIBSTATE_IDLE : strcpy(s, "Not connected to Q660") ; break ;
+    case LIBSTATE_IDLE : strcpy(s, "Not connected to multicast socket") ; break ;
     case LIBSTATE_TERM : strcpy(s, "Terminated") ; break ;
     case LIBSTATE_CONN : strcpy(s, "TCP Connect Wait") ; break ;
     case LIBSTATE_REQ : strcpy(s, "Requesting Registration") ; break ;

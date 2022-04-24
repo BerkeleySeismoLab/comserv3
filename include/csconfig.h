@@ -22,17 +22,17 @@ typedef struct {
 } cs_user_privilege;
 
 typedef struct  {
-    /* Info from stations.ini file. */
+    /* Info from STATIONS_INI file. */
     char server_desc[CFGWIDTH];
     char server_dir[CFGWIDTH];
     char server_source[CFGWIDTH];
     char seed_station[CFGWIDTH];
     char seed_network[CFGWIDTH];
 #ifdef COMSERV2
-    /* Info from either network.ini[netmon] or stations.ini file. */
+    /* Info from either NETWORK_INI[netmon] or STATIONS_INI file. */
     char logdir[CFGWIDTH];
     char logtype[CFGWIDTH];
-    /* Info from original comlink section in station.ini file */
+    /* Info from original comlink section in STATIONS_INI file */
     char lockfile[CFGWIDTH];
     char ipport[CFGWIDTH];
     char udpaddr[CFGWIDTH];

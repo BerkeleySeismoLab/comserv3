@@ -43,5 +43,6 @@ extern longword secsince (void) ;
 extern enum tliberr lib_lcqstat (pq660 q660, tlcqstat *lcqstat) ;
 extern enum tliberr lib_getdpcfg (pq660 q660, tdpcfg *dpcfg) ;
 extern void clear_calstat (pq660 q660) ;
+extern void init_ll_lcq (pq660 q660) ;
 
 #endif

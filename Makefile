@@ -44,14 +44,14 @@ install:	all $(BINDIR)
 ########################################################################
 # q8serv
 
-Q8SERV_EXTERNAL_LIBS	= lib660
+Q8SERV_COMM_LIBS	= lib660
 Q8SERV_SRC_DIRS		= libcomserv libcsutil q8serv_src
 Q8SERV_DIRS		= q8serv_src
-Q8SERV_ALL		= $(Q8SERV_EXTERNAL_LIBS) $(Q8SERV_SRC_DIRS)
+Q8SERV_ALL		= $(Q8SERV_COMM_LIBS) $(Q8SERV_SRC_DIRS)
 Q8SERV_INSTALL		= $(Q8SERV_DIRS)
 
 q8serv: 	
-	for dir in $(Q8SERV_EXTERNAL_LIBS) ; do \
+	for dir in $(Q8SERV_COMM_LIBS) ; do \
 		echo build for $$dir ... ; \
 		( cd $$dir ; make -f $(MAKEFILE) ) ; \
 	done
@@ -75,14 +75,14 @@ q8serv_install:	q8serv $(BINDIR)
 ########################################################################
 # q330serv
 
-Q330SERV_EXTERNAL_LIBS	= lib330
+Q330SERV_COMM_LIBS	= lib330
 Q330SERV_SRC_DIRS	= libcomserv libcsutil q330serv_src
 Q330SERV_DIRS		= q330serv_src
-Q330SERV_ALL		= $(Q330SERV_EXTERNAL_LIBS) $(Q330SERV_SRC_DIRS)
+Q330SERV_ALL		= $(Q330SERV_COMM_LIBS) $(Q330SERV_SRC_DIRS)
 Q330SERV_INSTALL		= $(Q330SERV_DIRS)
 
 q330serv: 	
-	for dir in $(Q330SERV_EXTERNAL_LIBS) ; do \
+	for dir in $(Q330SERV_COMM_LIBS) ; do \
 		echo build for $$dir ... ; \
 		( cd $$dir ; make -f $(MAKEFILE) ) ; \
 	done
@@ -106,14 +106,14 @@ q330serv_install:	q330serv $(BINDIR)
 ########################################################################
 # mserv
 
-MSERV_EXTERNAL_LIBS	= libmsmcast
+MSERV_COMM_LIBS		= libmsmcast
 MSERV_SRC_DIRS		= libcsutil mserv_src
 MSERV_DIRS		= mserv_src
-MSERV_ALL		= $(MSERV_EXTERNAL_LIBS) $(MSERV_SRC_DIRS)
+MSERV_ALL		= $(MSERV_COMM_LIBS) $(MSERV_SRC_DIRS)
 MSERV_INSTALL		= $(MSERV_DIRS)
 
 mserv: 	
-	for dir in $(MSERV_EXTERNAL_LIBS) ; do \
+	for dir in $(MSERV_COMM_LIBS) ; do \
 		echo build for $$dir ... ; \
 		( cd $$dir ; make -f $(MAKEFILE) ) ; \
 	done
@@ -137,14 +137,14 @@ mserv_install:	 mserv $(BINDIR)
 ########################################################################
 # comserv
 
-COMSERV_EXTERNAL_LIBS	= 
+COMSERV_COMM_LIBS	= 
 COMSERV_SRC_DIRS	= libcsutil comserv_src
 COMSERV_DIRS		= comserv_src
-COMSERV_ALL		= $(COMSERV_EXTERNAL_LIBS) $(COMSERV_SRC_DIRS)
+COMSERV_ALL		= $(COMSERV_COMM_LIBS) $(COMSERV_SRC_DIRS)
 COMSERV_INSTALL		= $(COMSERV_DIRS)
 
 comserv: 	
-	for dir in $(COMSERV_EXTERNAL_LIBS) ; do \
+	for dir in $(COMSERV_COMM_LIBS) ; do \
 		echo build for $$dir ... ; \
 		( cd $$dir ; make -f $(MAKEFILE) ) ; \
 	done
@@ -168,7 +168,7 @@ comserv_install:	 comserv $(BINDIR)
 ########################################################################
 # clients
 
-CLIENTS_EXT_LIBS	= qlib2
+CLIENTS_EXT_LIBS	= qlib2 libdali libslink
 CLIENTS_SRC_DIRS	= libcsutil clients.quanterra clients.ucb clients.cit
 CLIENTS_DIRS		= clients.quanterra clients.ucb clients.cit
 CLIENTS_ALL		= $(CLIENTS_SRC_DIRS)

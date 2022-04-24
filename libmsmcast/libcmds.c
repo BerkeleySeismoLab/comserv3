@@ -65,7 +65,7 @@ void start_deallocation (pmsmcast msmcast)
 
     libmsgadd (msmcast, LIBMSG_DEALLOC, "") ;
     new_state (msmcast, LIBSTATE_DEALLOC) ;
-    new_state (msmcast, LIBSTATE_WAIT) ;
+    new_state (msmcast, LIBSTATE_IDLE) ;
     close_socket (msmcast) ;
 }
 

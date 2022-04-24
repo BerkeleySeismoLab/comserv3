@@ -54,9 +54,7 @@ Edit History:
 
 short VER_CSCFG = 23 ;
 
-#define STATIONS_INI	"/etc/stations.ini"
 #define STATION_INI	"station.ini"
-#define NETWORK_INI 	"/etc/network.ini"
 #ifdef COMSERV2
 #define GLOBAL_DEFAULTS	"NETM"
 #else
@@ -83,8 +81,11 @@ int verify_server_name (char *server_name)
 {
     config_struc cfg ;
     int rc;
+    char *stations_ini;
+
     memset (&cfg, 0, sizeof(cfg));
-    rc = open_cfg(&cfg, STATIONS_INI, server_name);
+    stations_ini = get_stations_ini_pathname();
+    rc = open_cfg(&cfg, stations_ini, server_name);
     close_cfg(&cfg);
     return rc;
 }
@@ -102,13 +103,15 @@ int getLogParamsFromNetwork(csconfig *cs_cfg)
 {
     config_struc network_cfg;           /* structure for config file.   */
     char str1[SECWIDTH], str2[SECWIDTH];
+    char *network_ini;
 
     /* Scan network initialization file.                                */
     memset (&network_cfg, 0, sizeof(network_cfg));
-    if (open_cfg(&network_cfg,NETWORK_INI,GLOBAL_DEFAULTS))
+    network_ini = get_network_ini_pathname();
+    if (open_cfg(&network_cfg,network_ini,GLOBAL_DEFAULTS))
     {
         fprintf (stderr, "Warning: Could not find [%s] section in network file %s\n", 
-		 GLOBAL_DEFAULTS, NETWORK_INI);
+		 GLOBAL_DEFAULTS, network_ini);
 	return -1;
     }
     while (1)
@@ -150,13 +153,15 @@ int getCSServerInfo(csconfig *cs_cfg, char *server_name)
 {
     config_struc stations_cfg;           /* structure for config file.   */
     char str1[SECWIDTH], str2[SECWIDTH];
+    char *stations_ini;
 
     /* Get selected station info from stations file. */
     memset (&stations_cfg, 0, sizeof(stations_cfg));
-    if (open_cfg(&stations_cfg,STATIONS_INI,server_name))
+    stations_ini = get_stations_ini_pathname();
+    if (open_cfg(&stations_cfg,stations_ini,server_name))
     {
         fprintf (stderr, "Could not find [%s] section in file %s\n", 
-		 server_name, STATIONS_INI);
+		 server_name, stations_ini);
         exit(1);
     }
     while (1)

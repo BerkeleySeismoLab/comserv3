@@ -26,6 +26,7 @@ Edit History:
     2 2018-04-04 rdr Add showing logger idents. Change unit for sys_temp.
     3 2018-06-25 rdr Add showing clock serial number.
     4 2018-08-28 rdr Add showing antenna voltage.
+    5 2021-01-06 jms harden formatting of time error
 */
 #include "libverbose.h"
 #include "libmsgs.h"
@@ -263,7 +264,7 @@ begin
   libmsgadd(q660, LIBMSG_SYSINFO, s) ;
   sprintf (s, "Initial VCO: %3.1f", (float)psp->start_km) ;
   libmsgadd(q660, LIBMSG_SYSINFO, s) ;
-  sprintf (s, "Time Error: %8.6f", (float)psp->time_error) ;
+  sprintf (s, "Time Error: %.7g", (float)psp->time_error) ;
   libmsgadd(q660, LIBMSG_SYSINFO, s) ;
   sprintf (s, "Best VCO: %4.2f", (float)psp->best_vco) ;
   libmsgadd(q660, LIBMSG_SYSINFO, s) ;

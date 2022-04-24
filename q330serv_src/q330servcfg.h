@@ -21,6 +21,7 @@
  * Modification History:
  *  28 March 2002
  *  2020-09-29 DSN Updated for comserv3.
+ *  2022-03-16 DSN Added support for TCP connection to Q330/baler.
  */
 
 #ifndef Q330CFG_H
@@ -44,6 +45,7 @@ struct q330serv_cfg
     char contFileDir[CFGWIDTH];
     char statusinterval[CFGWIDTH];
     char udpaddr[CFGWIDTH];
+    char tcpaddr[CFGWIDTH];
     char baseport[CFGWIDTH];
     char dataport[CFGWIDTH];
     char serialnumber[CFGWIDTH];

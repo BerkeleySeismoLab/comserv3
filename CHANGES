@@ -2,6 +2,44 @@ COMSERV3 changes:
 
 =========================================================================================
 Doug Neuhauser, doug@seismo.berkeley.edu
+2022/04/23
+
+Release 1.1.0
+
+1.  Added the ability for environment variables to overrirde the default pathnames
+of the 2 global COMSERV3 config files:
+   STATIONS_INI - override default pathname of /etc/stations.ini
+   NETWORK_INI  - override default pathname of /etc/network.ini
+Note that all servers and clients should reference the same files.
+All servers and clients were updated to use these variable if they are set.
+IRIS incorporated the critical patches for libslink into libslink-2.7.0RC.
+Their version of the library can now be used.
+
+2.  Reduced CS_CHECK_INTERVAL to 2 to improve netmon response on server and client timeouts.
+If this causes problems when running many servers, you can increase the value.
+NOTE THAT CHANGING THIS VALUE REQUIRES RECOMPILATION OF ALL COMSERV3 LIBRARIES,
+SERVERS, AND CLIENTS.
+
+3. Added TCP support for q330serv.  However, current Q330 tcp support appears to be
+buggy, so this is NOT recommended.
+Fixed bug in lib330 that prevented Q330 TCP support from running.
+Added debugging code for lib330 PB loglevel, and additional debugging code
+for TCP support.
+
+4. Misc other bugs fixed.
+
+=========================================================================================
+Doug Neuhauser, doug@seismo.berkeley.edu
+2021/11/04
+
+Release 1.0.1
+
+1.  Updated to Quanterra lib660-r65.  
+Incorporated BSL addition/modifications with conditional compilation.
+2.  Incorporated IRIS libslink-2.6/develop with 2 critical patches.
+
+=========================================================================================
+Doug Neuhauser, doug@seismo.berkeley.edu
 2021/04/29
 
 Release 1.0.0

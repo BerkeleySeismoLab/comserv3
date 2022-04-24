@@ -41,6 +41,8 @@ Edit History:
    12 2010-01-04 rdr Use fcntl instead of ioctl to set socket non-blocking.
    13 2010-03-27 rdr Add Q335 support.
    14 2010-05-13 rdr Add detection of 127.0.0.1 as additional baler port.
+   15 2022-04-18 dsn Add check for EINPROGRESS return code from socket() call for linux.
+                     Keep check for EWOULDBLOCK solaris return code.
 */
 #ifdef CMEX32
 #include "cmexserial.h"
@@ -290,7 +292,7 @@ begin
 #else
                      errno ;
 #endif
-              if (err != EWOULDBLOCK)
+              if (err != EWOULDBLOCK && err != EINPROGRESS)
                 then
                   begin
                     close_sockets (q330) ;
@@ -642,6 +644,9 @@ begin
   integer err ;
   word poff, qdplth ;
   string95 msg ;
+#ifdef BSL_Q330_TCP_DEBUG
+  string95 errstr ;
+#endif
 
   if (q330->cpath == INVALID_SOCKET)
     then
@@ -673,11 +678,30 @@ begin
           then
             begin
               q330->tcpidx = q330->tcpidx + err ;
+#ifdef BSL_Q330_TCP_DEBUG
+              if (q330->cur_verbosity and VERB_PACKET)
+                then
+                  begin
+                    sprintf (errstr, "Read %d bytes into tcpbuf[%d...%d]",
+			     err, q330->tcpidx-err, q330->tcpidx-1);
+                    libmsgadd (q330, HOSTMSG_ALL, addr(errstr)) ;
+                  end
+#endif
               while (q330->tcpidx >= 4)
                 begin
                   p = (pbyte)addr(q330->tcpbuf) ;
                   poff = loadword (addr(p)) ;
                   qdplth = loadword (addr(p)) ;
+#ifdef BSL_Q330_TCP_DEBUG
+                  if (q330->cur_verbosity and VERB_PACKET)
+		    then
+		      begin
+                        sprintf (errstr, "poff=%u (0x%X) qdplth=%u (0x%X)",
+				 (unsigned int)poff, (unsigned int)poff, 
+				 (unsigned int)qdplth, (unsigned int)qdplth) ;
+                        libmsgadd (q330, HOSTMSG_ALL, addr(errstr)) ;
+                      end
+#endif
                   if ((poff > 1) lor (qdplth < sizeof(tqdp)) lor
                       (qdplth > MAXMTU))
                     then
@@ -687,13 +711,28 @@ begin
                       end
                   if (q330->tcpidx >= (qdplth + 4))
                     then
-                      begin /* have a full packet, or more */
+                      begin /* bhave a full packet, or more */ 
                         err = qdplth ; /* actual size */
                         memcpy (addr(q330->commands.cmsgin.qdp), addr((q330->tcpbuf)[4]), err) ;
                         q330->tcpidx = q330->tcpidx - (qdplth + 4) ; /* amount left over */
                         if (q330->tcpidx > 0)
-                          then
+			  then
+#ifdef BSL_Q330_TCP_DEBUG
+                            begin /* have a full packet, or more */
+                              memcpy (addr(q330->tcpbuf), addr((q330->tcpbuf)[qdplth + 4]), q330->tcpidx) ; /* move to start of buffer */
+                              sprintf (errstr, "Move remaining %d bytes from tcpbuf[%d...%d] to tcpuf[%d...%d]",
+				       q330->tcpidx, 
+				       qdplth+4, qdplth+4+q330->tcpidx-1, 0, q330->tcpidx-1);
+                              libmsgadd (q330, HOSTMSG_ALL, addr(errstr));
+                            end
+			  else
+                           begin
+                             sprintf (errstr, "No remaining bytes in tcpbuf");
+                             libmsgadd (q330, HOSTMSG_ALL, addr(errstr));
+                           end
+#else
                             memcpy (addr(q330->tcpbuf), addr((q330->tcpbuf)[qdplth + 4]), q330->tcpidx) ; /* move to start of buffer */
+#endif
                         process_cmd_socket (q330, err, (poff != 0)) ;
                       end
                     else

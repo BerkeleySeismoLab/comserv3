@@ -15,6 +15,13 @@
  *		Updated for comserv extended length server and client names.
  *  2021-04-27 DSN ver 1.4.1 (2021.117)
  *		Initialize config_struc structure before open_cfg call.
+ *  2021-11-05 DSN ver 1.4.2 (2021.309)
+ *		Incorporate AA patch to ignore timestamp and used only seqnum
+ *		from state file to address presumed problem with RockToSLink
+ *		seedlink server.  Use libslink-v2.6/develop branch with AA patch
+ *		to support libslink auto-detection of MiniSEED record size.
+ *  2022-02-59 DSN ver 1.4.3 (2020.059)
+ *		Allow environmental override of STATIONS_INI pathname;
  ***************************************************************************/
 
 /* System includes */
@@ -44,7 +51,7 @@
 
 #include "retcodes.h"
 
-#define VERSION "1.4.1 (2021.117)"
+#define VERSION "1.4.2 (2021.309)"
 
 #ifdef COMSERV2
 #define	CLIENT_NAME	"SL2M"
@@ -54,7 +61,6 @@
 
 #define TIMESTRLEN      80
 #define MAX_SELECTORS CHAN+2
-#define CSMAXFILELEN 1024
 #define MAX_CHARS_IN_SELECTOR_LIST  300
 
 char *syntax[] = {
@@ -159,6 +165,10 @@ static char23 stats[11] = { "Good", "Enqueue Timeout", "Service Timeout",
 void finish_handler(int sig);
 void terminate_program (int error);
 
+#define ANNOUNCE(cmd,fp)							\
+    ( fprintf (fp, "%s - Using STATIONS_INI=%s NETWORK_INI=%s\n", \
+	      cmd, get_stations_ini_pathname(), get_network_ini_pathname()) )
+
 /***********************************************************************
  *  main program
  ***********************************************************************/
@@ -223,7 +233,7 @@ int main (int argc, char **argv)
     while ((c = getopt (argc, argv, "hvnxI:M:p:s:C:S:i:o:")) != -1) {
 	switch (c) {
 	case '?':   
-	case 'h':   print_syntax (cmdname, syntax, info); exit(0);
+	case 'h':   ANNOUNCE(cmdname,info); print_syntax (cmdname, syntax, info); exit(0);
 	case 'v':   verbose = 1; break;
 	case 'n':   output = 0; break;
 	case 'I':   multicast_interface = optarg; break;
@@ -255,12 +265,11 @@ int main (int argc, char **argv)
 	fprintf (info, "Error: input blksize %d > output blksize %d\n", slblksize, mcblksize);
 	exit(1);
     }
-    if (mcblksize > slblksize) {
-	new_msrecord = malloc (mcblksize);
-	if (new_msrecord == NULL) {
-	    fprintf (info, "Error: mallocing multicast buffer of %d bytes\n", mcblksize);
-	    exit(1);
-	}
+    /* Allocate always for case when input block size is smaller than the output */
+    new_msrecord = malloc (mcblksize);
+    if (new_msrecord == NULL) {
+	fprintf (info, "Error: mallocing multicast buffer of %d bytes\n", mcblksize);
+	exit(1);
     }
 
     /*    Skip over all options and their arguments.                      */
@@ -285,13 +294,16 @@ int main (int argc, char **argv)
     if (run_as_client) {
 	/* Look for info in the station.ini file.           */
 	/* open the stations list and look for that station */
-	strcpy (filename, "/etc/stations.ini") ;
+	ANNOUNCE(cmdname,info);
+	strncpy(filename, get_stations_ini_pathname(), CSMAXFILELEN);
+	filename[CSMAXFILELEN-1] = '\0';
 	memset (&cfg, 0, sizeof(cfg));
 	if (open_cfg(&cfg, filename, sname)) {
 	    fprintf (stderr,"Could not find station\n") ;
 	    exit(1);
 	}
 	/* Try to find the station directory, source, and description */
+	station_dir[0] = '\0';
 	do {
 	    read_cfg(&cfg, str1, str2) ;
 	    if (str1[0] == '\0')
@@ -317,8 +329,8 @@ int main (int argc, char **argv)
 	close_cfg(&cfg) ;
 
 	if (station_dir[0] == '\0') {
-	    fprintf (info, "%s Could not find station %s in stations.ini file\n",
-		     sname, localtime_string(dtime()));
+	    fprintf (info, "%s Could not find station %s in %s file\n",
+		     sname, localtime_string(dtime()), filename);
 	    exit(1);
 	}
 
@@ -542,6 +554,11 @@ int main (int argc, char **argv)
 
 	/* Seedlink code - get and multicast data. */
 	if (debug>1) { printf("DEBUG: Seedlink code - get and multicast data.\n"); }
+
+        /* Ignore timestamp. Use seqnum only to address positioning problem with RockToSLink server. */
+        if (slconn->streams!=0)
+            slconn->streams[0].timestamp[0] = 0;
+
 	retval = sl_collect_nb_size (slconn, &slpack, slblksize);
 	if (retval == SLTERMINATE) {
 	    fprintf (info, "%s terminating on seedlink server SLTERMINATE retcode\n", cmdname);
@@ -567,16 +584,16 @@ int main (int argc, char **argv)
 	    seqnum = sl_sequence (slpack);
           
 	    /* Expand/pad this seedlink record if necessary. */
-	    if (slblksize < mcblksize) {
-		memcpy (new_msrecord,&slpack->msrecord,slblksize);
-		expand_blksize ((SDR_HDR *)new_msrecord,slblksize,mcblksize);
+	    if (slpack->reclen < mcblksize) {
+		memcpy (new_msrecord,slpack->msrecord,slpack->reclen);
+		expand_blksize ((SDR_HDR *)new_msrecord,slpack->reclen,mcblksize);
 		msrecord = new_msrecord;
 	    }
 	    else {
-		msrecord = (char *) &slpack->msrecord;
+		msrecord = (char *) slpack->msrecord;
 	    }
 
-	    packet_handler (msrecord, ptype, seqnum, mcblksize, slblksize);
+	    packet_handler (msrecord, ptype, seqnum, mcblksize, slpack->reclen);
           
 	    /* Save intermediate state file */
 	    if ( statefile && stateint )
