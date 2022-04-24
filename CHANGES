@@ -2,7 +2,7 @@ COMSERV3 changes:
 
 =========================================================================================
 Doug Neuhauser, doug@seismo.berkeley.edu
-2022/02/07
+2022/07/23
 
 Release 1.0.2
 
@@ -15,15 +15,18 @@ All servers and clients were updated to use these variable if they are set.
 IRIS incorporated the critical patches for libslink into libslink-2.7.0RC.
 Their version of the library can now be used.
 
-Reduced CS_CHECK_INTERVAL to 2 to improve netmon response on server and client timeouts.
+2.  Reduced CS_CHECK_INTERVAL to 2 to improve netmon response on server and client timeouts.
 If this causes problems when running many servers, you can increase the value.
 NOTE THAT CHANGING THIS VALUE REQUIRES RECOMPILATION OF ALL COMSERV3 LIBRARIES,
 SERVERS, AND CLIENTS.
 
-Added TCP support for q330serv.  However, current Q330 tcp support appears to be
+3. Added TCP support for q330serv.  However, current Q330 tcp support appears to be
 buggy, so this is NOT recommended.
+Fixed bug in lib330 that prevented Q330 TCP support from running.
+Added debugging code for lib330 PB loglevel, and additional debugging code
+for TCP support.
 
-Misc other bug fixed.
+4. Misc other bugs fixed.
 
 =========================================================================================
 Doug Neuhauser, doug@seismo.berkeley.edu
