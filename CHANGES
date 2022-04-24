@@ -2,9 +2,9 @@ COMSERV3 changes:
 
 =========================================================================================
 Doug Neuhauser, doug@seismo.berkeley.edu
-2022/07/23
+2022/04/23
 
-Release 1.0.2
+Release 1.1.0
 
 1.  Added the ability for environment variables to overrirde the default pathnames
 of the 2 global COMSERV3 config files:
