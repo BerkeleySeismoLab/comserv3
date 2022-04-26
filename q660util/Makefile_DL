@@ -1,0 +1,38 @@
+TARGET	= libq660util.a
+
+SRCS =	memutil.c readpackets.c sha256.c\
+	xmlcfg.c xmlseed.c xmlsup.c qsockets.c
+
+
+HDRS =	memutil.h platform.h readpackets.h\
+	sha256.h utiltypes.h xmlcfg.h\
+	xmlseed.h xmlsup.c xmlsup.h qsockets.h
+
+
+OBJS	= $(SRCS:%.c=%.o)
+
+RANLIB	= ranlib
+
+.PRECIOUS:	$(TARGET)
+
+CC	= gcc
+#CFLAGS  = -g -DPROG_BE -DPROG_DL -DPROG_SS -DDUMPPACKETS
+CFLAGS  = -g -DPROG_DL\
+	-march=armv7-a -O2 -mfpu=neon -ffast-math -finline-functions\
+	-funswitch-loops -g -DUSE_GCC_PACKING -w  -fmessage-length=0 -Wall
+COPT	= 
+
+$(TARGET)  := CFLAGS += $(COPT)
+
+ALL	=  $(TARGET)
+
+all:	$(ALL)
+
+$(TARGET):	$(TARGET)($(OBJS)) 
+	$(RANLIB) $@
+
+
+clean:
+	-rm -f *.o $(ALL)
+
+
