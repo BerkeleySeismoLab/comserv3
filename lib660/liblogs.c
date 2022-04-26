@@ -1,5 +1,11 @@
+
+
+
+
 /*   Lib660 Message Log Routines
-     Copyright 2017 Certified Software Corporation
+     Copyright 2017-2021 by
+     Kinemetrics, Inc.
+     Pasadena, CA 91107 USA.
 
     This file is part of Lib660
 
@@ -27,6 +33,8 @@ Edit History:
                      blockette handling.
     4 2021-01-06 jms fix incorrect use of "addr" operator that resulted in stack
                         corruption when time jump > 250us occurred.
+    5 2021-12-24 rdr Copyright assignment to Kinemetrics.
+------2022-02-24 jms remove pseudo-pascal macros------
 */
 #ifndef liblogs_h
 #include "liblogs.h"
@@ -42,518 +50,518 @@ Edit History:
 #include "libseed.h"
 #include "readpackets.h"
 
-
-
 /* copy string "s" to fixed width right padded field "b" */
-void lib660_padright (pchar s, pchar b, integer fld)
-begin
-  integer i, j ;
-  string s1 ;
+void lib660_padright (pchar s, pchar b, int fld)
+{
+    int i, j ;
+    string s1 ;
 
-  strcpy (s1, s) ;
-  j = (integer)strlen(s1) ;
-  if (j > fld)
-    then
-      j = fld ;
-  for (i = 0 ; i < j ; i++)
-    *b++ = s1[i] ;
-  for (i = j ; i < fld ; i++)
-    *b++ = ' ' ;
-end
+    strcpy (s1, s) ;
+    j = (int)strlen(s1) ;
+
+    if (j > fld)
+        j = fld ;
+
+    for (i = 0 ; i < j ; i++)
+        *b++ = s1[i] ;
+
+    for (i = j ; i < fld ; i++)
+        *b++ = ' ' ;
+}
 
 /* return two digit string, padded on left with zero */
-pchar two (word w, pchar s)
-begin
-  integer v ;
+pchar two (U16 w, pchar s)
+{
+    int v ;
 
-  v = w ;
-  sprintf(s, "%d", v mod 100) ;
-  zpad (s, 2) ;
-  return s ;
-end
+    v = w ;
+    sprintf(s, "%d", v % 100) ;
+    zpad (s, 2) ;
+    return s ;
+}
 
 #ifdef adsfadsfasdf
 /* same as zpad but pads on left with spaces */
-static pchar spad (pchar s, integer lth)
-begin
-  integer len, diff ;
+static pchar spad (pchar s, int lth)
+{
+    int len, diff ;
 
-  len = strlen(s) ;
-  diff = lth - len ;
-  if (diff > 0)
-    then
-      begin
-        memmove (addr(s[diff]), addr(s[0]), len + 1) ; /* shift existing string right */
-        memset (addr(s[0]), ' ', diff) ; /* add spaces at front */
-      end
-  return s ;
-end
+    len = strlen(s) ;
+    diff = lth - len ;
+
+    if (diff > 0) {
+        memmove (&(s[diff]), &(s[0]), len + 1) ; /* shift existing string right */
+        memset (&(s[0]), ' ', diff) ; /* add spaces at front */
+    }
+
+    return s ;
+}
 
 static pchar string_time (tsystemtime *nt, pchar result)
-begin
-  string3 smth, sday, shour, smin, ssec ;
+{
+    string3 smth, sday, shour, smin, ssec ;
 
-  sprintf(result, "%d-%s-%s %s:%s:%s", nt->wyear, two(nt->wmonth, smth),
-          two(nt->wday, sday), two(nt->whour, shour),
-          two(nt->wminute, smin), two(nt->wsecond, ssec)) ;
-  return result ;
-end
+    sprintf(result, "%d-%s-%s %s:%s:%s", nt->wyear, two(nt->wmonth, smth),
+            two(nt->wday, sday), two(nt->whour, shour),
+            two(nt->wminute, smin), two(nt->wsecond, ssec)) ;
+    return result ;
+}
 #endif
 
 static void fix_time (tseed_time *st)
-begin
-  tsystemtime greg ;
-  longint usec ;
+{
+    tsystemtime greg ;
+    I32 usec ;
 
-  convert_time (st->seed_fpt, addr(greg), addr(usec)) ;
-  lib660_seed_time (st, addr(greg), usec) ;
-end
+    convert_time (st->seed_fpt, &(greg), &(usec)) ;
+    lib660_seed_time (st, &(greg), usec) ;
+}
 
 void log_clock (pq660 q660, enum tclock_exception clock_exception, pchar jump_amount)
-begin
-  string s ;
-  tsystemtime newtime ;
-  longint newusec ;
-  pbyte p ;
-  seed_header *phdr ;
-  tcom_packet *pcom ;
-  plcq q ;
-  timing *ptim ;
+{
+    string s ;
+    tsystemtime newtime ;
+    I32 newusec ;
+    PU8 p ;
+    seed_header *phdr ;
+    tcom_packet *pcom ;
+    plcq q ;
+    timing *ptim ;
 
-  q = q660->tim_lcq ;
-  if ((q == NIL) lor (q->com->ring == NIL))
-    then
-      return ;
-  pcom = q->com ;
-  phdr = addr(pcom->ring->hdr_buf) ;
-  if (q660->need_sats)
-    then
-      finish_log_clock (q660) ; /* Already one pending, just use current satellite info */
-  q660->last_update = q660->data_timetag ;
-  memset(addr(pcom->ring->rec), 0, LIB_REC_SIZE) ;
-  phdr->samples_in_record = 0 ;
-  phdr->seed_record_type = 'D' ;
-  phdr->continuation_record = ' ' ;
-  phdr->sequence.seed_num = pcom->records_written + 1 ;
-  inc(pcom->records_written) ;
-  memcpy(addr(phdr->location_id), addr(q->location), sizeof(tlocation)) ;
-  memcpy(addr(phdr->channel_id), addr(q->seedname), sizeof(tseed_name)) ;
-  memcpy(addr(phdr->station_id_call_letters), addr(q660->station), sizeof(tseed_stn)) ;
-  memcpy(addr(phdr->seednet), addr(q660->network), sizeof(tseed_net)) ;
-  phdr->starting_time.seed_fpt = q660->data_timetag ;
-  phdr->sample_rate_factor = 0 ;
-  phdr->sample_rate_multiplier = 1 ;
-  phdr->number_of_following_blockettes = 2 ;
-  phdr->tenth_msec_correction = 0 ; /* this is a delta, which we don't */
-  phdr->first_data_byte = 0 ;
-  phdr->first_blockette_byte = 48 ;
-  phdr->dob.blockette_type = 1000 ;
-  phdr->dob.word_order = 1 ;
-  phdr->dob.rec_length = RECORD_EXP ;
-  phdr->dob.dob_reserved = 0 ;
-  phdr->dob.next_blockette = 56 ;
-  phdr->dob.encoding_format = 0 ;
-  ptim = addr(q660->timing_buf) ;
-  ptim->blockette_type = 500 ;
-  ptim->next_blockette = 0 ;
-  ptim->vco_correction = q660->share.stat_pll.cur_vco / 50.0 ;
-  convert_time (q660->data_timetag, addr(newtime), addr(newusec)) ;
-  lib660_seed_time (addr(ptim->time_of_exception), addr(newtime), newusec) ;
-  ptim->usec99 = newusec mod 100 ;
-  ptim->reception_quality = q660->data_qual ;
-  ptim->exception_count = q660->except_count ;
-  q660->except_count = 0 ;
-  switch (clock_exception) begin
+    q = q660->tim_lcq ;
+
+    if ((q == NIL) || (q->com->ring == NIL))
+        return ;
+
+    pcom = q->com ;
+    phdr = &(pcom->ring->hdr_buf) ;
+
+    if (q660->need_sats)
+        finish_log_clock (q660) ; /* Already one pending, just use current satellite info */
+
+    q660->last_update = q660->data_timetag ;
+    memset(&(pcom->ring->rec), 0, LIB_REC_SIZE) ;
+    phdr->samples_in_record = 0 ;
+    phdr->seed_record_type = 'D' ;
+    phdr->continuation_record = ' ' ;
+    phdr->sequence.seed_num = pcom->records_written + 1 ;
+    (pcom->records_written)++ ;
+    memcpy(&(phdr->location_id), &(q->location), sizeof(tlocation)) ;
+    memcpy(&(phdr->channel_id), &(q->seedname), sizeof(tseed_name)) ;
+    memcpy(&(phdr->station_id_call_letters), &(q660->station), sizeof(tseed_stn)) ;
+    memcpy(&(phdr->seednet), &(q660->network), sizeof(tseed_net)) ;
+    phdr->starting_time.seed_fpt = q660->data_timetag ;
+    phdr->sample_rate_factor = 0 ;
+    phdr->sample_rate_multiplier = 1 ;
+    phdr->number_of_following_blockettes = 2 ;
+    phdr->tenth_msec_correction = 0 ; /* this is a delta, which we don't */
+    phdr->first_data_byte = 0 ;
+    phdr->first_blockette_byte = 48 ;
+    phdr->dob.blockette_type = 1000 ;
+    phdr->dob.word_order = 1 ;
+    phdr->dob.rec_length = RECORD_EXP ;
+    phdr->dob.dob_reserved = 0 ;
+    phdr->dob.next_blockette = 56 ;
+    phdr->dob.encoding_format = 0 ;
+    ptim = &(q660->timing_buf) ;
+    ptim->blockette_type = 500 ;
+    ptim->next_blockette = 0 ;
+    ptim->vco_correction = q660->share.stat_pll.cur_vco / 50.0 ;
+    convert_time (q660->data_timetag, &(newtime), &(newusec)) ;
+    lib660_seed_time (&(ptim->time_of_exception), &(newtime), newusec) ;
+    ptim->usec99 = newusec % 100 ;
+    ptim->reception_quality = q660->data_qual ;
+    ptim->exception_count = q660->except_count ;
+    q660->except_count = 0 ;
+
+    switch (clock_exception) {
     case CE_DAILY :
-      lib660_padright ("Daily Timemark", ptim->exception_type, 16) ;
-      break ;
+        lib660_padright ("Daily Timemark", ptim->exception_type, 16) ;
+        break ;
+
     case CE_VALID :
-      lib660_padright ("Valid Timemark", ptim->exception_type, 16) ;
-      break ;
+        lib660_padright ("Valid Timemark", ptim->exception_type, 16) ;
+        break ;
+
     case CE_JUMP :
-      lib660_padright ("UnExp Timemark", ptim->exception_type, 16) ;
-      sprintf (s, "Jump of %s Seconds", jump_amount) ;
-      lib660_padright (s, ptim->clock_status, 128) ;
-      break ;
-  end
-  lib660_padright (q660->share.sysinfo.clk_typ, ptim->clock_model, 32) ;
-  if (clock_exception == CE_JUMP)
-    then
-      begin
-        p = (pbyte)addr(pcom->ring->rec) ;
-        storeseedhdr (addr(p), phdr, FALSE) ;
-        storetiming (addr(p), ptim) ;
-        inc(q->records_generated_session) ;
+        lib660_padright ("UnExp Timemark", ptim->exception_type, 16) ;
+        sprintf (s, "Jump of %s Seconds", jump_amount) ;
+        lib660_padright (s, ptim->clock_status, 128) ;
+        break ;
+    }
+
+    lib660_padright (q660->share.sysinfo.clk_typ, ptim->clock_model, 32) ;
+
+    if (clock_exception == CE_JUMP) {
+        p = (PU8)&(pcom->ring->rec) ;
+        storeseedhdr (&(p), phdr, FALSE) ;
+        storetiming (&(p), ptim) ;
+        (q->records_generated_session)++ ;
         q->last_record_generated = secsince () ;
         send_to_client (q660, q, pcom->ring, SCD_BOTH) ;
-      end
-    else
-      q660->need_sats = TRUE ;
-end
+    } else
+        q660->need_sats = TRUE ;
+}
 
 void finish_log_clock (pq660 q660)
-begin
-  string s ;
-  string7 s1 ;
-  word w ;
-  pbyte p ;
-  tcom_packet *pcom ;
-  plcq q ;
-  timing *ptim ;
-  tstat_gpssat *pone ;
+{
+    string s ;
+    string7 s1 ;
+    U16 w ;
+    PU8 p ;
+    tcom_packet *pcom ;
+    plcq q ;
+    timing *ptim ;
+    tstat_gpssat *pone ;
 
-  q = q660->tim_lcq ;
-  if ((q == NIL) lor (q->com->ring == NIL))
-    then
-      return ;
-  pcom = q->com ;
-  q660->need_sats = FALSE ;
-  ptim = addr(q660->timing_buf) ;
-  if (q660->share.stat_gps.sat_count)
-    then
-      begin
+    q = q660->tim_lcq ;
+
+    if ((q == NIL) || (q->com->ring == NIL))
+        return ;
+
+    pcom = q->com ;
+    q660->need_sats = FALSE ;
+    ptim = &(q660->timing_buf) ;
+
+    if (q660->share.stat_gps.sat_count) {
         strcpy(s, "SNR=") ;
-        for (w = 0 ; w <= q660->share.stat_gps.sat_count - 1 ; w++)
-          begin
-            pone = addr(q660->share.stat_gps.gps_sats[w]) ;
-            if ((pone->num) land (pone->snr >= 20))
-              then
-                begin
-                  if (strlen(s) > 4)
-                    then
-                      strcat(s, ",") ;
-                  sprintf(s1, "%d", pone->snr) ;
-                  strcat(s, s1) ;
-                end
-          end
-      end
-    else
-      s[0] = 0 ;
-  lib660_padright (s, ptim->clock_status, 128) ;
-  p = (pbyte)addr(pcom->ring->rec) ;
-  storeseedhdr (addr(p), (pvoid)addr(pcom->ring->hdr_buf), FALSE) ;
-  storetiming (addr(p), ptim) ;
-  inc(q->records_generated_session) ;
-  q->last_record_generated = secsince () ;
-  send_to_client (q660, q660->tim_lcq, pcom->ring, SCD_BOTH) ;
-end
+
+        for (w = 0 ; w <= q660->share.stat_gps.sat_count - 1 ; w++) {
+            pone = &(q660->share.stat_gps.gps_sats[w]) ;
+
+            if ((pone->num) && (pone->snr >= 20)) {
+                if (strlen(s) > 4)
+                    strcat(s, ",") ;
+
+                sprintf(s1, "%d", pone->snr) ;
+                strcat(s, s1) ;
+            }
+        }
+    } else
+        s[0] = 0 ;
+
+    lib660_padright (s, ptim->clock_status, 128) ;
+    p = (PU8)&(pcom->ring->rec) ;
+    storeseedhdr (&(p), (pvoid)&(pcom->ring->hdr_buf), FALSE) ;
+    storetiming (&(p), ptim) ;
+    (q->records_generated_session)++ ;
+    q->last_record_generated = secsince () ;
+    send_to_client (q660, q660->tim_lcq, pcom->ring, SCD_BOTH) ;
+}
 
 void flush_timing (pq660 q660)
-begin
-  plcq q ;
+{
+    plcq q ;
 
-  q = q660->tim_lcq ;
-  if ((q == NIL) lor (q->com->ring == NIL))
-    then
-      return ;
-  if ((q->arc.amini_filter) land (q->arc.total_frames > 0))
-    then
-      flush_archive (q660, q) ;
-end
+    q = q660->tim_lcq ;
+
+    if ((q == NIL) || (q->com->ring == NIL))
+        return ;
+
+    if ((q->arc.amini_filter) && (q->arc.total_frames > 0))
+        flush_archive (q660, q) ;
+}
 
 void logevent (pq660 q660, pdet_packet det, tonset_mh *onset)
-begin
+{
 #ifdef dasfadsfsdf
-  string on_, s ;
-  string63 w ;
-  string31 s1, s2 ;
-  boolean mh ;
-  tsystemtime newtime ;
-  longint newusec ;
-  murdock_detect eblk ;
-  threshold_detect *pt ;
-  double ts ;
-  byte buffer[FRAME_SIZE] ; /* for creating "blockette image" */
-  pbyte p ;
-  plcq ppar ;
-  pdetect pdef ;
+    string on_, s ;
+    string63 w ;
+    string31 s1, s2 ;
+    BOOLEAN mh ;
+    tsystemtime newtime ;
+    I32 newusec ;
+    murdock_detect eblk ;
+    threshold_detect *pt ;
+    double ts ;
+    U8 buffer[FRAME_SIZE] ; /* for creating "blockette image" */
+    PU8 p ;
+    plcq ppar ;
+    pdetect pdef ;
 
-  q660 = paqs->owner ;
-  ppar = det->parent ;
-  pdef = det->detector_def ;
-  mh = (pdef->dtype == MURDOCK_HUTT) ;
-  if (mh)
-    then
-      sprintf(on_, "%c %c %c %c%c%c%c%c", onset->event_detection_flags + 0x63,
-              onset->pick_algorithm + 0x41, onset->lookback_value + 0x30,
-              onset->snr[0] + 0x30, onset->snr[1] + 0x30, onset->snr[2] + 0x30,
-              onset->snr[3] + 0x30, onset->snr[4] + 0x30) ;
+    q660 = paqs->owner ;
+    ppar = det->parent ;
+    pdef = det->detector_def ;
+    mh = (pdef->dtype == MURDOCK_HUTT) ;
+
+    if (mh)
+        sprintf(on_, "%c %c %c %c%c%c%c%c", onset->event_detection_flags + 0x63,
+                onset->pick_algorithm + 0x41, onset->lookback_value + 0x30,
+                onset->snr[0] + 0x30, onset->snr[1] + 0x30, onset->snr[2] + 0x30,
+                onset->snr[3] + 0x30, onset->snr[4] + 0x30) ;
     else
-      strcpy(on_, "           ") ;
-  ts = onset->signal_onset_time.seed_fpt ;
-  convert_time (onset->signal_onset_time.seed_fpt, addr(newtime), addr(newusec)) ;
-  sprintf(s2, "%d", newusec) ;
-  zpad(s2, 6) ;
-  sprintf(w, " %s.%s ", string_time (addr(newtime), s1), s2) ;
-  strcat(on_, w) ;
-  if ((lnot mh) lor (onset->signal_amplitude >= 0))
-    then
-      begin
+        strcpy(on_, "           ") ;
+
+    ts = onset->signal_onset_time.seed_fpt ;
+    convert_time (onset->signal_onset_time.seed_fpt, &(newtime), &(newusec)) ;
+    sprintf(s2, "%d", newusec) ;
+    zpad(s2, 6) ;
+    sprintf(w, " %s.%s ", string_time (&(newtime), s1), s2) ;
+    strcat(on_, w) ;
+
+    if ((! mh) || (onset->signal_amplitude >= 0)) {
         sprintf(s1, "%d", lib_round(onset->signal_amplitude)) ;
         spad(s1, 10) ;
         strcat(on_, s1) ;
         strcat(on_, " ") ;
-      end
-    else
-      strcat(on_, "?????????? ") ;
-  sprintf(s2, "%d", lib_round(onset->background_estimate)) ;
-  if (mh)
-    then
-      begin
-        if ((onset->signal_period > 0) land (onset->signal_period < 1000))
-          then
-            begin
-              sprintf(s1, "%6.2f ", onset->signal_period) ;
-              strcat(on_, s1) ;
-            end
-          else
+    } else
+        strcat(on_, "?????????? ") ;
+
+    sprintf(s2, "%d", lib_round(onset->background_estimate)) ;
+
+    if (mh) {
+        if ((onset->signal_period > 0) && (onset->signal_period < 1000)) {
+            sprintf(s1, "%6.2f ", onset->signal_period) ;
+            strcat(on_, s1) ;
+        } else
             strcat(on_, "???.?? ") ;
-        if (onset->background_estimate >= 0)
-          then
-            begin
-              spad(s2, 7) ;
-              strcat(on_, s2) ;
-            end
-          else
+
+        if (onset->background_estimate >= 0) {
+            spad(s2, 7) ;
+            strcat(on_, s2) ;
+        } else
             strcat(on_, "???????") ;
-      end
-    else
-      begin
+    } else {
         zpad(s2, 14) ;
         strcat(on_, s2) ;
-      end
-  strcat(on_, " ") ;
-  sprintf(w, "%s:%s", seed2string(ppar->location, ppar->seedname, s2), pdef->detname) ;
-  while (strlen(w) < 18)
-    strcat(w, " ") ;
-  if (det->det_options and DO_MSG)
-    then
-      begin
+    }
+
+    strcat(on_, " ") ;
+    sprintf(w, "%s:%s", seed2string(ppar->location, ppar->seedname, s2), pdef->detname) ;
+
+    while (strlen(w) < 18)
+        strcat(w, " ") ;
+
+    if (det->det_options & DO_MSG) {
         sprintf(s, "%s-%s", w, on_) ;
         libmsgadd(q660, LIBMSG_DETECT, s) ;
-      end
-  lib660_seed_time (addr(eblk.mh_onset.signal_onset_time), addr(newtime), newusec) ;
-  eblk.mh_onset.signal_amplitude = onset->signal_amplitude ;
-  eblk.mh_onset.signal_period = onset->signal_period ;
-  eblk.mh_onset.background_estimate = onset->background_estimate ;
-  eblk.mh_onset.event_detection_flags = onset->event_detection_flags ;
-  eblk.mh_onset.reserved_byte = 0 ;
-  pt = (pointer)addr(eblk) ;
-  p = addr(buffer) ;
-  if (mh)
-    then
-      begin
+    }
+
+    lib660_seed_time (&(eblk.mh_onset.signal_onset_time), &(newtime), newusec) ;
+    eblk.mh_onset.signal_amplitude = onset->signal_amplitude ;
+    eblk.mh_onset.signal_period = onset->signal_period ;
+    eblk.mh_onset.background_estimate = onset->background_estimate ;
+    eblk.mh_onset.event_detection_flags = onset->event_detection_flags ;
+    eblk.mh_onset.reserved_byte = 0 ;
+    pt = (pointer)&(eblk) ;
+    p = &(buffer) ;
+
+    if (mh) {
         eblk.blockette_type = 201 ;
         eblk.next_blockette = 0 ;
-        memcpy(addr(eblk.mh_onset.snr), addr(onset->snr), 6) ;
+        memcpy(&(eblk.mh_onset.snr), &(onset->snr), 6) ;
         eblk.mh_onset.lookback_value = onset->lookback_value ;
         eblk.mh_onset.pick_algorithm = onset->pick_algorithm ;
-        lib660_padright (addr(pdef->detname), addr(eblk.s_detname), 24) ;
-        storemurdock (addr(p), addr(eblk)) ;
-      end
-    else
-      begin
+        lib660_padright (&(pdef->detname), &(eblk.s_detname), 24) ;
+        storemurdock (&(p), &(eblk)) ;
+    } else {
         pt->blockette_type = 200 ;
         pt->next_blockette = 0 ;
-        lib660_padright (addr(pdef->detname), addr(pt->s_detname), 24) ;
-        storethreshold (addr(p), pt) ;
-      end
-  if (ppar->lcq_opt and LO_DETP)
-    then
-      begin
+        lib660_padright (&(pdef->detname), &(pt->s_detname), 24) ;
+        storethreshold (&(p), pt) ;
+    }
+
+    if (ppar->lcq_opt & LO_DETP) {
         if (q660->par_create.mini_embed)
-          then
-            add_blockette (paqs, ppar, (pword)addr(buffer), ts) ;
+            add_blockette (paqs, ppar, (PU16)&(buffer), ts) ;
+
         if (q660->par_create.mini_separate)
-          then
-            build_separate_record (paqs, ppar, (pword)addr(buffer), ts, PKC_EVENT) ;
-      end
+            build_separate_record (paqs, ppar, (PU16)&(buffer), ts, PKC_EVENT) ;
+    }
+
 #endif
-end
+}
 
 static void set_cal2 (pcal2 pc2, tcalstart *cals, pq660 q660)
-begin
-  integer sub ;
-  plcq pq ;
+{
+    int sub ;
+    plcq pq ;
 
-  pc2->calibration_amplitude = (cals->amplitude + 1) * -6 ;
-  pc2->cal2_res = 0 ;
-  pc2->ref_amp = 0 ;
-  lib660_padright ("Resistive", pc2->coupling, 12) ;
-  lib660_padright ("3DB@10Hz", pc2->rolloff, 12) ;
-  memset(addr(pc2->calibration_input_channel), ' ', 3) ;
-  for (sub = FREQS - 1 ; sub >= 0 ; sub--)
-    begin
-      pq = q660->mdispatch[CAL_CHANNEL][sub] ;
-      if (pq)
-        then
-          begin
-            memcpy (addr(pc2->calibration_input_channel), addr(pq->seedname), 3) ;
+    pc2->calibration_amplitude = (cals->amplitude + 1) * -6 ;
+    pc2->cal2_res = 0 ;
+    pc2->ref_amp = 0 ;
+    lib660_padright ("Resistive", pc2->coupling, 12) ;
+    lib660_padright ("3DB@10Hz", pc2->rolloff, 12) ;
+    memset(&(pc2->calibration_input_channel), ' ', 3) ;
+
+    for (sub = FREQS - 1 ; sub >= 0 ; sub--) {
+        pq = q660->mdispatch[CAL_CHANNEL][sub] ;
+
+        if (pq) {
+            memcpy (&(pc2->calibration_input_channel), &(pq->seedname), 3) ;
             break ;
-          end
-    end
-end
+        }
+    }
+}
 
-void log_cal (pq660 q660, pbyte pb, boolean start)
-begin
-  tcalstart cals ;
-  plcq q ;
-  integer idx, sub ;
-  word map ;
-  step_calibration *pstep ;
-  sine_calibration *psine ;
-  random_calibration *prand ;
-  abort_calibration *pabort ;
-  random_calibration cblk ;
-  byte buffer[FRAME_SIZE] ; /* for creating "blockette image" */
-  pbyte p ;
+void log_cal (pq660 q660, PU8 pb, BOOLEAN start)
+{
+    tcalstart cals ;
+    plcq q ;
+    int idx, sub ;
+    U16 map ;
+    step_calibration *pstep ;
+    sine_calibration *psine ;
+    random_calibration *prand ;
+    abort_calibration *pabort ;
+    random_calibration cblk ;
+    U8 buffer[FRAME_SIZE] ; /* for creating "blockette image" */
+    PU8 p ;
 
-  memclr(addr(cblk), sizeof(random_calibration)) ;
-  p = (pbyte)addr(buffer) ;
-  if (start)
-    then
-      begin
-        loadcalstart (addr(pb), addr(cals)) ;
+    memclr(&(cblk), sizeof(random_calibration)) ;
+    p = (PU8)&(buffer) ;
+
+    if (start) {
+        loadcalstart (&(pb), &(cals)) ;
         map = cals.calbit_map ;
-        psine = (pvoid)addr(cblk) ;
+        psine = (pvoid)&(cblk) ;
         /* common for all waveforms */
         psine->next_blockette = 0 ;
         psine->calibration_time.seed_fpt = q660->data_timetag ;
-        fix_time (addr(psine->calibration_time)) ;
-        if (cals.waveform and 0x80)
-          then
+        fix_time (&(psine->calibration_time)) ;
+
+        if (cals.waveform & 0x80)
             psine->calibration_flags = 4 ; /* automatic */
-          else
+        else
             psine->calibration_flags = 0 ;
-        psine->calibration_duration = (longint)cals.duration * 10000 ;
-        switch ((byte)(cals.waveform and 7)) begin
-          case 0 : /* sine */
+
+        psine->calibration_duration = (I32)cals.duration * 10000 ;
+
+        switch ((U8)(cals.waveform & 7)) {
+        case 0 : /* sine */
             psine->blockette_type = 310 ;
-            psine->calibration_flags = psine->calibration_flags or 0x10 ;
-            if (cals.freqdiv and 0x8000)
-              then
-                psine->sine_period = 1.0 / (cals.freqdiv and 0xFF) ; /* 2Hz to 20Hz */
-              else
+            psine->calibration_flags = psine->calibration_flags | 0x10 ;
+
+            if (cals.freqdiv & 0x8000)
+                psine->sine_period = 1.0 / (cals.freqdiv & 0xFF) ; /* 2Hz to 20Hz */
+            else
                 psine->sine_period = cals.freqdiv ;
-            set_cal2 (addr(psine->sine2), addr(cals), q660) ;
-            storesine (addr(p), psine) ;
+
+            set_cal2 (&(psine->sine2), &(cals), q660) ;
+            storesine (&(p), psine) ;
             break ;
-          case 1 :
-          case 2 :
-          case 4 : /* random */
-            prand = addr(cblk) ;
+
+        case 1 :
+        case 2 :
+        case 4 : /* random */
+            prand = &(cblk) ;
             prand->blockette_type = 320 ;
-        /* white uses random amplitudes, red and telegraph don't */
-            if ((byte)(cals.waveform and 7) == 2)
-              then
-                prand->calibration_flags = prand->calibration_flags or 0x10 ;
-            set_cal2 (addr(prand->random2), addr(cals), q660) ;
-            switch ((byte)(cals.waveform and 7)) begin
-              case 1 :
+
+            /* white uses random amplitudes, red and telegraph don't */
+            if ((U8)(cals.waveform & 7) == 2)
+                prand->calibration_flags = prand->calibration_flags | 0x10 ;
+
+            set_cal2 (&(prand->random2), &(cals), q660) ;
+
+            switch ((U8)(cals.waveform & 7)) {
+            case 1 :
                 lib660_padright("Red",prand->noise_type, 8) ;
                 break ;
-              case 2 :
+
+            case 2 :
                 lib660_padright("White", prand->noise_type, 8) ;
                 break ;
-              case 4 :
+
+            case 4 :
                 lib660_padright("Telegraf", prand->noise_type, 8) ;
                 break ;
-            end
-            storerandom (addr(p), prand) ;
+            }
+
+            storerandom (&(p), prand) ;
             break ;
-          case 3 : /* step */
-            pstep = (pvoid)addr(cblk) ;
+
+        case 3 : /* step */
+            pstep = (pvoid)&(cblk) ;
             pstep->blockette_type = 300 ;
             pstep->number_of_steps = 1 ;
-            if ((cals.waveform and 0x40) == 0)
-              then
-                pstep->calibration_flags = pstep->calibration_flags or 1 ; /* positive pulse */
+
+            if ((cals.waveform & 0x40) == 0)
+                pstep->calibration_flags = pstep->calibration_flags | 1 ; /* positive pulse */
+
             pstep->interval_duration = 0 ;
-            set_cal2 (addr(pstep->step2), addr(cals), q660) ;
-            storestep (addr(p), pstep) ;
+            set_cal2 (&(pstep->step2), &(cals), q660) ;
+            storestep (&(p), pstep) ;
             break ;
-        end
-      end
-    else
-      begin
-        loadbyte (addr(pb)) ;
-        loadbyte (addr(pb)) ;
-        map = loadword (addr(pb)) ;
-        pabort = (pvoid)addr(cblk) ;
+        }
+    } else {
+        loadbyte (&(pb)) ;
+        loadbyte (&(pb)) ;
+        map = loadword (&(pb)) ;
+        pabort = (pvoid)&(cblk) ;
         pabort->blockette_type = 395 ;
         pabort->next_blockette = 0 ;
         pabort->calibration_time.seed_fpt = q660->data_timetag ;
-        fix_time (addr(pabort->calibration_time)) ;
-        storeabort (addr(p), pabort) ;
-      end ;
-  /* need a record for each channel in the map */
-  for (idx = 0 ; idx <= TOTAL_CHANNELS - 1 ; idx++)
-    if (map and (1 shl idx))
-      then
-        for (sub = 0 ; sub <= FREQS - 1 ; sub++)
-          begin
-            q = q660->mdispatch[idx][sub] ;
-            if (q)
-              then
-                begin
-                  inc(q->calibrations_session) ;
-                  if (q660->par_create.mini_embed)
-                    then
-                      add_blockette (q660, q, (pword)addr(buffer), q660->data_timetag) ;
-                  if (q660->par_create.mini_separate)
-                    then
-                      build_separate_record (q660, q, (pword)addr(buffer), q660->data_timetag, PKC_CALIBRATE) ;
-                end
-          end
-end
+        fix_time (&(pabort->calibration_time)) ;
+        storeabort (&(p), pabort) ;
+    } ;
+
+    /* need a record for each channel in the map */
+    for (idx = 0 ; idx <= TOTAL_CHANNELS - 1 ; idx++)
+        if (map & (1 << idx))
+            for (sub = 0 ; sub <= FREQS - 1 ; sub++) {
+                q = q660->mdispatch[idx][sub] ;
+
+                if (q) {
+                    (q->calibrations_session)++ ;
+
+                    if (q660->par_create.mini_embed)
+                        add_blockette (q660, q, (PU16)&(buffer), q660->data_timetag) ;
+
+                    if (q660->par_create.mini_separate)
+                        build_separate_record (q660, q, (PU16)&(buffer), q660->data_timetag, PKC_CALIBRATE) ;
+                }
+            }
+}
 
 void log_message (pq660 q660, pchar msg)
-begin
-  integer i ;
-  double ts ;
-  pbyte p ;
-  pchar pc ;
-  plcq q ;
-  tcom_packet *pcom ;
-  seed_header *phdr ;
+{
+    int i ;
+    double ts ;
+    PU8 p ;
+    pchar pc ;
+    plcq q ;
+    tcom_packet *pcom ;
+    seed_header *phdr ;
 
-  q = q660->msg_lcq ;
-  if ((q == NIL) lor (q->com->ring == NIL))
-    then
-      return ; /* not initialized */
-  ts = now() ;
-  pcom = q->com ;
-  phdr = addr(pcom->ring->hdr_buf) ;
-  i = (integer)strlen(msg) + 2 ;
-  if ((pcom->frame >= 2) land
-     (((pcom->frame + i) > NONDATA_AREA) lor (ts > (phdr->starting_time.seed_fpt + 60))))
-    then
-      begin /* won't fit in current frame or was too long ago */
+    q = q660->msg_lcq ;
+
+    if ((q == NIL) || (q->com->ring == NIL))
+        return ; /* not initialized */
+
+    ts = now() ;
+    pcom = q->com ;
+    phdr = &(pcom->ring->hdr_buf) ;
+    i = (int)strlen(msg) + 2 ;
+
+    if ((pcom->frame >= 2) &&
+            (((pcom->frame + i) > NONDATA_AREA) || (ts > (phdr->starting_time.seed_fpt + 60))))
+
+    { /* won't fit in current frame or was too long ago */
         phdr->samples_in_record = pcom->frame ;
         q660->nested_log = TRUE ;
-        p = (pbyte)addr(pcom->ring->rec) ;
-        storeseedhdr (addr(p), (pvoid)phdr, FALSE) ;
-        inc(q->records_generated_session) ;
+        p = (PU8)&(pcom->ring->rec) ;
+        storeseedhdr (&(p), (pvoid)phdr, FALSE) ;
+        (q->records_generated_session)++ ;
         q->last_record_generated = secsince () ;
         send_to_client (q660, q, pcom->ring, SCD_BOTH) ;
         q660->nested_log = FALSE ;
         pcom->frame = 0 ;
-      end
-  if (pcom->frame < 2)
-    then
-      begin /* at least a blank line */
-        memset(addr(pcom->ring->rec), 0, LIB_REC_SIZE) ;
+    }
+
+    if (pcom->frame < 2) {
+        /* at least a blank line */
+        memset(&(pcom->ring->rec), 0, LIB_REC_SIZE) ;
         phdr->samples_in_record = 0 ;
         pcom->frame = 0 ;
         phdr->starting_time.seed_fpt = ts ;
         phdr->seed_record_type = 'D' ;
         phdr->continuation_record = ' ' ;
         phdr->sequence.seed_num = pcom->records_written + 1 ;
-        inc(pcom->records_written) ;
-        memcpy(addr(phdr->location_id), addr(q->location), sizeof(tlocation)) ;
-        memcpy(addr(phdr->channel_id), addr(q->seedname), sizeof(tseed_name)) ;
-        memcpy(addr(phdr->station_id_call_letters), addr(q660->station), sizeof(tseed_stn)) ;
-        memcpy(addr(phdr->seednet), addr(q660->network), sizeof(tseed_net)) ;
+        (pcom->records_written)++ ;
+        memcpy(&(phdr->location_id), &(q->location), sizeof(tlocation)) ;
+        memcpy(&(phdr->channel_id), &(q->seedname), sizeof(tseed_name)) ;
+        memcpy(&(phdr->station_id_call_letters), &(q660->station), sizeof(tseed_stn)) ;
+        memcpy(&(phdr->seednet), &(q660->network), sizeof(tseed_net)) ;
         phdr->sample_rate_factor = 0 ;
         phdr->sample_rate_multiplier = 1 ;
         phdr->number_of_following_blockettes = 1 ;
@@ -566,44 +574,46 @@ begin
         phdr->dob.dob_reserved = 0 ;
         phdr->dob.next_blockette = 0 ;
         phdr->dob.encoding_format = 0 ;
-      end
-  strcat(msg, "\x0D\x0A") ;
-  pc = (pointer)((pntrint)addr(pcom->ring->rec) + 56 + pcom->frame) ; /* add text to data area */
-  memcpy(pc, msg, strlen(msg)) ;
-  incn(pcom->frame, strlen(msg)) ;
-  q660->log_timer = LOG_TIMEOUT ;
-end
+    }
+
+    strcat(msg, "\x0D\x0A") ;
+    pc = (pointer)((PNTRINT)&(pcom->ring->rec) + 56 + pcom->frame) ; /* add text to data area */
+    memcpy(pc, msg, strlen(msg)) ;
+    pcom->frame = pcom->frame + (strlen(msg)) ;
+    q660->log_timer = LOG_TIMEOUT ;
+}
 
 void flush_messages (pq660 q660)
-begin
-  pbyte p ;
-  plcq q ;
-  tcom_packet *pcom ;
-  seed_header *phdr ;
+{
+    PU8 p ;
+    plcq q ;
+    tcom_packet *pcom ;
+    seed_header *phdr ;
 
-  q = q660->msg_lcq ;
-  if ((q == NIL) lor (q->com->ring == NIL))
-    then
-      return ; /* not initialized */
-  pcom = q->com ;
-  phdr = addr(pcom->ring->hdr_buf) ;
-  if (pcom->frame >= 2)
-    then
-      begin
+    q = q660->msg_lcq ;
+
+    if ((q == NIL) || (q->com->ring == NIL))
+        return ; /* not initialized */
+
+    pcom = q->com ;
+    phdr = &(pcom->ring->hdr_buf) ;
+
+    if (pcom->frame >= 2) {
         phdr->samples_in_record = pcom->frame ;
         q660->nested_log = TRUE ;
-        p = (pbyte)addr(pcom->ring->rec) ;
-        storeseedhdr (addr(p), (pvoid)phdr, FALSE) ;
-        inc(q->records_generated_session) ;
+        p = (PU8)&(pcom->ring->rec) ;
+        storeseedhdr (&(p), (pvoid)phdr, FALSE) ;
+        (q->records_generated_session)++ ;
         q->last_record_generated = secsince () ;
         send_to_client (q660, q, pcom->ring, SCD_BOTH) ;
         q660->nested_log = FALSE ;
         pcom->frame = 0 ;
-      end
-  if ((q->arc.amini_filter) land (q->arc.hdr_buf.samples_in_record))
-    then
-      flush_archive (q660, q) ;
-  q660->log_timer = 0 ;
-end
+    }
+
+    if ((q->arc.amini_filter) && (q->arc.hdr_buf.samples_in_record))
+        flush_archive (q660, q) ;
+
+    q660->log_timer = 0 ;
+}
 
 

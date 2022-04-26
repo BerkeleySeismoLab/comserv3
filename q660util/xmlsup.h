@@ -1,5 +1,11 @@
+
+
+
+
 /*   XML Read Support definitions
-     Copyright 2015, 2016 Certified Software Corporation
+     Copyright 2015-2017 by
+     Kinemetrics, Inc.
+     Pasadena, CA 91107 USA.
 
     This file is part of Lib660
 
@@ -25,10 +31,12 @@ Edit History:
                      ENG to match web page forms.
     2 2016-09-07 rdr Add xml_mutex for multi-threaded applications.
     3 2017-06-07 rdr Add txmlline.
+    4 2021-12-24 rdr Copyright assignment to Kinemetrics.
+------2022-02-24 jms remove pseudo-pascal macros------
 */
 #ifndef XMLSUP_H
 #define XMLSUP_H
-#define VER_XMLSUP 7
+#define VER_XMLSUP 8
 
 #ifndef UTILTYPES_H
 #include "utiltypes.h"
@@ -45,54 +53,62 @@ Edit History:
 #define ESC_COUNT 5 /* For webpage */
 #define ARRAY_DEPTH 2 /* maximum array nesting */
 
-typedef longint crc_table_type[256] ;
+typedef I32 crc_table_type[256] ;
 
-typedef struct {
-  char unesc ; /* unescaped character */
-  string7 escpd ; /* escaped character */
+typedef struct
+{
+    char unesc ; /* unescaped character */
+    string7 escpd ; /* escaped character */
 } tescentry ;
 typedef tescentry tescapes[ESC_COUNT] ;
 
-enum txmltype {X_REC, X_EREC, X_SIMP, X_ARRAY, X_EARRAY} ;
-enum ttype {T_BYTE, T_SHORT, T_WORD, T_INT, T_LWORD, T_LINT, T_SINGLE,
-            T_DOUBLE, T_STRING, T_CRC} ;
+enum txmltype
+{X_REC, X_EREC, X_SIMP, X_ARRAY, X_EARRAY} ;
+enum ttype
+{T_BYTE, T_SHORT, T_WORD, T_INT, T_LWORD, T_LINT, T_SINGLE,
+ T_DOUBLE, T_STRING, T_CRC
+} ;
 /* The main sections in the XML file */
-enum txmlsect {XS_SINF, /* System Info */
-               XS_WRIT, /* Writer */
-               XS_SENS, /* Sensors */
-               XS_MAIN, /* Main Digitizer */
-               XS_ACCL, /* Accelerometer */
-               XS_DCFG, /* Dust Configuration */
-               XS_TIME, /* Timing */
-               XS_OPTS, /* Options */
-               XS_NETW, /* Network */
-               XS_ANNC, /* Announcements */
-               XS_AUTO, /* Automatic Mass Recentering */
-               XS_STN,  /* Station */
-               XS_IIR,  /* IIR Filters */
-               XS_MNAC, /* Main Digitizer & Accelerometer */
-               XS_SOH,  /* State of Health */
-               XS_DUST, /* Dust Channels */
-               XS_ENG,  /* Engineering Data */
-               XS_SIZE} ;
+enum txmlsect
+{XS_SINF, /* System Info */
+ XS_WRIT, /* Writer */
+ XS_SENS, /* Sensors */
+ XS_MAIN, /* Main Digitizer */
+ XS_ACCL, /* Accelerometer */
+ XS_DCFG, /* Dust Configuration */
+ XS_TIME, /* Timing */
+ XS_OPTS, /* Options */
+ XS_NETW, /* Network */
+ XS_ANNC, /* Announcements */
+ XS_AUTO, /* Automatic Mass Recentering */
+ XS_STN,  /* Station */
+ XS_IIR,  /* IIR Filters */
+ XS_MNAC, /* Main Digitizer & Accelerometer */
+ XS_SOH,  /* State of Health */
+ XS_DUST, /* Dust Channels */
+ XS_ENG,  /* Engineering Data */
+ XS_SIZE
+} ;
 
-typedef struct {
-  string23 arrayname ;
-  integer arrayidx, arraycount, arrayfirst, arraystart ;
-  word arraysize ;
-  word nestoffset ;
-  boolean iscompact ;
+typedef struct
+{
+    string23 arrayname ;
+    int arrayidx, arraycount, arrayfirst, arraystart ;
+    U16 arraysize ;
+    U16 nestoffset ;
+    BOOLEAN iscompact ;
 } tarraystack ;
 
-typedef struct {
-  string23 name ;
-  enum txmltype x_type ;
-  enum ttype stype ;
-  byte bopts ; /* size for string and character array, precision for scale, start for array */
-  boolean inv_com ; /* invert for scale, compact for array. */
-  word wopts ; /* mask for simple, count for array */
-  word basesize ; /* for array */
-  pointer svar ; /* pointer to variable */
+typedef struct
+{
+    string23 name ;
+    enum txmltype x_type ;
+    enum ttype stype ;
+    U8 bopts ; /* size for string and character array, precision for scale, start for array */
+    BOOLEAN inv_com ; /* invert for scale, compact for array. */
+    U16 wopts ; /* mask for simple, count for array */
+    U16 basesize ; /* for array */
+    pointer svar ; /* pointer to variable */
 } txmldef ;
 typedef char txmlline[250] ;
 typedef txmlline *pxmlline ;
@@ -102,20 +118,20 @@ typedef txmldefarray *pxmldefarray ;
 typedef string23 tfieldarray[MAX_FIELD] ;
 typedef tfieldarray *pfieldarray ;
 typedef pchar tsrcptrs[MAXLINES] ;
-typedef integer terr_counts[XS_SIZE] ;
+typedef int terr_counts[XS_SIZE] ;
 typedef string47 tsectnames[XS_SIZE] ;
 
 extern enum txmlsect cur_sect ;
 extern terr_counts error_counts ;
-extern longword crc_err_map ;
-extern longword load_map ;
-extern integer xmlnest ;
+extern U32 crc_err_map ;
+extern U32 load_map ;
+extern int xmlnest ;
 extern string value ;
 extern string tag ;
-extern boolean startflag, endflag ;
+extern BOOLEAN startflag, endflag ;
 extern string cur_xml_line ;
-extern integer srccount ;
-extern integer srcidx ;
+extern int srccount ;
+extern int srcidx ;
 extern tsrcptrs srcptrs ;
 extern pmeminst pxmlmem ;
 
@@ -123,8 +139,8 @@ extern const tescapes ESCAPES ;
 extern const tsectnames SECTNAMES ;
 
 /* following returned from read_xml */
-extern boolean crcvalid ;
-extern longint sectcrc ;
+extern BOOLEAN crcvalid ;
+extern I32 sectcrc ;
 /* end of caller variables */
 
 /* XML Mutex routines */
@@ -133,20 +149,20 @@ extern void xml_lock (void) ;
 extern void xml_unlock (void) ;
 
 /* Utility routines */
-extern longint gcrccalc (pbyte p, longint len) ;
-extern void gcrcupdate (pbyte p, longint len, longint *crc) ;
+extern I32 gcrccalc (PU8 p, I32 len) ;
+extern void gcrcupdate (PU8 p, I32 len, I32 *crc) ;
 extern pchar q660_upper (pchar s) ;
-extern longint lib_round (double r) ;
-extern boolean isclean (pchar f) ;
+extern I32 lib_round (double r) ;
+extern BOOLEAN isclean (pchar f) ;
 
 /* Start of XML read routines */
-extern boolean read_xml_start (pchar section) ;
-extern boolean read_next_tag (void) ;
-extern integer match_tag (pxmldefarray pxe, integer cnt) ;
+extern BOOLEAN read_xml_start (pchar section) ;
+extern BOOLEAN read_next_tag (void) ;
+extern int match_tag (pxmldefarray pxe, int cnt) ;
 extern void proc_tag (pxmldef xe) ;
-extern void read_xml (pxmldefarray pxe, integer cnt, enum txmlsect sect) ;
+extern void read_xml (pxmldefarray pxe, int cnt, enum txmlsect sect) ;
 extern pchar xml_unescape (pchar s) ;
 extern pchar trim (string *s) ;
-extern integer match_field (pfieldarray pfld, integer cnt, pchar pc) ;
+extern int match_field (pfieldarray pfld, int cnt, pchar pc) ;
 
 #endif

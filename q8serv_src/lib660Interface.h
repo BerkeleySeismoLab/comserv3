@@ -9,6 +9,10 @@
 #ifndef __LIB660INTERFACE_H__
 #define __LIB660INTERFACE_H__
 
+#include <iostream>
+#include <map>
+#include <string>
+
 /*
 ** pascal.h and C++ don't get along well (and, or, xor etc... mean something in C++)
 */
@@ -37,6 +41,7 @@ extern "C" {
 typedef struct {
     char channel[4];
     char location[4];
+    int  lowlatency;
 } multicastChannelEntry;
 
 struct onesec_pkt{
@@ -105,6 +110,7 @@ public:
     static void archival_miniseed_callback(pointer p);
     static void msg_callback(pointer p);
     static void onesec_callback(pointer p);
+    static void lowlatency_callback(pointer p);
     static void file_callback(pointer p);
     static enum tfilekind translate_file (char *outfile, char *infile, char *prefix, pfile_owner pfo);
 
@@ -112,6 +118,9 @@ public:
     static int num_multicastChannelEntries;
     static multicastChannelEntry multicastChannelList[MAX_MULTICASTCHANNELENTRIES];
     static double timestampOfLastRecord;
+    /* Map and interator for list of lowlatency channels. */
+    static std::map<std::string, int> lowlatencymap;
+    static std::map<std::string,int>::iterator it;
 
 private:
     int sendUserMessage(char *);
@@ -127,7 +136,7 @@ private:
     /* Structures for site-specific info. */
     tfile_owner fowner;
     private_station_info station_info;
-  
+
 };
 
 #endif

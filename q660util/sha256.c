@@ -1,6 +1,12 @@
+
+
+
+
 /*
     Q660 SHA256 Routines
-    Copyright 2016 Certified Software Corporation
+    Copyright 2016 by
+    Kinemetrics, Inc.
+    Pasadena, CA 91107 USA.
 
     This file is part of Lib660
 
@@ -23,15 +29,16 @@ Edit History:
    -- ---------- --- ---------------------------------------------------
     0 2016-09-05 rdr Created.
     2 2019-09027 jms pure C version from https://github.com/amosnier/sha-2/blob/master/sha-256.c
+    3 2020-12-24 rdr Add stdio.h header due to sprintf.
+    4 2021-12-24 rdr Copyright assignment to Kinemetrics.
+------2022-02-24 jms remove pseudo-pascal macros------
+                     remove alternate version
 */
 
-#ifndef ALTSHA256
 
-// this is the preferred multi-host version, enabled by default
-
-#include <stdio.h>
 #include <stdint.h>
 #include <string.h>
+#include <stdio.h>
 
 typedef char *pchar ;
 
@@ -60,7 +67,8 @@ static const uint32_t k[] = {
     0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208, 0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2
 };
 
-struct buffer_state {
+struct buffer_state
+{
     const uint8_t * p;
     size_t len;
     size_t total_len;
@@ -219,9 +227,10 @@ void calc_sha_256(uint8_t hash[32], const void * input, size_t len)
         int i;
 
         memset(w, 0x00, sizeof w);
+
         for (i = 0; i < 16; i++) {
             w[i] = (uint32_t) p[0] << 24 | (uint32_t) p[1] << 16 |
-                (uint32_t) p[2] << 8 | (uint32_t) p[3];
+                   (uint32_t) p[2] << 8 | (uint32_t) p[3];
             p += 4;
         }
 
@@ -310,190 +319,21 @@ void calc_sha_256(uint8_t hash[32], const void * input, size_t len)
 
 static void hash_to_string(char s[65], const uint8_t hash[32])
 {
-	size_t i;
-	for (i = 0; i < 32; i++) {
-		s+= sprintf(s, "%02x", hash[i]);
-	}
+    size_t i;
+
+    for (i = 0; i < 32; i++) {
+        s+= sprintf(s, "%02x", hash[i]);
+    }
 }
 
 void sha256 (pchar inpmsg, pchar outhash)
 {
 
-  uint8_t hash[32];
-  calc_sha_256(hash, inpmsg, strlen(inpmsg));
-  hash_to_string(outhash, hash);
+    uint8_t hash[32];
+    calc_sha_256(hash, inpmsg, strlen(inpmsg));
+    hash_to_string(outhash, hash);
 
 }
 
 
 
-#else
-
-// this is the alternative sha256 used for experimental purposes.
-// this will not produce a correct result on many hosts
-
-#include "pascal.h"
-#include "xmlsup.h"
-#include "sha256.h"
-
-static longword rotr (longword n, longword x)
-begin
-
-  return (x shr n) or (x shl (32 - n)) ;
-end
-
-static longword s0 (longword x)
-begin
-
-  return rotr(2, x) xor rotr(13, x) xor rotr(22, x) ;
-end
-
-static longword s1 (longword x)
-begin
-
-  return rotr(6, x) xor rotr(11, x) xor rotr(25, x) ;
-end
-
-static longword a0 (longword x)
-begin
-
-  return rotr(7, x) xor rotr(18, x) xor (x shr 3) ;
-end
-
-static longword a1 (longword x)
-begin
-
-  return rotr(17, x) xor rotr(19, x) xor (x shr 10) ;
-end
-
-static longword ch (longword x, longword y, longword z)
-begin
-
-  return (x and y) xor (not x and z) ;
-end
-
-static longword maj (longword x, longword y, longword z)
-begin
-
-  return (x and y) xor (x and z) xor (y and z) ;
-end
-
-static char *z_pad (pchar s, integer lth)
-begin
-  integer len, diff ;
-
-  len = (integer)strlen(s) ;
-  diff = lth - len ;
-  if (diff > 0)
-    then
-      begin
-        memmove (addr(s[diff]), addr(s[0]), len + 1) ; /* shift existing string right */
-        memset (addr(s[0]), '0', diff) ; /* add ascii zeroes at front */
-      end
-  return s ;
-end
-
-static pchar int_to_hex (longword h, integer digits, pchar s)
-begin
-
-  sprintf (s, "%x", (unsigned int)h) ;
-  z_pad (s, digits) ;
-  return s ;
-end
-
-/* Handles up to 192 character input. Used to generate hash for authentication */
-void sha256 (pchar inpmsg, pchar outhash)
-begin
-  string3 s ;
-  string15 hbuf ;
-  integer l, n, i, j, idx, lth, padlth ;
-  longword m[3][16] ;
-  longword w[64] ;
-  longword v[8] ;
-  longword a, b, c, d, e, f, g, h ;
-  longword t, t1, t2 ;
-
-  const longword K[64] = {
-    0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
-    0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3, 0x72be5d74, 0x80deb1fe, 0x9bdc06a7, 0xc19bf174,
-    0xe49b69c1, 0xefbe4786, 0x0fc19dc6, 0x240ca1cc, 0x2de92c6f, 0x4a7484aa, 0x5cb0a9dc, 0x76f988da,
-    0x983e5152, 0xa831c66d, 0xb00327c8, 0xbf597fc7, 0xc6e00bf3, 0xd5a79147, 0x06ca6351, 0x14292967,
-    0x27b70a85, 0x2e1b2138, 0x4d2c6dfc, 0x53380d13, 0x650a7354, 0x766a0abb, 0x81c2c92e, 0x92722c85,
-    0xa2bfe8a1, 0xa81a664b, 0xc24b8b70, 0xc76c51a3, 0xd192e819, 0xd6990624, 0xf40e3585, 0x106aa070,
-    0x19a4c116, 0x1e376c08, 0x2748774c, 0x34b0bcb5, 0x391c0cb3, 0x4ed8aa4a, 0x5b9cca4f, 0x682e6ff3,
-    0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208, 0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2} ;
-
-  s[1] = 0 ;
-  s[0] = 0x80 ;
-  lth = (integer)strlen(inpmsg) ; /* before any additions */
-  strcat (inpmsg, s) ; /* add trailing '1' bit (+ 0's padding) to string */
-  l = ((integer)strlen(inpmsg) div 4) + 2 ; /* length (in longwords of msg + '1' + appended length */
-  n = (l + 15) div 16 ; /* number of 16 longword blocks required (1 or 2 or 3) */
-  padlth = lth + 1 ;
-  while (padlth < (n * 64))
-    inpmsg[padlth++] = 0 ;
-  for (i = 0 ; i < n ; i++)
-    for (j = 0 ; j < 16 ; j++)
-      begin /* encode 4 chars per integer, big-endian encoding */
-        idx = (i * 64) + (j * 4) ;
-        m[i][j] = ((longword)inpmsg[idx] shl 24) or ((longword)inpmsg[idx + 1] shl 16) or
-                  ((longword)inpmsg[idx + 2] shl 8) or ((longword)inpmsg[idx + 3]) ;
-      end
-  m[n - 1][14] = 0 ;
-  m[n - 1][15] = lth * 8 ; /* number of bits in original message */
-  /* set initial hash value */
-  v[0] = 0x6a09e667 ;
-  v[1] = 0xbb67ae85 ;
-  v[2] = 0x3c6ef372 ;
-  v[3] = 0xa54ff53a ;
-  v[4] = 0x510e527f ;
-  v[5] = 0x9b05688c ;
-  v[6] = 0x1f83d9ab ;
-  v[7] = 0x5be0cd19 ;
-  /* hash computation */
-  for (i = 0 ; i < n ; i++)
-    begin
-      /* 1 - prepare message schedule 'w' */
-      for (t1 = 0 ; t1 < 16 ; t1++)
-        w[t1] = m[i][t1] ;
-      for (t1 = 16 ; t1 < 64 ; t1++)
-        w[t1] = a1(w[t1 - 2]) + w[t1 - 7] + a0(w[t1 - 15]) + w[t1 - 16] ;
-      /* 2 - initialise eight working variables a, b, c, d, e, f, g, h with previous hash value */
-      a = v[0] ;
-      b = v[1] ;
-      c = v[2] ;
-      d = v[3] ;
-      e = v[4] ;
-      f = v[5] ;
-      g = v[6] ;
-      h = v[7] ;
-      /* 3 - main loop */
-      for (t = 0 ; t < 64 ; t++)
-        begin
-          t1 = h + s1(e) + ch(e, f, g) + K[t] + w[t] ;
-          t2 = s0(a) + maj(a, b, c) ;
-          h = g ;
-          g = f ;
-          f = e ;
-          e = d + t1 ;
-          d = c ;
-          c = b ;
-          b = a ;
-          a = t1 + t2 ;
-        end
-      /* 4 - compute the new intermediate hash value */
-      v[0] = v[0] + a ;
-      v[1] = v[1] + b ;
-      v[2] = v[2] + c ;
-      v[3] = v[3] + d ;
-      v[4] = v[4] + e ;
-      v[5] = v[5] + f ;
-      v[6] = v[6] + g ;
-      v[7] = v[7] + h ;
-    end
-  strcpy (outhash, int_to_hex(v[0], 8, hbuf)) ;
-  for (i = 1 ; i <= 7 ; i++)
-    strcat (outhash, int_to_hex(v[i], 8, hbuf)) ;
-end
-
-#endif

@@ -1,5 +1,11 @@
+
+
+
+
 /*   Lib660 Seed Compression definitions
-     Copyright 2017 Certified Software Corporation
+     Copyright 2017 by
+     Kinemetrics, Inc.
+     Pasadena, CA 91107 USA.
 
     This file is part of Lib660
 
@@ -21,19 +27,21 @@ Edit History:
    Ed Date       By  Changes
    -- ---------- --- ---------------------------------------------------
     0 2017-06-08 rdr Created
+    1 2021-12-24 rdr Copyright assignment to Kinemetrics.
+------2022-02-24 jms remove pseudo-pascal macros------
 */
 #ifndef libcompress_h
 /* Flag this file as included */
 #define libcompress_h
-#define VER_LIBCOMPRESS 0
+#define VER_LIBCOMPRESS 1
 
 #include "libtypes.h"
 #include "libstrucs.h"
 #include "libsampglob.h"
 
-extern integer decompress_blockette (pq660 q660, plcq q) ;
-extern integer compress_block (pq660 q660, plcq q, pcom_packet pcom) ;
-extern integer build_blocks (pq660 q660, plcq q, pcom_packet pcom) ;
+extern int decompress_blockette (pq660 q660, plcq q) ;
+extern int compress_block (pq660 q660, plcq q, pcom_packet pcom) ;
+extern int build_blocks (pq660 q660, plcq q, pcom_packet pcom) ;
 extern void no_previous (pq660 q660) ;
 
 #endif

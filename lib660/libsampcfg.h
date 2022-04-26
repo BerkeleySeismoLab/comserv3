@@ -1,5 +1,11 @@
+
+
+
+
 /*   Lib660 time series configuration definitions
-     Copyright 2017 Certified Software Corporation
+     Copyright 2017 by
+     Kinemetrics, Inc.
+     Pasadena, CA 91107 USA.
 
     This file is part of Lib660
 
@@ -21,11 +27,13 @@ Edit History:
    Ed Date       By  Changes
    -- ---------- --- ---------------------------------------------------
     0 2017-06-11 rdr Created
+    1 2021-12-24 rdr Copyright assignment to Kinemetrics.
+------2022-02-24 jms remove pseudo-pascal macros------
 */
 #ifndef libsampcfg_h
 /* Flag this file as included */
 #define libsampcfg_h
-#define VER_LIBSAMPCFG 6
+#define VER_LIBSAMPCFG 10
 
 #include "libtypes.h"
 #include "libstrucs.h"
@@ -36,13 +44,13 @@ extern void deallocate_sg (pq660 q660) ;
 extern void set_gaps (plcq q) ;
 extern void set_net_station (pq660 q660) ;
 extern void init_lcq (pq660 q660) ;
+extern void init_ll_lcq (pq660 q660) ;
 extern void process_dplcqs (pq660 q660) ;
 extern void init_dplcqs (pq660 q660) ;
-extern pchar realtostr (double r, integer digits, pchar result) ;
-extern longword secsince (void) ;
+extern pchar realtostr (double r, int digits, pchar result) ;
+extern U32 secsince (void) ;
 extern enum tliberr lib_lcqstat (pq660 q660, tlcqstat *lcqstat) ;
 extern enum tliberr lib_getdpcfg (pq660 q660, tdpcfg *dpcfg) ;
 extern void clear_calstat (pq660 q660) ;
-extern void init_ll_lcq (pq660 q660) ;
 
 #endif

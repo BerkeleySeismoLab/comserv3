@@ -1,5 +1,11 @@
+
+
+
+
 /*   Lib660 Message Definitions
-     Copyright 2017 Certified Software Corporation
+     Copyright 2017,2020 by
+     Kinemetrics, Inc.
+     Pasadena, CA 91107 USA.
 
     This file is part of Lib660
 
@@ -22,11 +28,16 @@ Edit History:
    -- ---------- --- ---------------------------------------------------
     0 2017-06-09 rdr Created
     1 2020-03-07 jms add LIBMSG_NOTREADY
+    2 2021-12-24 rdr Copyright assignment to Kinemetrics.
+------2022-02-24 jms remove pseudo-pascal macros------
+    3 2022-03-01 jms added throttle and BSL enhancement messages
+    4 2022-03-31 jms add BWFILL message    
+
 */
 #ifndef libmsgs_h
 /* Flag this file as included */
 #define libmsgs_h
-#define VER_LIBMSGS 0
+#define VER_LIBMSGS 5
 
 #include "libtypes.h"
 #include "libstrucs.h"
@@ -62,6 +73,10 @@ Edit History:
 #define LIBMSG_NETSTN 116
 #define LIBMSG_TOTAL 117
 #define LIBMSG_PRILIMIT 118
+#define LIBMSG_DISCREQ 119
+#define LIBMSG_STARTAT 120
+#define LIBMSG_THROTTLE 121
+#define LIBMSG_BWFILL 122
 
 #define LIBMSG_CREATED 200
 #define LIBMSG_REGISTERED 201
@@ -120,22 +135,22 @@ Edit History:
 #define HOSTMSG_ALL 800
 
 #ifdef CONSTMSG
-extern void libmsgadd (pq660 q660, word msgcode, const pchar msgsuf) ;
-extern void libdatamsg (pq660 q660, word msgcode, const pchar msgsuf) ;
-extern void msgadd (pq660 q660, word msgcode, longword dt, const pchar msgsuf, boolean client) ;
+extern void libmsgadd (pq660 q660, U16 msgcode, const pchar msgsuf) ;
+extern void libdatamsg (pq660 q660, U16 msgcode, const pchar msgsuf) ;
+extern void msgadd (pq660 q660, U16 msgcode, U32 dt, const pchar msgsuf, BOOLEAN client) ;
 #else
-extern void libmsgadd (pq660 q660, word msgcode, pchar msgsuf) ;
-extern void libdatamsg (pq660 q660, word msgcode, pchar msgsuf) ;
-extern void msgadd (pq660 q660, word msgcode, longword dt, pchar msgsuf, boolean client) ;
+extern void libmsgadd (pq660 q660, U16 msgcode, pchar msgsuf) ;
+extern void libdatamsg (pq660 q660, U16 msgcode, pchar msgsuf) ;
+extern void msgadd (pq660 q660, U16 msgcode, U32 dt, pchar msgsuf, BOOLEAN client) ;
 #endif
 
 extern void dump_msgqueue (pq660 q660) ;
-extern pchar lib_get_msg (word code, pchar result) ;
+extern pchar lib_get_msg (U16 code, pchar result) ;
 extern pchar lib_get_errstr (enum tliberr err, pchar result) ;
 extern pchar lib_get_statestr (enum tlibstate state, pchar result) ;
-extern pchar showdot (longword num, pchar result) ;
+extern pchar showdot (U32 num, pchar result) ;
 extern pchar inet_ntop6 (tip_v6 *src) ;
-extern pchar command_name (byte cmd, pchar result) ;
+extern pchar command_name (U8 cmd, pchar result) ;
 extern pchar lib_gps_pwr (enum tgpspwr gp, pchar result) ;
 extern pchar lib_gps_fix (enum tgpsfix gf, pchar result) ;
 extern pchar lib_pll_state (enum tpllstat ps, pchar result) ;

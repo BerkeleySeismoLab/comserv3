@@ -37,7 +37,8 @@ static int min_free_packet_threshold = 0.1 * PACKETQUEUE_QUEUE_SIZE;
 double Lib660Interface::timestampOfLastRecord = 0;
 int Lib660Interface::num_multicastChannelEntries = 0;
 multicastChannelEntry Lib660Interface::multicastChannelList[MAX_MULTICASTCHANNELENTRIES];
-
+std::map<std::string, int> Lib660Interface::lowlatencymap;
+std::map<std::string,int>::iterator Lib660Interface::it;
 
 Lib660Interface::Lib660Interface(char *stationName, ConfigVO ourConfig) {
     pmodules mods;
@@ -135,7 +136,11 @@ void Lib660Interface::initializeRegistrationInfo(ConfigVO ourConfig) {
     strcpy(this->registrationInfo.q660id_address, ourConfig.getQ660UdpAddr());
     this->registrationInfo.q660id_baseport = ourConfig.getQ660BasePort();
     /* Start of new items in lib660.  Possibly configurable items or change. */
+#ifdef LIB660_BETA    
+    this->registrationInfo.spare1 = FALSE;
+#else
     this->registrationInfo.low_lat = FALSE;
+#endif
     this->registrationInfo.prefer_ipv4 = TRUE;
     this->registrationInfo.start_newer = TRUE;
     /* End of new items in lib660.  Possibly configurable items. */
@@ -152,7 +157,16 @@ void Lib660Interface::initializeRegistrationInfo(ConfigVO ourConfig) {
     this->registrationInfo.opt_start = OST_LAST;	//:: DSN -  Make configurable?
     this->registrationInfo.opt_end = 0;
     this->registrationInfo.opt_limit_last_backfill = ourConfig.getLimitBackfill();
+#ifdef LIB660_BETA    
+    this->registrationInfo.opt_throttle_kbitpersec = 0;
+    this->registrationInfo.opt_bwfill_kbit_target = 0;
+    this->registrationInfo.opt_bwfill_probe_interval = 0;
+    this->registrationInfo.opt_bwfill_exceed_trigger = 0;
+    this->registrationInfo.opt_bwfill_increase_interval = 0;
+    this->registrationInfo.opt_bwfill_max_latency = 0;
+#else
     this->registrationInfo.opt_lookback[0] = '\0';
+#endif
 }
 
 
@@ -196,10 +210,11 @@ void Lib660Interface::initializeCreationInfo(char *stationName, ConfigVO ourConf
     this->creationInfo.call_messages = this->msg_callback;
     if(ourConfig.getMulticastEnabled()) {
 	this->creationInfo.call_secdata = this->onesec_callback;
+	this->creationInfo.call_lowlatency = this->lowlatency_callback;
     } else {
 	this->creationInfo.call_secdata = NULL;
+	this->creationInfo.call_lowlatency = NULL;
     }
-    this->creationInfo.call_lowlatency = NULL;
 }
 
 
@@ -227,6 +242,8 @@ void Lib660Interface::changeState(enum tlibstate newState, enum tliberr reason) 
 void Lib660Interface::startDataFlow() {
     g_log << "+++ Requesting dataflow to start" << std::endl;
     this->changeState(LIBSTATE_RUN, LIBERR_NOERR);
+    /* Clear the lowlatency map. */
+    lowlatencymap.clear();
 }
 
 
@@ -350,14 +367,12 @@ void Lib660Interface::state_callback(pointer p) {
 
 /***********************************************************************
  * onesec_callback:
- *	Receive one second data packets from lib660.
- *	Multicast the packet if configured.
- *	Convert lib660 epocch time to lib330 epoch time for compatibility
- *	with q330 onesec multicast packets.
- *
- *  2011 modification to one-second multicast packet:
- *  1.  New structure with explicitly sized data types.
- *  2.  All values are multicast in network byte order.
+ * 	Receive onesec single channel uncompessed data packets from lib660.
+ * 	Multicast the packet if configured, and channel NOT seen by 
+ * 	lowlatency_callback.
+ *	Convert lib660 epocch time to lib330 epoch time for
+ *	compatibility with q330 onesec multicast packets.
+ *	All values are multicast in network byte order.
  ***********************************************************************/
 void Lib660Interface::onesec_callback(pointer p) {
     onesec_pkt msg;
@@ -393,38 +408,131 @@ void Lib660Interface::onesec_callback(pointer p) {
     if (ll < 2) strncat(msg.location,"  ", 2-ll);
     msg.rate = htonl((int)src->rate);
 
+    // Determine whether to multicast this packet.
+    int fnmatch_flags = 0;
+    for(int i=0; i < num_multicastChannelEntries; i++) {
+	if( fnmatch(multicastChannelList[i].channel, msg.channel, fnmatch_flags) == 0 && 
+	    fnmatch(multicastChannelList[i].location, msg.location, fnmatch_flags) == 0) {
+
+	    // Only multicast if it is not a lowlatency channel. */
+	    std::string chanloc = (std::string)msg.channel + "." + (std::string)msg.location;
+	    it = lowlatencymap.find(chanloc);
+	    if (it == lowlatencymap.end()) {
+		// Channel is not a lowlatency channel.  Multicast it.
+		// All fields in multicast msg must be in network byte order.
+		for(int i=0;i<src->sample_count;i++){
+		    msg.samples[i] = htonl((int)src->samples[i]);
+		}
+		int msgsize = ONESEC_PKT_HDR_LEN + src->sample_count * sizeof(int);
+		
+		// Convert q660 epoch time to q330 epoch time for the multicast timestamp.
+		// q660 epoch time starts at 2016-01-01T00:00:00 UTC.
+		// q330 epoch time starts at 2000-01-01T00:00:00 UTC.
+		// Both systems use a nominal epoch time (all days have 86400 seconds),
+		// and do not count leapseconds.
+		q330_timestamp_sec = (uint32_t)src->timestamp + Q660_to_Q330_sec_offset;
+		msg.timestamp_sec = q330_timestamp_sec;
+		msg.timestamp_usec = (src->timestamp - (double)((uint32_t)src->timestamp))*1000000;
 #ifdef DEBUG_Lib660Interface
-    g_log << __func__ << "onsec-callback: channnel: " << msg.station << "." << msg.net << "." << msg.channel << "." << msg.location << std::endl;
+		g_log << __func__ << ": channnel: " << 
+		    msg.station << "." << msg.net << "." << msg.channel << "." << msg.location << 
+		    " sample_count=" << src->sample_count << 
+//		    " q330_timestamp=" << msg.timestamp_sec << "," << msg.timestamp_usec << std::endl;
+		    " Q8_timestamp=" << std::fixed << src->timestamp << std::endl;
 #endif
-  
-    // Convert q660 epoch time to q330 epoch time for the multicast timestamp.
-    // q660 epoch time starts at 2016-01-01T00:00:00 UTC.
-    // q330 epoch time starts at 2000-01-01T00:00:00 UTC.
-    // Both systems use a nominal epoch time (all days have 86400 seconds),
-    // and do not count leapseconds.
-
-    q330_timestamp_sec = (uint32_t)src->timestamp + Q660_to_Q330_sec_offset;
-    msg.timestamp_sec = htonl((int)q330_timestamp_sec);
-    msg.timestamp_usec = htonl((int)((src->timestamp - (double)(((int)src->timestamp)))*1000000));
-
-    //#ifdef ENDIAN_LITTLE
-    //g_log <<" TimeStamp for "<<msg.net<<"."<<msg.station<<"."<<msg.channel<<std::endl;
-    //g_log <<" : "<<msg.timestamp<<std::endl;
-    //SwapDouble((double*)&msg.timestamp);
-    //g_log <<" (after swap) TimeStamp for "<<msg.net<<"."<<msg.station<<"."<<msg.channel;
-    //g_log <<" : "<<msg.timestamp<<std::endl;
-    //#endif
-
-    for(int i=0;i<src->rate;i++){
-	msg.samples[i] = htonl((int)src->samples[i]);
+		msg.timestamp_sec = htonl(msg.timestamp_sec);
+		msg.timestamp_usec = htonl(msg.timestamp_usec);
+		retval = sendto(mcastSocketFD, &msg, msgsize, 0, (struct sockaddr *) &(mcastAddr), sizeof(mcastAddr));
+#ifdef DEBUG_MULTICAST      
+		g_log << "Multicasting " << msg.station << "." << msg.net << "." <<  msg.channel << "." << msg.location << std::endl;
+#endif
+		if(retval < 0) {
+		    g_log << "XXX Unable to send multicast packet: " << strerror(errno) << std::endl;
+		}
+	    }
+	} 
     }
-    int msgsize = ONESEC_PKT_HDR_LEN + src->rate * sizeof(int);
+}
+
+
+/***********************************************************************
+ * lowlatency_callback
+ *	Receive lowlatency single channel uncompessed data packets from lib660.
+ *	Multicast the packet if configured.
+ *	Convert lib660 epocch time to lib330 epoch time for compatibility
+ *	with q330 onesec multicast packets.
+ *	All values are multicast in network byte order.
+ ***********************************************************************/
+void Lib660Interface::lowlatency_callback(pointer p) {
+    onesec_pkt msg;
+    tonesec_call *src = (tonesec_call*)p;
+    int retval;
+    char temp[32];
+    uint32_t q330_timestamp_sec;
+    char *tp;
+  
+    // Translate tonesec_call to onesec_pkt;
+    memset(&msg, 0, sizeof(msg));
+    memset(temp, 0, sizeof(temp));
+    strncpy(temp,src->station_name,9);
+    tp = strtok((char*)temp,(char*)"-");
+    // If the station_name is not valid, ignore the packet.
+    // The station_name is not valid when not connected to a Q8.
+    // However, lib660 still generates SOH channels with invalid station_name.
+    if (tp == NULL) {
+	strncpy(temp,src->station_name,9);
+#ifdef DEBUG_Lib660Interface 
+	g_log << "ERROR in " << __func__ << ": Bad format for station_name: " << temp << std::endl;
+#endif
+	return;
+    }
+    strcpy(msg.net,tp);
+    strcpy(msg.station,strtok(NULL,(char*)"-"));
+    strcpy(msg.channel,src->channel);
+    strcpy(msg.location,src->location);
+    // Ensure that channel is 3 characters, and location is 2 characters, blank padded.
+    int lc = strlen(msg.channel);
+    int ll = strlen(msg.location);
+    if (lc < 3) strncat(msg.channel,"   ", 3-lc);
+    if (ll < 2) strncat(msg.location,"  ", 2-ll);
+    msg.rate = htonl((int)src->rate);
+
 
     // Determine whether to multicast this packet.
     int fnmatch_flags = 0;
     for(int i=0; i < num_multicastChannelEntries; i++) {
 	if( fnmatch(multicastChannelList[i].channel, msg.channel, fnmatch_flags) == 0 && 
 	    fnmatch(multicastChannelList[i].location, msg.location, fnmatch_flags) == 0) {
+
+	    // Add channel to the lowlatency map it if is not there already.
+	    std::string chanloc = (std::string)msg.channel + "." + (std::string)msg.location;
+	    it = lowlatencymap.find(chanloc);
+	    if (it == lowlatencymap.end()) {
+		lowlatencymap[chanloc] = 1;
+	    }
+	    // All fields in multicast msg must be in network byte order.
+	    for(int i=0;i<src->sample_count;i++){
+		msg.samples[i] = htonl((int)src->samples[i]);
+	    }
+	    int msgsize = ONESEC_PKT_HDR_LEN + src->sample_count * sizeof(int);
+
+	    // Convert q660 epoch time to q330 epoch time for the multicast timestamp.
+	    // q660 epoch time starts at 2016-01-01T00:00:00 UTC.
+	    // q330 epoch time starts at 2000-01-01T00:00:00 UTC.
+	    // Both systems use a nominal epoch time (all days have 86400 seconds),
+	    // and do not count leapseconds.
+	    q330_timestamp_sec = (uint32_t)src->timestamp + Q660_to_Q330_sec_offset;
+	    msg.timestamp_sec = q330_timestamp_sec;
+	    msg.timestamp_usec = (src->timestamp - (double)((uint32_t)src->timestamp))*1000000;
+#ifdef DEBUG_Lib660Interface
+	    g_log << __func__ << ": channnel: " << 
+		msg.station << "." << msg.net << "." << msg.channel << "." << msg.location << 
+		" sample_count=" << src->sample_count << 
+//		" q330_timestamp=" << msg.timestamp_sec << "," << msg.timestamp_usec << std::endl;
+		" Q8_timestamp=" << std::fixed << src->timestamp << std::endl;
+#endif
+	    msg.timestamp_sec = htonl(msg.timestamp_sec);
+	    msg.timestamp_usec = htonl(msg.timestamp_usec);
 	    retval = sendto(mcastSocketFD, &msg, msgsize, 0, (struct sockaddr *) &(mcastAddr), sizeof(mcastAddr));
 #ifdef DEBUG_MULTICAST      
 	    g_log << "Multicasting " << msg.station << "." << msg.net << "." <<  msg.channel << "." << msg.location << std::endl;
@@ -673,11 +781,11 @@ void Lib660Interface::file_callback (pointer p)
 {
     tfileacc_call *pfa ;
     char fname[PATH_MAX] = "";
-    integer flags ;
+    int flags ;
     mode_t rwmode ;
     off_t result, long_offset ;
-    integer numread ;
-    integer numwrite ;
+    ssize_t numread ;
+    ssize_t numwrite ;
     struct stat sb ;
     int filekind = FK_UNKNOWN;
   
@@ -817,8 +925,8 @@ void Lib660Interface::file_callback (pointer p)
 	break ;
 
     case FAT_READ :
-	numread = (integer)read (pfa->handle, pfa->buffer, pfa->options) ;
-	if (numread != pfa->options)
+	numread = read (pfa->handle, pfa->buffer, pfa->options) ;
+	if ((int)numread != pfa->options)
 	{
 	    pfa->fault = TRUE ;
 	}
@@ -829,8 +937,8 @@ void Lib660Interface::file_callback (pointer p)
 	break ;
 
     case FAT_WRITE :
-	numwrite = (integer)write(pfa->handle, pfa->buffer, pfa->options) ;
-	if (numwrite != pfa->options)
+	numwrite = write(pfa->handle, pfa->buffer, pfa->options) ;
+	if ((int)numwrite != pfa->options)
 	{
 	    pfa->fault = TRUE ;
 	}	  
@@ -842,7 +950,7 @@ void Lib660Interface::file_callback (pointer p)
 
     case FAT_SIZE :
 	pfa->fault = fstat (pfa->handle, &(sb)) ;
-	pfa->options = (integer)sb.st_size ;
+	pfa->options = (int)sb.st_size ;
 #if DEBUG_FILE_CALLBACK > 1
 	LogMessage (CS_LOG_TYPE_DEBUG, "%s: op=%s fd=%d err=%d\n", tag,
 		    FAT_str[pfa->fileacc_type], pfa->handle, pfa->fault);

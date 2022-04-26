@@ -1,5 +1,11 @@
+
+
+
+
 /*   Lib660 POC Receiver
-     Copyright 2006, 2013 Certified Software Corporation
+     Copyright 2006, 2013 by
+     Kinemetrics, Inc.
+     Pasadena, CA 91107 USA.
 
     This file is part of Lib660
 
@@ -26,6 +32,8 @@ Edit History:
     2 2007-08-04 rdr Add conditionals for omitting network code.
     3 2010-01-04 rdr Use fcntl instead of ioctl to set socket non-blocking.
     4 2013-02-02 rdr Use actual socket number for select.
+    5 2021-12-24 rdr Copyright assignment to Kinemetrics.
+------2022-02-24 jms remove pseudo-pascal macros------
 */
 #ifndef OMIT_NETWORK
 
@@ -38,175 +46,163 @@ Edit History:
 
 #define POC_SIZE (QDP_HDR_LTH + 16 + 4)
 
-typedef struct {
+typedef struct
+{
 #ifdef X86_WIN32
-  HANDLE threadhandle ;
-  longword threadid ;
+    HANDLE threadhandle ;
+    U32 threadid ;
 #else
-  pthread_t threadid ;
+    pthread_t threadid ;
 #endif
-  boolean running ;
-  tpoc_par poc_par ; /* creation parameters */
-  tpoc_recvd poc_buf ; /* to build message for client */
+    BOOLEAN running ;
+    tpoc_par poc_par ; /* creation parameters */
+    tpoc_recvd poc_buf ; /* to build message for client */
 #ifdef X86_WIN32
-  SOCKET cpath ; /* commands socket */
+    SOCKET cpath ; /* commands socket */
 #else
-  integer cpath ; /* commands socket */
-  integer high_socket ;
+    int cpath ; /* commands socket */
+    int high_socket ;
 #endif
-  struct sockaddr_in csock ; /* IPV4 address */
-  struct sockaddr_in6 csock6 ; /* IPV6 address */
-  tqdp recvhdr ;
-  boolean sockopen ;
-  boolean terminate ;
-  byte buf[POC_SIZE] ;
+    struct sockaddr_in csock ; /* IPV4 address */
+    struct sockaddr_in6 csock6 ; /* IPV6 address */
+    tqdp recvhdr ;
+    BOOLEAN sockopen ;
+    BOOLEAN terminate ;
+    U8 buf[POC_SIZE] ;
 } tpocstr ;
 typedef tpocstr *ppocstr ;
 
 static void close_socket (ppocstr pocstr)
-begin
+{
 
-  pocstr->sockopen = FALSE ;
-  if (pocstr->cpath != INVALID_SOCKET)
-    then
-      begin
+    pocstr->sockopen = FALSE ;
+
+    if (pocstr->cpath != INVALID_SOCKET) {
 #ifdef X86_WIN32
         closesocket (pocstr->cpath) ;
 #else
         close (pocstr->cpath) ;
 #endif
         pocstr->cpath = INVALID_SOCKET ;
-      end
+    }
+
 #ifndef X86_WIN32
-  pocstr->high_socket = 0 ;
+    pocstr->high_socket = 0 ;
 #endif
-end
+}
 
 static void read_poc_socket (ppocstr pocstr)
-begin
-  integer lth ;
-  pbyte p ;
-  integer err ;
+{
+    int lth ;
+    PU8 p ;
+    int err ;
 
-  if (pocstr->cpath == INVALID_SOCKET)
-    then
-      return ;
-  if (pocstr->poc_par.ipv6)
-    then
-      begin
+    if (pocstr->cpath == INVALID_SOCKET)
+        return ;
+
+    if (pocstr->poc_par.ipv6) {
         lth = sizeof(struct sockaddr_in6) ;
-        err = (integer)recvfrom (pocstr->cpath, (pvoid)addr(pocstr->buf), POC_SIZE, 0, (pvoid)addr(pocstr->csock6), (pvoid)addr(lth)) ;
-      end
-    else
-      begin
+        err = (int)recvfrom (pocstr->cpath, (pvoid)&(pocstr->buf), POC_SIZE, 0, (pvoid)&(pocstr->csock6), (pvoid)&(lth)) ;
+    } else {
         lth = sizeof(struct sockaddr) ;
-        err = (integer)recvfrom (pocstr->cpath, (pvoid)addr(pocstr->buf), POC_SIZE, 0, (pvoid)addr(pocstr->csock), (pvoid)addr(lth)) ;
-      end
-  if (err == SOCKET_ERROR)
-    then
-      begin
+        err = (int)recvfrom (pocstr->cpath, (pvoid)&(pocstr->buf), POC_SIZE, 0, (pvoid)&(pocstr->csock), (pvoid)&(lth)) ;
+    }
+
+    if (err == SOCKET_ERROR) {
         err =
 #ifdef X86_WIN32
-               WSAGetLastError() ;
+            WSAGetLastError() ;
 #else
-               errno ;
+            errno ;
 #endif
+
         if (err != EWOULDBLOCK)
-          then
-            if (err == ECONNRESET)
-              then
-                begin
-                  close_socket (pocstr) ;
-                  if (pocstr->poc_par.poc_callback)
-                    then
-                      pocstr->poc_par.poc_callback (PS_CONNRESET, addr(pocstr->poc_buf)) ;
-                end
-      end
-  else if (err > 0)
-    then
-      begin
-        p = (pbyte)addr(pocstr->buf) ;
-        lth = loadqdphdr (addr(p), addr(pocstr->recvhdr)) ;
-        if (lth)
-          then
-            begin
-              loadpoc (addr(p), addr(pocstr->poc_buf.msg)) ;
-              pocstr->poc_buf.ipv6 = pocstr->poc_par.ipv6 ;
-              if (pocstr->poc_buf.ipv6)
-                then
-                  memcpy (addr(pocstr->poc_buf.ip6_address), addr(pocstr->csock6.sin6_addr), sizeof(tip_v6)) ;
-                else
-                  pocstr->poc_buf.ip_address = ntohl(pocstr->csock.sin_addr.s_addr) ;
-              if (pocstr->poc_par.poc_callback)
-                then
-                  pocstr->poc_par.poc_callback (PS_NEWPOC, addr(pocstr->poc_buf)) ;
-            end
-      end
-end
+            if (err == ECONNRESET) {
+                close_socket (pocstr) ;
+
+                if (pocstr->poc_par.poc_callback)
+                    pocstr->poc_par.poc_callback (PS_CONNRESET, &(pocstr->poc_buf)) ;
+            }
+    } else if (err > 0) {
+        p = (PU8)&(pocstr->buf) ;
+        lth = loadqdphdr (&(p), &(pocstr->recvhdr)) ;
+
+        if (lth) {
+            loadpoc (&(p), &(pocstr->poc_buf.msg)) ;
+            pocstr->poc_buf.ipv6 = pocstr->poc_par.ipv6 ;
+
+            if (pocstr->poc_buf.ipv6)
+                memcpy (&(pocstr->poc_buf.ip6_address), &(pocstr->csock6.sin6_addr), sizeof(tip_v6)) ;
+            else
+                pocstr->poc_buf.ip_address = ntohl(pocstr->csock.sin_addr.s_addr) ;
+
+            if (pocstr->poc_par.poc_callback)
+                pocstr->poc_par.poc_callback (PS_NEWPOC, &(pocstr->poc_buf)) ;
+        }
+    }
+}
 
 static void open_socket (ppocstr pocstr)
-begin
-  boolean isipv6 ;
-  integer err, j ;
-  longint flag ;
-  struct sockaddr_in *psock ;
-  struct sockaddr_in6 *psock6 ;
+{
+    BOOLEAN isipv6 ;
+    int err, j ;
+    I32 flag ;
+    struct sockaddr_in *psock ;
+    struct sockaddr_in6 *psock6 ;
 #ifdef X86_WIN32
-  BOOL flag2 ;
+    BOOL flag2 ;
 #else
-  int flag2 ;
+    int flag2 ;
 #endif
 
-  close_socket (pocstr) ;
-  isipv6 = pocstr->poc_par.ipv6 ;
-  if (isipv6)
-    then
-      pocstr->cpath = socket (AF_INET6, SOCK_DGRAM, IPPROTO_UDP) ;
+    close_socket (pocstr) ;
+    isipv6 = pocstr->poc_par.ipv6 ;
+
+    if (isipv6)
+        pocstr->cpath = socket (AF_INET6, SOCK_DGRAM, IPPROTO_UDP) ;
     else
-      pocstr->cpath = socket (AF_INET, SOCK_DGRAM, IPPROTO_UDP) ;
-  if (pocstr->cpath == INVALID_SOCKET)
-    then
-      return ;
-  flag = 1 ;
+        pocstr->cpath = socket (AF_INET, SOCK_DGRAM, IPPROTO_UDP) ;
+
+    if (pocstr->cpath == INVALID_SOCKET)
+        return ;
+
+    flag = 1 ;
 #ifdef X86_WIN32
-  ioctlsocket (pocstr->cpath, FIONBIO, (pvoid)addr(flag)) ;
+    ioctlsocket (pocstr->cpath, FIONBIO, (pvoid)&(flag)) ;
 #else
-  flag = fcntl (pocstr->cpath, F_GETFL, 0) ;
-  fcntl (pocstr->cpath, F_SETFL, flag or O_NONBLOCK) ;
+    flag = fcntl (pocstr->cpath, F_GETFL, 0) ;
+    fcntl (pocstr->cpath, F_SETFL, flag | O_NONBLOCK) ;
 #endif
-  flag2 = 1 ;
+    flag2 = 1 ;
 #ifdef X86_WIN32
-  j = sizeof(BOOL) ;
-  err = setsockopt (pocstr->cpath, SOL_SOCKET, SO_REUSEADDR, (pvoid)addr(flag2), j) ;
+    j = sizeof(BOOL) ;
+    err = setsockopt (pocstr->cpath, SOL_SOCKET, SO_REUSEADDR, (pvoid)&(flag2), j) ;
 #else
-  j = sizeof(int) ;
-  err = setsockopt (pocstr->cpath, SOL_SOCKET, SO_REUSEADDR, (pvoid)addr(flag2), j) ;
-  if (pocstr->cpath > pocstr->high_socket)
-    then
-      pocstr->high_socket = pocstr->cpath ;
+    j = sizeof(int) ;
+    err = setsockopt (pocstr->cpath, SOL_SOCKET, SO_REUSEADDR, (pvoid)&(flag2), j) ;
+
+    if (pocstr->cpath > pocstr->high_socket)
+        pocstr->high_socket = pocstr->cpath ;
+
 #endif
-  if (isipv6)
-    then
-      begin
-        psock6 = (pointer)addr(pocstr->csock6) ;
+
+    if (isipv6) {
+        psock6 = (pointer)&(pocstr->csock6) ;
         memclr (psock6, sizeof(struct sockaddr_in6)) ;
         psock6->sin6_family = AF_INET6 ;
         psock6->sin6_port = htons(pocstr->poc_par.poc_port) ;
-        memclr (addr(psock6->sin6_addr), sizeof(tip_v6)) ;
-        err = bind(pocstr->cpath, (pvoid)addr(pocstr->csock6), sizeof(struct sockaddr_in6)) ;
-      end
-    else
-      begin
-        psock = (pointer) addr(pocstr->csock) ;
+        memclr (&(psock6->sin6_addr), sizeof(tip_v6)) ;
+        err = bind(pocstr->cpath, (pvoid)&(pocstr->csock6), sizeof(struct sockaddr_in6)) ;
+    } else {
+        psock = (pointer) &(pocstr->csock) ;
         memclr (psock, sizeof(struct sockaddr)) ;
         psock->sin_family = AF_INET ;
         psock->sin_port = htons(pocstr->poc_par.poc_port) ;
         psock->sin_addr.s_addr = INADDR_ANY ;
-        err = bind(pocstr->cpath, (pvoid)addr(pocstr->csock), sizeof(struct sockaddr)) ;
-      end
-  if (err)
-    then
-      begin
+        err = bind(pocstr->cpath, (pvoid)&(pocstr->csock), sizeof(struct sockaddr)) ;
+    }
+
+    if (err) {
 #ifdef X86_WIN32
         closesocket (pocstr->cpath) ;
 #else
@@ -214,109 +210,115 @@ begin
 #endif
         pocstr->cpath = INVALID_SOCKET ;
         return ;
-      end
-  pocstr->sockopen = TRUE ;
-end
+    }
+
+    pocstr->sockopen = TRUE ;
+}
 
 #ifdef X86_WIN32
 unsigned long  __stdcall pocthread (pointer p)
 #else
 void *pocthread (pointer p)
 #endif
-begin
-  ppocstr pocstr ;
-  fd_set readfds, writefds, exceptfds ;
-  struct timeval timeout ;
-  integer res ;
+{
+    ppocstr pocstr ;
+    fd_set readfds, writefds, exceptfds ;
+    struct timeval timeout ;
+    int res ;
 
 #ifndef X86_WIN32
-  pthread_detach (pthread_self ()) ;
+    pthread_detach (pthread_self ()) ;
 #endif
-  pocstr = p ;
-  repeat
-    if (pocstr->sockopen)
-      then
-        begin /* wait for socket input or timeout */
-          FD_ZERO (addr(readfds)) ;
-          FD_ZERO (addr(writefds)) ;
-          FD_ZERO (addr(exceptfds)) ;
-          FD_SET (pocstr->cpath, addr(readfds)) ;
-          timeout.tv_sec = 0 ;
-          timeout.tv_usec = 25000 ; /* 25ms timeout */
+    pocstr = p ;
+
+    do {
+        if (pocstr->sockopen) {
+            /* wait for socket input or timeout */
+            FD_ZERO (&(readfds)) ;
+            FD_ZERO (&(writefds)) ;
+            FD_ZERO (&(exceptfds)) ;
+            FD_SET (pocstr->cpath, &(readfds)) ;
+            timeout.tv_sec = 0 ;
+            timeout.tv_usec = 25000 ; /* 25ms timeout */
 #ifdef X86_WIN32
-          res = select (0, addr(readfds), addr(writefds), addr(exceptfds), addr(timeout)) ;
+            res = select (0, &(readfds), &(writefds), &(exceptfds), &(timeout)) ;
 #else
-          res = select (pocstr->high_socket + 1, addr(readfds), addr(writefds), addr(exceptfds), addr(timeout)) ;
+            res = select (pocstr->high_socket + 1, &(readfds), &(writefds), &(exceptfds), &(timeout)) ;
 #endif
-          if (res > 0)
-            then
-              if (FD_ISSET (pocstr->cpath, addr(readfds)))
-                then
-                  read_poc_socket (pocstr) ;
-        end
-      else
-        sleepms (25) ;
-  until pocstr->terminate) ;
-  pocstr->running = FALSE ;
+
+            if (res > 0)
+                if (FD_ISSET (pocstr->cpath, &(readfds)))
+                    read_poc_socket (pocstr) ;
+        } else
+            sleepms (25) ;
+    } while (! pocstr->terminate) ;
+
+    pocstr->running = FALSE ;
 #ifdef X86_WIN32
-  ExitThread (0) ;
-  return 0 ;
+    ExitThread (0) ;
+    return 0 ;
 #else
-  pthread_exit (0) ;
+    pthread_exit (0) ;
 #endif
-end
+}
 
 pointer lib_poc_start (tpoc_par *pp)
-begin
-  ppocstr pocstr ;
+{
+    ppocstr pocstr ;
 #ifndef X86_WIN32
-  integer err ;
-  pthread_attr_t attr;
+    int err ;
+    pthread_attr_t attr;
 #endif
 #endif
 
-  pocstr = malloc(sizeof(tpocstr)) ;
-  memclr (pocstr, sizeof(tpocstr)) ;
-  memcpy (addr(pocstr->poc_par), pp, sizeof(tpoc_par)) ;
-  pocstr->cpath = INVALID_SOCKET ;
-  open_socket (pocstr) ;
-  if (pocstr->sockopen == FALSE)
-    then
-      begin
+    pocstr = malloc(sizeof(tpocstr)) ;
+    memclr (pocstr, sizeof(tpocstr)) ;
+    memcpy (&(pocstr->poc_par), pp, sizeof(tpoc_par)) ;
+    pocstr->cpath = INVALID_SOCKET ;
+    open_socket (pocstr) ;
+
+    if (pocstr->sockopen == FALSE) {
         free (pocstr) ;
         return NIL ;
-      end
+    }
+
 #ifdef X86_WIN32
-  pocstr->threadhandle = CreateThread (NIL, 0, pocthread, pocstr, 0, (pvoid)addr(pocstr->threadid)) ;
-  if (pocstr->threadhandle == NIL)
+    pocstr->threadhandle = CreateThread (NIL, 0, pocthread, pocstr, 0, (pvoid)&(pocstr->threadid)) ;
+
+    if (pocstr->threadhandle == NIL)
 #else
-  err = pthread_attr_init (addr(attr)) ;
-  if (err == 0)
-    then
-      err = pthread_attr_setdetachstate (addr(attr), PTHREAD_CREATE_DETACHED) ;
-  if (err == 0)
-    then
-      err = pthread_create (addr(pocstr->threadid), addr(attr), pocthread, pocstr) ;
-  if (err)
+    err = pthread_attr_init (&(attr)) ;
+
+    if (err == 0)
+        err = pthread_attr_setdetachstate (&(attr), PTHREAD_CREATE_DETACHED) ;
+
+    if (err == 0)
+        err = pthread_create (&(pocstr->threadid), &(attr), pocthread, pocstr) ;
+
+    if (err)
 #endif
-    then
-      begin
+
+    {
         free (pocstr) ;
         return NIL ;
-      end ;
-  pocstr->running = TRUE ;
-  return pocstr ; /* return running context */
-end
+    } ;
+
+    pocstr->running = TRUE ;
+
+    return pocstr ; /* return running context */
+}
 
 void lib_poc_stop (pointer ct)
-begin
-  ppocstr pocstr ;
+{
+    ppocstr pocstr ;
 
-  pocstr = ct ;
-  pocstr->terminate = TRUE ;
-  while (pocstr->running)
-    sleepms (25) ;
-  close_socket (pocstr) ;
-end
+    pocstr = ct ;
+    pocstr->terminate = TRUE ;
+
+    while (pocstr->running)
+        sleepms (25) ;
+
+    close_socket (pocstr) ;
+}
 
 
