@@ -41,7 +41,6 @@ extern "C" {
 typedef struct {
     char channel[4];
     char location[4];
-    int  lowlatency;
 } multicastChannelEntry;
 
 struct onesec_pkt{
@@ -103,7 +102,8 @@ public:
     int processPacketQueue();
     int queueNearFull();
     bool build_multicastChannelList(char *);
-  
+    void log_q8serv_config(ConfigVO ourConfig);
+
     // These functions are static because they are callback routines from lib660.
     static void state_callback(pointer p);
     static void miniseed_callback(pointer p);

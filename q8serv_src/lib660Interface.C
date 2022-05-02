@@ -72,7 +72,7 @@ Lib660Interface::Lib660Interface(char *stationName, ConfigVO ourConfig) {
 
     g_log << "+++ IP info:" << std::endl;  
     g_log << "+++ IP Addr:" << this->registrationInfo.q660id_address << std::endl;
-
+    log_q8serv_config(ourConfig);
     if(ourConfig.getMulticastEnabled()) {
 	g_log << "+++ Multicast Enabled:" << std::endl;
 	if( (mcastSocketFD = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0) {
@@ -136,11 +136,7 @@ void Lib660Interface::initializeRegistrationInfo(ConfigVO ourConfig) {
     strcpy(this->registrationInfo.q660id_address, ourConfig.getQ660UdpAddr());
     this->registrationInfo.q660id_baseport = ourConfig.getQ660BasePort();
     /* Start of new items in lib660.  Possibly configurable items or change. */
-#ifdef LIB660_BETA    
     this->registrationInfo.spare1 = FALSE;
-#else
-    this->registrationInfo.low_lat = FALSE;
-#endif
     this->registrationInfo.prefer_ipv4 = TRUE;
     this->registrationInfo.start_newer = TRUE;
     /* End of new items in lib660.  Possibly configurable items. */
@@ -156,17 +152,15 @@ void Lib660Interface::initializeRegistrationInfo(ConfigVO ourConfig) {
     this->registrationInfo.opt_token = 0;
     this->registrationInfo.opt_start = OST_LAST;	//:: DSN -  Make configurable?
     this->registrationInfo.opt_end = 0;
+    this->registrationInfo.opt_client_mode = LMODE_BSL;
     this->registrationInfo.opt_limit_last_backfill = ourConfig.getLimitBackfill();
-#ifdef LIB660_BETA    
-    this->registrationInfo.opt_throttle_kbitpersec = 0;
-    this->registrationInfo.opt_bwfill_kbit_target = 0;
-    this->registrationInfo.opt_bwfill_probe_interval = 0;
-    this->registrationInfo.opt_bwfill_exceed_trigger = 0;
-    this->registrationInfo.opt_bwfill_increase_interval = 0;
-    this->registrationInfo.opt_bwfill_max_latency = 0;
-#else
-    this->registrationInfo.opt_lookback[0] = '\0';
-#endif
+    // Bandwidth control
+    this->registrationInfo.opt_throttle_kbitpersec = ourConfig.getOptThrottleKbitpersec();
+    this->registrationInfo.opt_bwfill_kbit_target = ourConfig.getOptBwfillKbitTarget();
+    this->registrationInfo.opt_bwfill_probe_interval = ourConfig.getOptBwfillProbeInterval();
+    this->registrationInfo.opt_bwfill_exceed_trigger = ourConfig.getOptBwfillExceedTrigger();
+    this->registrationInfo.opt_bwfill_increase_interval = ourConfig.getOptBwfillIncreaseInterval();
+    this->registrationInfo.opt_bwfill_max_latency = ourConfig.getOptBwfillMaxLatency();
 }
 
 
@@ -243,6 +237,7 @@ void Lib660Interface::startDataFlow() {
     g_log << "+++ Requesting dataflow to start" << std::endl;
     this->changeState(LIBSTATE_RUN, LIBERR_NOERR);
     /* Clear the lowlatency map. */
+    g_log << "+++ Clearing lowlantecy map" << std::endl;
     lowlatencymap.clear();
 }
 
@@ -342,10 +337,54 @@ enum tlibstate Lib660Interface::getLibState() {
     return this->currentLibState;
 }
 
+void Lib660Interface::log_q8serv_config(ConfigVO ourConfig)
+{
+    g_log << "+++ Config info:" << std::endl;
+    g_log << "+++   ServerName =                     " << ourConfig.getServerName() << std::endl;
+    g_log << "+++   ServerDesc =                     " << ourConfig.getServerDesc() << std::endl;
+    g_log << "+++   ServerDir =                      " << ourConfig.getServerDir() << std::endl;
+    g_log << "+++   ServerSource =                   " << ourConfig.getServerSource() << std::endl;
+    g_log << "+++   SeedStation =                    " << ourConfig.getSeedStation() << std::endl;
+    g_log << "+++   SeedNetwork =                    " << ourConfig.getSeedNetwork() << std::endl;
+    g_log << "+++   LogDir =                         " << ourConfig.getLogDir() << std::endl;
+    g_log << "+++   LogType =                        " << ourConfig.getLogType() << std::endl;
+    g_log << "+++   Q660UdpAddr =                    " << ourConfig.getQ660UdpAddr() << std::endl;
+    g_log << "+++   Q660BasePort =                   " << ourConfig.getQ660BasePort() << std::endl;
+    g_log << "+++   Q660Priority =                   " << ourConfig.getQ660Priority() << std::endl;
+    g_log << "+++   Q660SerialNumber =               " << ourConfig.getQ660SerialNumber() << std::endl;
+    g_log << "+++   Q660Password =                   " << ourConfig.getQ660Password() << std::endl;
+    g_log << "+++   LockFile =                       " << ourConfig.getLockFile() << std::endl;
+    g_log << "+++   StartMsg =                       " << ourConfig.getStartMsg() << std::endl;
+    g_log << "+++   StatusInterval =                 " << ourConfig.getStatusInterval() << std::endl;
+    g_log << "+++   Verbosity =                      " << ourConfig.getVerbosity() << std::endl;
+    g_log << "+++   Diagnostic =                     " << ourConfig.getDiagnostic() << std::endl;
+    g_log << "+++   LogLevel =                       " << ourConfig.getLogLevel() << std::endl;
+    g_log << "+++   FailedRegistrationsBeforeSleep = " << ourConfig.getFailedRegistrationsBeforeSleep() << std::endl;
+    g_log << "+++   MinutesToSleepBeforeRetry =      " << ourConfig.getMinutesToSleepBeforeRetry() << std::endl;
+    g_log << "+++   DutyCycle_MaxConnectTime =       " << ourConfig.getDutyCycle_MaxConnectTime() << std::endl;
+    g_log << "+++   DutyCycle_SleepTime =            " << ourConfig.getDutyCycle_SleepTime() << std::endl;
+    g_log << "+++   MulticastEnabled =               " << ourConfig.getMulticastEnabled() << std::endl;
+    g_log << "+++   MulticastPort =                  " << ourConfig.getMulticastPort() << std::endl;
+    g_log << "+++   MulticastHost =                  " << ourConfig.getMulticastHost() << std::endl;
+    g_log << "+++   MulticastChannelList =           " << ourConfig.getMulticastChannelList() << std::endl;
+    g_log << "+++   ContFileDir =                    " << ourConfig.getContFileDir() << std::endl;
+    g_log << "+++   LimitBackfill =                  " << ourConfig.getLimitBackfill() << std::endl;
+    g_log << "+++   WaitForClients =                 " << ourConfig.getWaitForClients() << std::endl;
+    // Bandwith control options
+    g_log << "+++   OptThrottleKbitpersec =          " << ourConfig.getOptThrottleKbitpersec() << std::endl;
+    g_log << "+++   OptBwfillKbitTarget =            " << ourConfig.getOptBwfillKbitTarget() << std::endl;
+    g_log << "+++   OptBwfillProbeInterval =         " << ourConfig.getOptBwfillProbeInterval() << std::endl;
+    g_log << "+++   OptBwfillExceedTrigger =         " << ourConfig.getOptBwfillExceedTrigger() << std::endl;
+    g_log << "+++   OptBwfillIncreaseInterval =      " << ourConfig.getOptBwfillIncreaseInterval() << std::endl;
+    g_log << "+++   OptBwfillMaxLatency =            " << ourConfig.getOptBwfillMaxLatency() << std::endl;
+}
+
 
 /***********************************************************************
  *
- * lib660 callbacks
+ * lib660 callbacks and associated routines.
+ * Since they are callback routines, they are all static, and cannot
+ * access non-static class variables.
  *
  ***********************************************************************/
 
@@ -358,7 +397,7 @@ void Lib660Interface::state_callback(pointer p) {
     tstate_call *state;
 
     state = (tstate_call *)p;
-
+ 
     if(state->state_type == ST_STATE) {
 	g_libInterface->setLibState((enum tlibstate)state->info);
     }
@@ -998,6 +1037,17 @@ void Lib660Interface::setLibState(enum tlibstate newState) {
      * Do NOT automatically call startDataFlow if we are in LIBSTATE_RUNWAIT.
      * Allow main program to decide when to call startDataFlow.
      */
+
+    switch (newState) {
+    case LIBSTATE_IDLE:
+    case LIBSTATE_WAIT:
+	/* Clear the lowlatency map. */
+	g_log << "+++ Clearing lowlantecy map" << std::endl;
+	lowlatencymap.clear();
+	break;
+    default:
+	break;
+    }
 }
 
 

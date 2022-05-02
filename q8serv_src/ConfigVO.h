@@ -65,13 +65,20 @@ public:
     uint16_t getMinutesToSleepBeforeRetry() const;
     uint16_t getDutyCycle_MaxConnectTime() const;
     uint16_t getDutyCycle_SleepTime() const;
-    int8_t   getMulticastEnabled() const;
+    uint16_t getMulticastEnabled() const;
     uint16_t getMulticastPort() const;
     char *   getMulticastHost() const;
     char *   getMulticastChannelList() const;
     char *   getContFileDir() const;
     uint32_t getLimitBackfill() const;
     uint32_t getWaitForClients() const;
+    // Bandwith control options
+    uint32_t getOptThrottleKbitpersec() const;
+    uint32_t getOptBwfillKbitTarget() const;
+    uint32_t getOptBwfillProbeInterval() const;
+    uint32_t getOptBwfillExceedTrigger() const;
+    uint32_t getOptBwfillIncreaseInterval() const;
+    uint32_t getOptBwfillMaxLatency() const;
 
     void setServerName(char *input);
     void setServerDesc(char *input);
@@ -103,6 +110,13 @@ public:
     void setContFileDir(char *input);
     void setLimitBackfill(char *input);
     void setWaitForClients(char *input);
+    // Bandwith control options
+    void setOptThrottleKbitpersec(char *input);
+    void setOptBwfillKbitTarget(char *input);
+    void setOptBwfillProbeInterval(char *input);
+    void setOptBwfillExceedTrigger(char *input);
+    void setOptBwfillIncreaseInterval(char *input);
+    void setOptBwfillMaxLatency(char *input);
 
     void setQ660BasePort(uint32_t);
     void setQ660Priority(uint32_t);
@@ -111,6 +125,13 @@ public:
     void setVerbosity(uint32_t);
     void setDiagnostic(uint32_t);
     void setWaitForClients(uint32_t);
+    // Bandwith control options
+    void setOptThrottleKbitpersec(uint32_t);
+    void setOptBwfillKbitTarget(uint32_t);
+    void setOptBwfillProbeInterval(uint32_t);
+    void setOptBwfillExceedTrigger(uint32_t) ;
+    void setOptBwfillIncreaseInterval(uint32_t) ;
+    void setOptBwfillMaxLatency(uint32_t);
 
 private:
 
@@ -137,13 +158,20 @@ private:
     uint16_t p_minutesToSleepBeforeRetry;
     uint16_t p_dutycycle_maxConnectTime;
     uint16_t p_dutycycle_sleepTime;
-    int8_t   p_multicast_enabled;
+    uint16_t p_multicast_enabled;
     uint16_t p_multicast_port;
     char     p_multicast_host[CFGWIDTH];
     char     p_multicast_channellist[512];
     char     p_contFileDir[CFGWIDTH];
     uint32_t p_limitBackfill;
     uint32_t p_waitForClients;
+    // Bandwith control options
+    uint32_t p_opt_throttle_kbitpersec;
+    uint32_t p_opt_bwfill_kbit_target;
+    uint32_t p_opt_bwfill_probe_interval;
+    uint32_t p_opt_bwfill_exceed_trigger;
+    uint32_t p_opt_bwfill_increase_interval;
+    uint32_t p_opt_bwfill_max_latency;
 
     bool     p_configured;
 };

@@ -63,6 +63,13 @@ struct q8serv_cfg
     char multicastChannelList[CFGWIDTH];
     char limitBackfill[CFGWIDTH];
     char waitForClients[CFGWIDTH];
+    /* Info for lowlatency support. */
+    char opt_throttle_kbitpersec[CFGWIDTH];
+    char opt_bwfill_kbit_target[CFGWIDTH];
+    char opt_bwfill_probe_interval[CFGWIDTH];
+    char opt_bwfill_exceed_trigger[CFGWIDTH];
+    char opt_bwfill_increase_interval[CFGWIDTH];
+    char opt_bwfill_max_latency[CFGWIDTH];
 };
 
 #ifdef __cplusplus

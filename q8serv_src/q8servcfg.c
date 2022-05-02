@@ -346,6 +346,36 @@ int GetServerParamsFromStationIni(struct q8serv_cfg* out_cfg, char *section_name
 	    strcpy(out_cfg->limitBackfill, str2) ;
 	    continue;
 	}
+	if (strcmp(str1, "OPT_THROTTLE_KBITPERSEC") == 0)
+	{
+	    strcpy(out_cfg->opt_throttle_kbitpersec, str2);
+	    continue;
+	}
+	if (strcmp(str1, "OPT_BWFILL_KBIT_TARGET") == 0)
+	{
+	    strcpy(out_cfg->opt_bwfill_kbit_target, str2);
+	    continue;
+	}
+	if (strcmp(str1, "OPT_BWFILL_PROBE_INTERVAL") == 0)
+	{
+	    strcpy(out_cfg->opt_bwfill_probe_interval, str2);
+	    continue;
+	}
+	if (strcmp(str1, "OPT_BWFILL_EXCEED_TRIGGER") == 0)
+	{
+	    strcpy(out_cfg->opt_bwfill_exceed_trigger, str2);
+	    continue;
+	}
+	if (strcmp(str1, "OPT_BWFILL_INCREASE_INTERVAL") == 0)
+	{
+	    strcpy(out_cfg->opt_bwfill_increase_interval, str2);
+	    continue;
+	}
+	if (strcmp(str1, "OPT_BWFILL_MAX_LATENCY") == 0)
+	{
+	    strcpy(out_cfg->opt_bwfill_max_latency, str2);
+	    continue;
+	}
     }
     close_cfg(&cfg);
     return QSERV_SUCCESS;
