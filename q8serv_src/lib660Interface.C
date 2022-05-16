@@ -29,9 +29,11 @@
 //: #define DEBUG_Lib660Interface
 //: #define DEBUG_MULTICAST
 //: #define DEBUG_FILE_CALLBACK	1
+//: #define DEBUG_PQUEUE
 
-static int throttle_free_packet_threshold = 0.5 * PACKETQUEUE_QUEUE_SIZE;
-static int min_free_packet_threshold = 0.1 * PACKETQUEUE_QUEUE_SIZE;
+static int throttle_free_packet_threshold = (0.1 * PACKETQUEUE_QUEUE_SIZE);
+static int unthrottle_free_packet_threshold = (0.8 * PACKETQUEUE_QUEUE_SIZE);
+static int min_free_packet_threshold = (0.05 * PACKETQUEUE_QUEUE_SIZE);
 
 // Static variables from Lib660Interface needed in static callback functions.
 double Lib660Interface::timestampOfLastRecord = 0;
@@ -647,23 +649,22 @@ void Lib660Interface::miniseed_callback(pointer p) {
     // We rely on the main thread to dequeue the packets into the comserv buffers.
     struct timespec t;
     t.tv_sec = 0;
-    t.tv_nsec = 250000000;
-    for(int i=0; i < 4; i++) {
+    t.tv_nsec = 100000000;
+    for(int i = 0; i < 10; i++) {
 	int nfree = packetQueue.numFree();
-	if (nfree < throttle_free_packet_threshold) {
-	    if (! throttling) {
-		g_log << "XXX Limited space in intermediate queue. Start delay in miniseed_callback" << std::endl;
-		++throttling;
-	    }
-	    nanosleep(&t, NULL);
+#ifdef DEBUG_PQUEUE
+	g_log << "--- nfree in pq = " << nfree << std::endl;
+#endif
+	if ((! throttling) && (nfree < throttle_free_packet_threshold)) {
+	    g_log << "XXX Start delay in miniseed_callback. Intermediate PacketQueue nfree = " << nfree << std::endl;
+	    ++throttling;
 	}
-	else {
-	    if (throttling) {
-		g_log << "--- End delay in miniseed_callback" << std::endl;
-		throttling = 0;
-	    }
-	    break;
+	if ((throttling) && (nfree >= unthrottle_free_packet_threshold)) {
+	    g_log << "--- End delay in miniseed_callback. Intermediate PacketQuue nfree = " << nfree << std::endl;
+	    throttling = 0;
 	}
+	if (! throttling) break;
+	nanosleep(&t, NULL);
     }
 }
 

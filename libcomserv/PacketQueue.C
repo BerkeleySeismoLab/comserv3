@@ -91,10 +91,10 @@ QueuedPacket PacketQueue::dequeuePacket() {
   if(ret.dataSize) {
     this->advanceHead();
   }  
-  pthread_mutex_unlock(&(this->queueLock));
   if (DEBUG_PQ) {
     g_log << "DEQUEUE: head:" << this->queueHead << " tail:" << this->queueTail << std::endl;
   }
+  pthread_mutex_unlock(&(this->queueLock));
   return ret;
 }
 

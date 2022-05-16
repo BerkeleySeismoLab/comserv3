@@ -317,7 +317,7 @@ int main(int argc, char *argv[]) {
 		nextStatusUpdate = time(NULL) + g_cvo.getStatusInterval();
 	    }
 	    packetQueueEmptied = g_libInterface->processPacketQueue();
-	    if(!packetQueueEmptied && g_libInterface->queueNearFull()) {
+	    if((! packetQueueEmptied) && g_libInterface->queueNearFull()) {
 		g_log << "XXX Intermediate packet queue too full.  Halting dataflow." << std::endl;
 		g_reset = 1;
 	    }

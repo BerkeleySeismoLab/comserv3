@@ -350,6 +350,7 @@ void ConfigVO::setQ660BasePort(char* input)
     {
 	g_log << "xxx Error converting input to Q660 base port number : " <<  
 	    port << std::endl;
+	exit (1);
     }
     else
     {
@@ -394,14 +395,14 @@ void ConfigVO::setQ660Password(char* input)
   
 void ConfigVO::setLockFile(char* input)
 {
-    strlcat(p_lockfile,input,sizeof(p_lockfile)); // always null terminates the string
+    strlcpy(p_lockfile,input,sizeof(p_lockfile)); // always null terminates the string
 }
 
 void ConfigVO::setStartMsg(char* input)
 {
     char msg[256];
     sprintf(msg,"Starting %s %s", APP_IDENT_STRING, input);
-    strlcat(p_startmsg,input,sizeof(p_startmsg)); // always null terminates the string
+    strlcpy(p_startmsg,input,sizeof(p_startmsg)); // always null terminates the string
 }
 
 void ConfigVO::setStatusInterval(char* input)
@@ -613,100 +614,125 @@ void ConfigVO::setWaitForClients(char* input)
     }
 }
 
+// Optional config parameters.  Supply default if not specified.
 void ConfigVO::setOptThrottleKbitpersec(char* input)
 {
     uint32_t val;
-    errno = 0;
-    val = strtoul(input,0,0);
-    if(val <= 0 || errno != 0)
-    {
-	g_log << "xxx Error converting input to optBwfillTrottleKbitpersec : input = "
-	      << input << " output = " << val << std::endl;
+    uint32_t default_val = 0;
+    if(!strcmp(input, "")) {
+        val = default_val;
     }
-    else
-    {
-	p_opt_throttle_kbitpersec = val;
+    else {
+	errno = 0;
+	val = strtoul(input,0,0);
+	if(val < 0 || errno != 0)
+	{
+	    g_log << "xxx Error converting input to optBwfillThrottleKbitpersec : input = "
+		  << input << " default = " << default_val << std::endl;
+	    val = default_val;
+	}
     }
+    p_opt_throttle_kbitpersec = val;
 }
 
 void ConfigVO::setOptBwfillKbitTarget(char* input)
 {
     uint32_t val;
-    errno = 0;
-    val = strtoul(input,0,0);
-    if(val <= 0 || errno != 0)
-    {
-	g_log << "xxx Error converting input to optBwfillKbitTarget : input = "
-	      << input << " output = " << val << std::endl;
+    uint32_t default_val = 0;
+    if(!strcmp(input, "")) {
+        val = default_val;
     }
-    else
-    {
-	p_opt_bwfill_kbit_target = val;
+    else {
+	errno = 0;
+	val = strtoul(input,0,0);
+	if(val < 0 || errno != 0)
+	{
+	    g_log << "xxx Error converting input to optBwfillKbitTargit : input = "
+		  << input << " default = " << default_val << std::endl;
+	    val = default_val;
+	}
     }
+    p_opt_bwfill_kbit_target = val;
 }
 
 void ConfigVO::setOptBwfillProbeInterval(char* input)
 {
     uint32_t val;
-    errno = 0;
-    val = strtoul(input,0,0);
-    if(val <= 0)
-    {
-	g_log << "xxx Error converting input to optBwfillProbeInterval : input = "
-	      << input << " output = " << val << std::endl;
+    uint32_t default_val = 0;
+    if(!strcmp(input, "")) {
+        val = default_val;
     }
-    else
-    {
-	p_opt_bwfill_probe_interval = val;
+    else {
+	errno = 0;
+	val = strtoul(input,0,0);
+	if(val < 0 || errno != 0)
+	{
+	    g_log << "xxx Error converting input to optBwfillProbeInterval : input = "
+		  << input << " default = " << default_val << std::endl;
+	    val = default_val;
+	}
     }
+    p_opt_bwfill_probe_interval = val;
 }
 
 void ConfigVO::setOptBwfillExceedTrigger(char* input)
 {
     uint32_t val;
-    errno = 0;
-    val = strtoul(input,0,0);
-    if(val <= 0 || errno != 0)
-    {
-	g_log << "xxx Error converting input to optBwfillMaxLatency : input = "
-	      << input << " output = " << val << std::endl;
+    uint32_t default_val = 0;
+    if(!strcmp(input, "")) {
+        val = default_val;
     }
-    else
-    {
-	p_opt_bwfill_exceed_trigger = val;
+    else {
+	errno = 0;
+	val = strtoul(input,0,0);
+	if(val < 0 || errno != 0)
+	{
+	    g_log << "xxx Error converting input to optBwfillExceedTrigger : input = "
+		  << input << " default = " << default_val << std::endl;
+	    val = default_val;
+	}
     }
+    p_opt_bwfill_exceed_trigger = val;
 }
 
 void ConfigVO::setOptBwfillIncreaseInterval(char* input)
 {
     uint32_t val;
-    errno = 0;
-    val = strtoul(input,0,0);
-    if(val <= 0 || errno != 0)
-    {
-	g_log << "xxx Error converting input to optBwfillIncreaseInterval : input = "
-	      << input << " output = " << val << std::endl;
+    uint32_t default_val = 0;
+    if(!strcmp(input, "")) {
+        val = default_val;
     }
-    else
-    {
-	p_opt_bwfill_increase_interval = val;
+    else {
+	errno = 0;
+	val = strtoul(input,0,0);
+	if(val < 0 || errno != 0)
+	{
+	    g_log << "xxx Error converting input to optBwfillIncreaseInterval : input = "
+		  << input << " default = " << default_val << std::endl;
+	    val = default_val;
+	}
     }
+    p_opt_bwfill_increase_interval = val;
 }
 
 void ConfigVO::setOptBwfillMaxLatency(char* input)
 {
     uint32_t val;
-    errno = 0;
-    val = strtoul(input,0,0);
-    if(val <= 0 || errno != 0)
-    {
-	g_log << "xxx Error converting input to optBwfillMaxLatency : input = "
-	      << input << " output = " << val << std::endl;
+    uint32_t default_val = 0;
+    if(!strcmp(input, "")) {
+        val = default_val;
     }
-    else
-    {
-	p_opt_bwfill_max_latency = val;
+    else {
+	errno = 0;
+	val = strtoul(input,0,0);
+	if(val < 0 || errno != 0)
+	{
+	    g_log << "xxx Error converting input to optBwfillMaxLatency : input = "
+		  << input << " default = " << default_val << std::endl;
+	    val = default_val;
+	}
     }
+    p_opt_bwfill_max_latency = val;
 }
 //**********************************************************************
 
