@@ -72,6 +72,7 @@ public:
     char *   getContFileDir() const;
     uint32_t getLimitBackfill() const;
     uint32_t getWaitForClients() const;
+    uint32_t getPacketQueueSize() const;
     // Bandwith control options
     uint32_t getOptThrottleKbitpersec() const;
     uint32_t getOptBwfillKbitTarget() const;
@@ -110,6 +111,7 @@ public:
     void setContFileDir(char *input);
     void setLimitBackfill(char *input);
     void setWaitForClients(char *input);
+    void setPacketQueueSize(char *input);
     // Bandwith control options
     void setOptThrottleKbitpersec(char *input);
     void setOptBwfillKbitTarget(char *input);
@@ -125,6 +127,7 @@ public:
     void setVerbosity(uint32_t);
     void setDiagnostic(uint32_t);
     void setWaitForClients(uint32_t);
+    void setPacketQueueSize(uint32_t);
     // Bandwith control options
     void setOptThrottleKbitpersec(uint32_t);
     void setOptBwfillKbitTarget(uint32_t);
@@ -165,7 +168,8 @@ private:
     char     p_contFileDir[CFGWIDTH];
     uint32_t p_limitBackfill;
     uint32_t p_waitForClients;
-    // Bandwith control options
+    uint32_t p_packetQueueSize;
+    // Bandwidth control options
     uint32_t p_opt_throttle_kbitpersec;
     uint32_t p_opt_bwfill_kbit_target;
     uint32_t p_opt_bwfill_probe_interval;

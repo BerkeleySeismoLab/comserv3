@@ -29,8 +29,9 @@
 // #define DEBUG_LibmsmcastInterface
 #define DEBUG_FILE_CALLBACK	1
 
-static int throttle_free_packet_threshold = 0.5 * PACKETQUEUE_QUEUE_SIZE;
-static int min_free_packet_threshold = 0.1 * PACKETQUEUE_QUEUE_SIZE;
+static int throttle_free_packet_threshold;
+static int unthrottle_free_packet_threshold;
+static int min_free_packet_threshold;
 
 // Static variables from LibmsmcastInterface needed in static callback functions.
 double LibmsmcastInterface::timestampOfLastRecord = 0;
@@ -54,10 +55,22 @@ LibmsmcastInterface::LibmsmcastInterface(char *stationName, ConfigVO ourConfig) 
 
     g_log << "Server Desc: " << ourConfig.getServerDesc() << std::endl;
     g_log << "+++ Initializing station thread" << std::endl;
+
     g_log << "+++ Input MCAST IP info:" << std::endl;  
     g_log << "+++ Input MCAST Interface Addr:" << this->registrationInfo.msmcastif_address << std::endl;
     g_log << "+++ Input MCAST IP Addr:" << this->registrationInfo.msmcastid_address << std::endl;
     g_log << "+++ Input MCAST IP Port:" << this->registrationInfo.msmcastid_udpport << std::endl;
+    log_mserv_config(ourConfig);
+
+    // Allocate intermediate PacketQueue.
+    int npackets = ourConfig.getPacketQueueSize();
+    if (npackets <= 0) npackets = DEFAULT_PACKETQUEUE_QUEUE_SIZE;
+    packetQueue = new PacketQueue(npackets);
+
+    // Set thresholds for the intermediate PacketQueue.
+    throttle_free_packet_threshold = (0.2 * npackets);
+    unthrottle_free_packet_threshold = (0.8 * npackets);
+    min_free_packet_threshold = (0.1 * npackets);
 
     lib_create_context(&(this->stationContext), &(this->creationInfo));
     if(this->creationInfo.resp_err == LIBERR_NOERR) {
@@ -244,10 +257,36 @@ enum tlibstate LibmsmcastInterface::getLibState() {
     return this->currentLibState;
 }
 
+void LibmsmcastInterface::log_mserv_config(ConfigVO ourConfig) {
+    g_log << "+++ Config info:" << std::endl;
+    g_log << "+++   ServerName =                     " << ourConfig.getServerName() << std::endl;
+    g_log << "+++   ServerDesc =                     " << ourConfig.getServerDesc() << std::endl;
+    g_log << "+++   ServerDir =                      " << ourConfig.getServerDir() << std::endl;
+    g_log << "+++   ServerSource =                   " << ourConfig.getServerSource() << std::endl;
+    g_log << "+++   SeedStation =                    " << ourConfig.getSeedStation() << std::endl;
+    g_log << "+++   SeedNetwork =                    " << ourConfig.getSeedNetwork() << std::endl;
+    g_log << "+++   LogDir =                         " << ourConfig.getLogDir() << std::endl;
+    g_log << "+++   LogType =                        " << ourConfig.getLogType() << std::endl;
+    g_log << "+++   McastIF =                        " << ourConfig.getMcastIf() << std::endl;
+    g_log << "+++   UDPAddrF =                       " << ourConfig.getUdpAddr() << std::endl;
+    g_log << "+++   IPPort =                         " << ourConfig.getIPPort() << std::endl;
+    g_log << "+++   LockFile =                       " << ourConfig.getLockFile() << std::endl;
+    g_log << "+++   StartMsg =                       " << ourConfig.getStartMsg() << std::endl;
+    g_log << "+++   StatusInterval =                 " << ourConfig.getStatusInterval() << std::endl;
+    g_log << "+++   Verbosity =                      " << ourConfig.getVerbosity() << std::endl;
+    g_log << "+++   Diagnostic =                     " << ourConfig.getDiagnostic() << std::endl;
+    g_log << "+++   LogLevel =                       " << ourConfig.getLogLevel() << std::endl;
+    g_log << "+++   ContFileDir =                    " << ourConfig.getContFileDir() << std::endl;
+    g_log << "+++   WaitForClients =                 " << ourConfig.getWaitForClients() << std::endl;
+    g_log << "+++   PacketQueueSize =                " << ourConfig.getPacketQueueSize() << std::endl;
+}
+
 
 /***********************************************************************
  *
- * libmsmcast callbacks
+ * libmcast callbacks and associated routines.
+ * Since they are callback routines, they are all static, and cannot
+ * access non-static class variables.
  *
  ***********************************************************************/
 
@@ -322,7 +361,7 @@ void LibmsmcastInterface::miniseed_callback(pointer p) {
 #endif
 
     // Put the packet in the intermediate packet queue.
-    packetQueue.enqueuePacket((char *)data->data_address, data->data_size, packetType);
+    packetQueue->enqueuePacket((char *)data->data_address, data->data_size, packetType);
 
     // Throttle (delay) for up to 1 second if we are in danger of filling the packet queue.
     // Since this function is called from the libmsmcast thread, this should help
@@ -332,7 +371,7 @@ void LibmsmcastInterface::miniseed_callback(pointer p) {
     t.tv_sec = 0;
     t.tv_nsec = 250000000;
     for(int i=0; i < 4; i++) {
-	int nfree = packetQueue.numFree();
+	int nfree = packetQueue->numFree();
 	if (nfree < throttle_free_packet_threshold) {
 	    if (! throttling) {
 		g_log << "XXX Limited space in intermediate queue. Start delay in miniseed_callback" << std::endl;
@@ -358,7 +397,7 @@ void LibmsmcastInterface::miniseed_callback(pointer p) {
  * Return: 1 if true , 0 if false.
  ***********************************************************************/
 int LibmsmcastInterface::queueNearFull() {
-    int nearFull = (packetQueue.numFree() < min_free_packet_threshold);
+    int nearFull = (packetQueue->numFree() < min_free_packet_threshold);
     return nearFull;
 }
 
@@ -377,11 +416,11 @@ int LibmsmcastInterface::processPacketQueue() {
     // We do not want to dequeue a packet unless we are guaranteed that
     // there is room in the comserv packet queues to accept it.
     // Otherwise, we risk losing the packet.
-    while (packetQueue.numQueued() > 0) {
+    while (packetQueue->numQueued() > 0) {
 	if(comserv_anyQueueBlocking()) {
 	    return 0;
 	}
-	QueuedPacket thisPacket = packetQueue.dequeuePacket();
+	QueuedPacket thisPacket = packetQueue->dequeuePacket();
 	if (thisPacket.dataSize != 0) {
 	    sendFailed = comserv_queue((char *)thisPacket.data, thisPacket.dataSize, thisPacket.packetType);
 	    if(sendFailed) {

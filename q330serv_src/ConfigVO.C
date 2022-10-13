@@ -74,6 +74,7 @@ ConfigVO::ConfigVO(q330serv_cfg cfg) {
     setMulticastChannelList(cfg.multicastChannelList);
     setContFileDir(cfg.contFileDir);
     setWaitForClients(cfg.waitForClients);
+    setPacketQueueSize(cfg.packetQueueSize);
 
     p_configured = true;
 }
@@ -112,6 +113,7 @@ ConfigVO::ConfigVO()
     memset(p_multicast_channellist, 0, sizeof(p_multicast_channellist));
     strcpy(p_contFileDir, "");
     p_waitForClients = 0;
+    p_packetQueueSize = DEFAULT_PACKETQUEUE_QUEUE_SIZE;
 
     p_configured = false;
 }
@@ -262,6 +264,10 @@ char * ConfigVO::getContFileDir() const {
 
 uint32_t ConfigVO::getWaitForClients() const {
     return p_waitForClients;
+}
+
+uint32_t ConfigVO::getPacketQueueSize() const {
+    return p_packetQueueSize;
 }
 
 //**********************************************************************
@@ -599,8 +605,22 @@ void ConfigVO::setWaitForClients(char* input)
     p_waitForClients = atoi(input);
     if (p_waitForClients <= 0)
     {
-	g_log << "xxx Error converting input to Q660 waitForClients number : " << input << std::endl;
+	g_log << "xxx Error converting input to Q330 waitForClients number : " << input << std::endl;
 	p_waitForClients = 0;
+    }
+}
+
+void ConfigVO::setPacketQueueSize(char* input)
+{
+    if(!strcmp(input, "") || !strcmp(input, "0")) {
+	p_packetQueueSize = DEFAULT_PACKETQUEUE_QUEUE_SIZE;
+	return;
+    }
+    p_packetQueueSize = atoi(input);
+    if (p_packetQueueSize <= 0)
+    {
+	g_log << "xxx Error converting input to Q330 packetQueueSize number : " << input << std::endl;
+	p_packetQueueSize = 0;
     }
 }
 
@@ -643,4 +663,15 @@ void ConfigVO::setVerbosity(uint32_t a)
 void ConfigVO::setDiagnostic(uint32_t a) 
 {
     p_diagnostic = a;
+}
+
+void ConfigVO::setWaitForClients(uint32_t a) 
+{
+    p_waitForClients = a;
+
+}
+
+void ConfigVO::setPacketQueueSize(uint32_t a) 
+{
+    p_packetQueueSize = a;
 }

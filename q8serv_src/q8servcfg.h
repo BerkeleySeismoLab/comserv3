@@ -63,6 +63,7 @@ struct q8serv_cfg
     char multicastChannelList[CFGWIDTH];
     char limitBackfill[CFGWIDTH];
     char waitForClients[CFGWIDTH];
+    char packetQueueSize[CFGWIDTH];
     /* Info for lowlatency support. */
     char opt_throttle_kbitpersec[CFGWIDTH];
     char opt_bwfill_kbit_target[CFGWIDTH];

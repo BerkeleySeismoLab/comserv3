@@ -116,7 +116,7 @@ int GetServerParamsFromStationsIni(struct q330serv_cfg *out_cfg, char *server_na
 /***********************************************************************
  * GetGlobalParamsFromNetworkIni
  *   Retrieve and return any pertinent global parameters from NETWORK_INI.
- *   Silently ignore any paremters that you are not interested in.
+ *   Silently ignore any parameters that you are not interested in.
  **********************************************************************/  
 
 int GetGlobalParamsFromNetworkIni(struct q330serv_cfg* out_cfg)
@@ -169,6 +169,31 @@ int GetGlobalParamsFromNetworkIni(struct q330serv_cfg* out_cfg)
 	if (strcmp(str1, "WAITFORCLIENTS") == 0)
 	{
 	    strcpy(out_cfg->waitForClients, str2) ;
+	    continue;
+	}
+	if (strcmp(str1, "PACKETQUEUESIZE") == 0)
+	{
+	    strcpy(out_cfg->packetQueueSize, str2) ;
+	    continue;
+	}
+	if (strcmp(str1, "MULTICASTENABLED") == 0)
+	{
+	    strcpy(out_cfg->multicastEnabled, str2);
+	    continue;
+	}
+	if (strcmp(str1, "MULTICASTPORT") == 0)
+	{
+            strcpy(out_cfg->multicastPort, str2);
+	    continue;
+	}
+	if (strcmp(str1, "MULTICASTHOST") == 0)
+	{
+	    strcpy(out_cfg->multicastHost, str2);
+	    continue;
+	}
+	if (strcmp(str1, "MULTICASTCHANNELLIST") == 0)
+	{
+	    strcpy(out_cfg->multicastChannelList, str2);
 	    continue;
 	}
     }
@@ -230,24 +255,9 @@ int GetServerParamsFromStationIni(struct q330serv_cfg* out_cfg, char *section_na
 	    strcpy(out_cfg->waitForClients, str2) ;
 	    continue;
 	}
-	if (strcmp(str1, "MULTICASTENABLED") == 0)
+	if (strcmp(str1, "PACKETQUEUESIZE") == 0)
 	{
-	    strcpy(out_cfg->multicastEnabled, str2);
-	    continue;
-	}
-	if (strcmp(str1, "MULTICASTPORT") == 0)
-	{
-	    strcpy(out_cfg->multicastPort, str2);
-	    continue;
-	}
-	if (strcmp(str1, "MULTICASTHOST") == 0)
-	{
-	    strcpy(out_cfg->multicastHost, str2);
-	    continue;
-	}
-	if (strcmp(str1, "MULTICASTCHANNELLIST") == 0)
-	{
-	    strcpy(out_cfg->multicastChannelList, str2);
+	    strcpy(out_cfg->packetQueueSize, str2) ;
 	    continue;
 	}
 	/* Server/program specific parameters. */
@@ -341,9 +351,24 @@ int GetServerParamsFromStationIni(struct q330serv_cfg* out_cfg, char *section_na
 	    strcpy(out_cfg->dutycycle_bufferLevel, str2);
 	    continue;
 	}
-	if (strcmp(str1, "WAITFORCLIENTS") == 0)
+	if (strcmp(str1, "MULTICASTENABLED") == 0)
 	{
-	    strcpy(out_cfg->waitForClients, str2) ;
+	    strcpy(out_cfg->multicastEnabled, str2);
+	    continue;
+	}
+	if (strcmp(str1, "MULTICASTPORT") == 0)
+	{
+	    strcpy(out_cfg->multicastPort, str2);
+	    continue;
+	}
+	if (strcmp(str1, "MULTICASTHOST") == 0)
+	{
+	    strcpy(out_cfg->multicastHost, str2);
+	    continue;
+	}
+	if (strcmp(str1, "MULTICASTCHANNELLIST") == 0)
+	{
+	    strcpy(out_cfg->multicastChannelList, str2);
 	    continue;
 	}
     }

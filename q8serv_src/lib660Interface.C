@@ -31,9 +31,9 @@
 //: #define DEBUG_FILE_CALLBACK	1
 //: #define DEBUG_PQUEUE
 
-static int throttle_free_packet_threshold = (0.1 * PACKETQUEUE_QUEUE_SIZE);
-static int unthrottle_free_packet_threshold = (0.8 * PACKETQUEUE_QUEUE_SIZE);
-static int min_free_packet_threshold = (0.05 * PACKETQUEUE_QUEUE_SIZE);
+static int throttle_free_packet_threshold;
+static int unthrottle_free_packet_threshold;
+static int min_free_packet_threshold;
 
 // Static variables from Lib660Interface needed in static callback functions.
 double Lib660Interface::timestampOfLastRecord = 0;
@@ -41,6 +41,7 @@ int Lib660Interface::num_multicastChannelEntries = 0;
 multicastChannelEntry Lib660Interface::multicastChannelList[MAX_MULTICASTCHANNELENTRIES];
 std::map<std::string, int> Lib660Interface::lowlatencymap;
 std::map<std::string,int>::iterator Lib660Interface::it;
+
 
 Lib660Interface::Lib660Interface(char *stationName, ConfigVO ourConfig) {
     pmodules mods;
@@ -96,6 +97,16 @@ Lib660Interface::Lib660Interface(char *stationName, ConfigVO ourConfig) {
 		(char *)multicastChannelList[i].location << std::endl;
 	}
     }
+
+    // Allocate intermediate PacketQueue.
+    int npackets = ourConfig.getPacketQueueSize();
+    if (npackets <= 0) npackets = DEFAULT_PACKETQUEUE_QUEUE_SIZE;
+    packetQueue = new PacketQueue(npackets);
+
+    // Set thresholds for the intermediate PacketQueue.
+    throttle_free_packet_threshold = (0.2 * npackets);
+    unthrottle_free_packet_threshold = (0.8 * npackets);
+    min_free_packet_threshold = (0.1 * npackets);
 
     lib_create_context(&(this->stationContext), &(this->creationInfo));
     if(this->creationInfo.resp_err == LIBERR_NOERR) {
@@ -339,8 +350,7 @@ enum tlibstate Lib660Interface::getLibState() {
     return this->currentLibState;
 }
 
-void Lib660Interface::log_q8serv_config(ConfigVO ourConfig)
-{
+void Lib660Interface::log_q8serv_config(ConfigVO ourConfig) {
     g_log << "+++ Config info:" << std::endl;
     g_log << "+++   ServerName =                     " << ourConfig.getServerName() << std::endl;
     g_log << "+++   ServerDesc =                     " << ourConfig.getServerDesc() << std::endl;
@@ -372,6 +382,7 @@ void Lib660Interface::log_q8serv_config(ConfigVO ourConfig)
     g_log << "+++   ContFileDir =                    " << ourConfig.getContFileDir() << std::endl;
     g_log << "+++   LimitBackfill =                  " << ourConfig.getLimitBackfill() << std::endl;
     g_log << "+++   WaitForClients =                 " << ourConfig.getWaitForClients() << std::endl;
+    g_log << "+++   PacketQueueSize =                " << ourConfig.getPacketQueueSize() << std::endl;
     // Bandwith control options
     g_log << "+++   OptThrottleKbitpersec =          " << ourConfig.getOptThrottleKbitpersec() << std::endl;
     g_log << "+++   OptBwfillKbitTarget =            " << ourConfig.getOptBwfillKbitTarget() << std::endl;
@@ -641,7 +652,7 @@ void Lib660Interface::miniseed_callback(pointer p) {
 #endif
 
     // Put the packet in the intermediate packet queue.
-    packetQueue.enqueuePacket((char *)data->data_address, data->data_size, packetType);
+    packetQueue->enqueuePacket((char *)data->data_address, data->data_size, packetType);
 
     // Throttle (delay) for up to 1 second if we are in danger of filling the packet queue.
     // Since this function is called from the lib660 thread, this should help
@@ -651,7 +662,7 @@ void Lib660Interface::miniseed_callback(pointer p) {
     t.tv_sec = 0;
     t.tv_nsec = 100000000;
     for(int i = 0; i < 10; i++) {
-	int nfree = packetQueue.numFree();
+	int nfree = packetQueue->numFree();
 #ifdef DEBUG_PQUEUE
 	g_log << "--- nfree in pq = " << nfree << std::endl;
 #endif
@@ -676,7 +687,7 @@ void Lib660Interface::miniseed_callback(pointer p) {
  * Return: 1 if true , 0 if false.
  ***********************************************************************/
 int Lib660Interface::queueNearFull() {
-    int nearFull = (packetQueue.numFree() < min_free_packet_threshold);
+    int nearFull = (packetQueue->numFree() < min_free_packet_threshold);
     return nearFull;
 }
 
@@ -695,11 +706,11 @@ int Lib660Interface::processPacketQueue() {
     // We do not want to dequeue a packet unless we are guaranteed that
     // there is room in the comserv packet queues to accept it.
     // Otherwise, we risk losing the packet.
-    while (packetQueue.numQueued() > 0) {
+    while (packetQueue->numQueued() > 0) {
 	if(comserv_anyQueueBlocking()) {
 	    return 0;
 	}
-	QueuedPacket thisPacket = packetQueue.dequeuePacket();
+	QueuedPacket thisPacket = packetQueue->dequeuePacket();
 	if (thisPacket.dataSize != 0) {
 	    sendFailed = comserv_queue((char *)thisPacket.data, thisPacket.dataSize, thisPacket.packetType);
 	    if(sendFailed) {

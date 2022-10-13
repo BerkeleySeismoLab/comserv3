@@ -171,6 +171,11 @@ int GetGlobalParamsFromNetworkIni(struct mserv_cfg* out_cfg)
 	    strcpy(out_cfg->waitForClients, str2) ;
 	    continue;
 	}
+	if (strcmp(str1, "PACKETQUEUESIZE") == 0)
+	{
+	    strcpy(out_cfg->packetQueueSize, str2) ;
+	    continue;
+	}
     }
     close_cfg(&network_cfg);
     return QSERV_SUCCESS;
@@ -228,6 +233,11 @@ int GetServerParamsFromStationIni(struct mserv_cfg* out_cfg, char *section_name)
 	if (strcmp(str1, "WAITFORCLIENTS") == 0)
 	{
 	    strcpy(out_cfg->waitForClients, str2) ;
+	    continue;
+	}
+	if (strcmp(str1, "PACKETQUEUESIZE") == 0)
+	{
+	    strcpy(out_cfg->packetQueueSize, str2) ;
 	    continue;
 	}
 	/* Server/program specific parameters. */

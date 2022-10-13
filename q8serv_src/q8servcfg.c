@@ -172,6 +172,11 @@ int GetGlobalParamsFromNetworkIni(struct q8serv_cfg* out_cfg)
 	    strcpy(out_cfg->waitForClients, str2) ;
 	    continue;
 	}
+	if (strcmp(str1, "PACKETQUEUESIZE") == 0)
+	{
+	    strcpy(out_cfg->packetQueueSize, str2) ;
+	    continue;
+	}
 	if (strcmp(str1, "MULTICASTENABLED") == 0)
 	{
 	    strcpy(out_cfg->multicastEnabled, str2);
@@ -200,7 +205,7 @@ int GetGlobalParamsFromNetworkIni(struct q8serv_cfg* out_cfg)
 /***********************************************************************
  * GetServerParamsFromStationIni
  *	Retrieve server and program specific parameters from STATION_INI.
- *   Silently ignore any paremters that you are not interested in.
+ *   Silently ignore any parameters that you are not interested in.
  **********************************************************************/  
 int GetServerParamsFromStationIni(struct q8serv_cfg* out_cfg, char *section_name)
 {
@@ -248,6 +253,11 @@ int GetServerParamsFromStationIni(struct q8serv_cfg* out_cfg, char *section_name
 	if (strcmp(str1, "WAITFORCLIENTS") == 0)
 	{
 	    strcpy(out_cfg->waitForClients, str2) ;
+	    continue;
+	}
+	if (strcmp(str1, "PACKETQUEUESIZE") == 0)
+	{
+	    strcpy(out_cfg->packetQueueSize, str2) ;
 	    continue;
 	}
 	/* Server/program specific parameters. */

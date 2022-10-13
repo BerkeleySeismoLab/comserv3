@@ -36,7 +36,7 @@ extern "C" {
 #include "ConfigVO.h"
 #include "PacketQueue.h"
 
-#define MAX_MULTICASTCHANNELENTRIES 256
+#define MAX_MULTICASTCHANNELENTRIES	256
 
 typedef struct {
     char channel[4];
@@ -76,7 +76,7 @@ struct onesec_pkt{
 // These variable must be global because they are used in callback routines 
 // called from outside the class, so they cannot be class variables.
 
-EXTERN PacketQueue packetQueue;
+EXTERN PacketQueue *packetQueue;
 EXTERN struct sockaddr_in mcastAddr;
 #ifdef DEFINE_EXTERNAL
 EXTERN int mcastSocketFD = -1;

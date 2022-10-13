@@ -72,6 +72,7 @@ ConfigVO::ConfigVO(q8serv_cfg cfg) {
     setContFileDir(cfg.contFileDir);
     setLimitBackfill(cfg.limitBackfill);
     setWaitForClients(cfg.waitForClients);
+    setPacketQueueSize(cfg.packetQueueSize);
     setOptThrottleKbitpersec(cfg.opt_throttle_kbitpersec);
     setOptBwfillKbitTarget(cfg.opt_bwfill_kbit_target);
     setOptBwfillProbeInterval(cfg.opt_bwfill_probe_interval);
@@ -114,6 +115,7 @@ ConfigVO::ConfigVO()
     memset(p_contFileDir, 0, sizeof(p_contFileDir));
     p_limitBackfill = 0;
     p_waitForClients = 0;
+    p_packetQueueSize = DEFAULT_PACKETQUEUE_QUEUE_SIZE;
     p_opt_throttle_kbitpersec = 0;
     p_opt_bwfill_kbit_target = 0;
     p_opt_bwfill_probe_interval = 0;
@@ -266,6 +268,10 @@ uint32_t ConfigVO::getLimitBackfill() const {
 
 uint32_t ConfigVO::getWaitForClients() const {
     return p_waitForClients;
+}
+
+uint32_t ConfigVO::getPacketQueueSize() const {
+    return p_packetQueueSize;
 }
 
 uint32_t ConfigVO::getOptThrottleKbitpersec() const {
@@ -614,6 +620,20 @@ void ConfigVO::setWaitForClients(char* input)
     }
 }
 
+void ConfigVO::setPacketQueueSize(char* input)
+{
+    if(!strcmp(input, "") || !strcmp(input, "0")) {
+	p_packetQueueSize = DEFAULT_PACKETQUEUE_QUEUE_SIZE;
+	return;
+    }
+    p_packetQueueSize = atoi(input);
+    if (p_packetQueueSize <= 0)
+    {
+	g_log << "xxx Error converting input to Q660 packetQueueSize number : " << input << std::endl;
+	p_packetQueueSize = 0;
+    }
+}
+
 // Optional config parameters.  Supply default if not specified.
 void ConfigVO::setOptThrottleKbitpersec(char* input)
 {
@@ -772,6 +792,11 @@ void ConfigVO::setDiagnostic(uint32_t a)
 void ConfigVO::setWaitForClients(uint32_t a) 
 {
     p_waitForClients = a;
+}
+
+void ConfigVO::setPacketQueueSize(uint32_t a) 
+{
+    p_packetQueueSize = a;
 }
 
 void ConfigVO::setOptThrottleKbitpersec(uint32_t a)

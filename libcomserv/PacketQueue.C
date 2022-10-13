@@ -2,6 +2,7 @@
  * PacketQueue class
  *
  * 29 Sep 2020 DSN Updated for comserv3.
+ * 03 Oct 2022 DSN Updated for runtime configuration of queueSize.
  */
 
 #include <string.h>
@@ -44,10 +45,12 @@ void QueuedPacket::clear() {
 // A full queue is determined by detecting that the tail packet
 // has info (eg datasize of tail packets is not 0).
 
-PacketQueue::PacketQueue() {
+PacketQueue::PacketQueue(int npackets) {
   queueHead = 0;
   queueTail = 0;
   nqueued = 0;
+  queueSize = npackets;
+  queue = new QueuedPacket[npackets];
   pthread_mutex_init(&(this->queueLock), NULL);
 }
 
@@ -99,6 +102,13 @@ QueuedPacket PacketQueue::dequeuePacket() {
 }
 
 
+int PacketQueue::maxPackets() {
+  int result;
+  result = queueSize;
+  return result;
+}
+
+
 int PacketQueue::numQueued() {
   int result;
   pthread_mutex_lock(&(this->queueLock));
@@ -111,7 +121,7 @@ int PacketQueue::numQueued() {
 int PacketQueue::numFree() {
   int result;
   pthread_mutex_lock(&(this->queueLock));
-  result = PACKETQUEUE_QUEUE_SIZE - this->nqueued;
+  result = this->queueSize - this->nqueued;
   pthread_mutex_unlock(&(this->queueLock));
   return result;
 }
@@ -120,7 +130,7 @@ int PacketQueue::numFree() {
 void PacketQueue::advanceTail() {
 
   this->queueTail++;
-  if(this->queueTail == PACKETQUEUE_QUEUE_SIZE) {
+  if(this->queueTail == this->queueSize) {
     this->queueTail = 0;
   }
 
@@ -135,7 +145,7 @@ void PacketQueue::advanceTail() {
       g_log << "XXX Packet queue full" << std::endl;
     }
     this->queueHead = this->queueTail;
-    this->nqueued = PACKETQUEUE_QUEUE_SIZE;
+    this->nqueued = this->queueSize;
   }
   else {
     ++this->nqueued;
@@ -144,7 +154,7 @@ void PacketQueue::advanceTail() {
 
 void PacketQueue::advanceHead() {
   this->queueHead++;
-  if(this->queueHead == PACKETQUEUE_QUEUE_SIZE) {
+  if(this->queueHead == this->queueSize) {
     this->queueHead = 0;
   }
   --this->nqueued;
@@ -156,7 +166,7 @@ void PacketQueue::advanceHead() {
 Logger g_log;
 
 int main(int argc, char *argv[]) {
-  PacketQueue pq = PacketQueue();
+  PacketQueue pq = PacketQueue(100);
 
   g_log.logToStdout(true);
   g_log.logToFile(false);

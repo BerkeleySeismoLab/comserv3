@@ -42,7 +42,12 @@ extern "C" {
 #else
 #define	EXTERN extern
 #endif
-EXTERN PacketQueue packetQueue;
+
+// These variable must be global because they are used in callback routines 
+// called from outside the class, so they cannot be class variables.
+
+EXTERN PacketQueue *packetQueue;
+
 
 class LibmsmcastInterface {
  public:
@@ -60,7 +65,8 @@ class LibmsmcastInterface {
   int processPacketQueue();
   int queueNearFull();
   bool build_multicastChannelList(char *);
-  
+  void log_mserv_config(ConfigVO ourConfig);
+
   // These functions are static because they are callback routines from libmsmcast.
   static void state_callback(pointer p);
   static void miniseed_callback(pointer p);
