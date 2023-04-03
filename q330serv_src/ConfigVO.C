@@ -243,7 +243,7 @@ uint16_t ConfigVO::getDutyCycle_BufferLevel() const {
     return p_dutycycle_bufferLevel;
 }
 
-int8_t ConfigVO::getMulticastEnabled() const {
+uint16_t ConfigVO::getMulticastEnabled() const {
     return p_multicast_enabled;
 }
 

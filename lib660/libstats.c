@@ -79,7 +79,7 @@ static void process_dpstat (pq660 q660, plcq q, I32 val)
         memcpy(&(q660->onesec_call.station_name), &(q660->station_ident), sizeof(string9)) ;
         strcpy(q660->onesec_call.location, q->slocation) ;
         strcpy(q660->onesec_call.channel, q->sseedname) ;
-        q660->onesec_call.timestamp = q660->data_timetag - q->delay ;
+        q660->onesec_call.timestamp = q660->dpstat_timestamp ;
         q660->onesec_call.qual_perc = DPSTAT_QUALITY ;
         q660->onesec_call.rate = q->rate ;
         q660->onesec_call.activity_flags = 0 ;

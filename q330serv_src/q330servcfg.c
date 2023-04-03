@@ -141,6 +141,7 @@ int GetGlobalParamsFromNetworkIni(struct q330serv_cfg* out_cfg)
 	{
 	    break;
 	}
+	/* Possible global parameters for this server. */
 	if (strcmp(str1, "LOGDIR") == 0)
 	{
 	    strcpy(out_cfg->logdir, str2);
@@ -156,14 +157,24 @@ int GetGlobalParamsFromNetworkIni(struct q330serv_cfg* out_cfg)
 	    strcpy(out_cfg->contFileDir, str2);
 	    continue;
 	}
-	if (strcmp(str1, "STATUSINTERVAL") == 0)
-	{
-	    strcpy(out_cfg->statusinterval, str2) ;
-	    continue;
-	}
 	if (strcmp(str1, "VERBOSITY") == 0)
 	{
 	    strcpy(out_cfg->verbosity, str2) ;
+	    continue;
+	}
+	if (strcmp(str1, "DIAGNOSTIC") == 0)
+	{
+	    strcpy(out_cfg->diagnostic, str2) ;
+	    continue;
+	}
+	if (strcmp(str1, "LOGLEVEL") == 0)
+	{
+	    strcpy(out_cfg->loglevel, str2);
+	    continue;
+	}
+	if (strcmp(str1, "STATUSINTERVAL") == 0)
+	{
+	    strcpy(out_cfg->statusinterval, str2) ;
 	    continue;
 	}
 	if (strcmp(str1, "WAITFORCLIENTS") == 0)
@@ -181,11 +192,6 @@ int GetGlobalParamsFromNetworkIni(struct q330serv_cfg* out_cfg)
 	    strcpy(out_cfg->multicastEnabled, str2);
 	    continue;
 	}
-	if (strcmp(str1, "MULTICASTPORT") == 0)
-	{
-            strcpy(out_cfg->multicastPort, str2);
-	    continue;
-	}
 	if (strcmp(str1, "MULTICASTHOST") == 0)
 	{
 	    strcpy(out_cfg->multicastHost, str2);
@@ -194,6 +200,26 @@ int GetGlobalParamsFromNetworkIni(struct q330serv_cfg* out_cfg)
 	if (strcmp(str1, "MULTICASTCHANNELLIST") == 0)
 	{
 	    strcpy(out_cfg->multicastChannelList, str2);
+	    continue;
+	}
+	if (strcmp(str1, "FAILEDREGISTRATIONSBEFORESLEEP") == 0)
+	{
+	    strcpy(out_cfg->failedRegistrationsBeforeSleep, str2);
+	    continue;
+	}
+	if (strcmp(str1, "MINUTESTOSLEEPBEFORERETRY") == 0)
+	{
+	    strcpy(out_cfg->minutesToSleepBeforeRetry, str2);
+	    continue;
+	}
+	if (strcmp(str1, "DUTYCYCLE_MAXCONNECTTIME") == 0)
+	{
+	    strcpy(out_cfg->dutycycle_maxConnectTime, str2);
+	    continue;
+	}
+	if (strcmp(str1, "DUTYCYCLE_SLEEPTIME") == 0)
+	{
+	    strcpy(out_cfg->dutycycle_sleepTime, str2);
 	    continue;
 	}
     }
@@ -229,13 +255,13 @@ int GetServerParamsFromStationIni(struct q330serv_cfg* out_cfg, char *section_na
 	{
 	    break ;
 	}
-	/* Possible global parameters. */
+	/* Possible global parameters for this server. */
 	if (strcmp(str1, "LOGDIR") == 0)
 	{
 	    strcpy(out_cfg->logdir, str2);
 	    continue;
 	}
-	if (strcmp(str1, "LOGTYPE") == 0) 
+	if (strcmp(str1, "LOGTYPE") == 0)
 	{
 	    strcpy(out_cfg->logtype, str2);
 	    continue;
@@ -243,6 +269,21 @@ int GetServerParamsFromStationIni(struct q330serv_cfg* out_cfg, char *section_na
 	if (strcmp(str1, "CONTFILEDIR") == 0)
 	{
 	    strcpy(out_cfg->contFileDir, str2);
+	    continue;
+	}
+	if (strcmp(str1, "VERBOSITY") == 0)
+	{
+	    strcpy(out_cfg->verbosity, str2) ;
+	    continue;
+	}
+	if (strcmp(str1, "DIAGNOSTIC") == 0)
+	{
+	    strcpy(out_cfg->diagnostic, str2) ;
+	    continue;
+	}
+	if (strcmp(str1, "LOGLEVEL") == 0)
+	{
+	    strcpy(out_cfg->loglevel, str2);
 	    continue;
 	}
 	if (strcmp(str1, "STATUSINTERVAL") == 0)
@@ -258,6 +299,41 @@ int GetServerParamsFromStationIni(struct q330serv_cfg* out_cfg, char *section_na
 	if (strcmp(str1, "PACKETQUEUESIZE") == 0)
 	{
 	    strcpy(out_cfg->packetQueueSize, str2) ;
+	    continue;
+	}
+	if (strcmp(str1, "MULTICASTENABLED") == 0)
+	{
+	    strcpy(out_cfg->multicastEnabled, str2);
+	    continue;
+	}
+	if (strcmp(str1, "MULTICASTHOST") == 0)
+	{
+	    strcpy(out_cfg->multicastHost, str2);
+	    continue;
+	}
+	if (strcmp(str1, "MULTICASTCHANNELLIST") == 0)
+	{
+	    strcpy(out_cfg->multicastChannelList, str2);
+	    continue;
+	}
+	if (strcmp(str1, "FAILEDREGISTRATIONSBEFORESLEEP") == 0)
+	{
+	    strcpy(out_cfg->failedRegistrationsBeforeSleep, str2);
+	    continue;
+	}
+	if (strcmp(str1, "MINUTESTOSLEEPBEFORERETRY") == 0)
+	{
+	    strcpy(out_cfg->minutesToSleepBeforeRetry, str2);
+	    continue;
+	}
+	if (strcmp(str1, "DUTYCYCLE_MAXCONNECTTIME") == 0)
+	{
+	    strcpy(out_cfg->dutycycle_maxConnectTime, str2);
+	    continue;
+	}
+	if (strcmp(str1, "DUTYCYCLE_SLEEPTIME") == 0)
+	{
+	    strcpy(out_cfg->dutycycle_sleepTime, str2);
 	    continue;
 	}
 	/* Server/program specific parameters. */
@@ -291,21 +367,6 @@ int GetServerParamsFromStationIni(struct q330serv_cfg* out_cfg, char *section_na
 	    strcpy(out_cfg->authcode, str2) ;
 	    continue;
 	}
-	if (strcmp(str1, "VERBOSITY") == 0)
-	{
-	    strcpy(out_cfg->verbosity, str2) ;
-	    continue;
-	}
-	if (strcmp(str1, "LOGLEVEL") == 0)
-	{
-	    strcpy(out_cfg->loglevel, str2) ;
-	    continue;
-	}
-	if (strcmp(str1, "DIAGNOSTIC") == 0)
-	{
-	    strcpy(out_cfg->diagnostic, str2) ;
-	    continue;
-	}
 	if (strcmp(str1, "LOCKFILE") == 0)
 	{
 	    strcpy(out_cfg->lockfile, str2) ;
@@ -316,59 +377,9 @@ int GetServerParamsFromStationIni(struct q330serv_cfg* out_cfg, char *section_na
 	    strcpy(out_cfg->startmsg, str2) ;
 	    continue;
 	}
-	if (strcmp(str1, "STATUSINTERVAL") == 0)
-	{
-	    strcpy(out_cfg->statusinterval, str2) ;
-	    continue;
-	}
-	if (strcmp(str1, "DATARATEINTERVAL") == 0)
-	{
-	    strcpy(out_cfg->datarateinterval, str2) ;
-	    continue;
-	}
-	if (strcmp(str1, "FAILEDREGISTRATIONSBEFORESLEEP") == 0)
-	{
-	    strcpy(out_cfg->failedRegistrationsBeforeSleep, str2);
-	    continue;
-	}
-	if (strcmp(str1, "MINUTESTOSLEEPBEFORERETRY") == 0)
-	{
-	    strcpy(out_cfg->minutesToSleepBeforeRetry, str2);
-	    continue;
-	}
-	if (strcmp(str1, "DUTYCYCLE_MAXCONNECTTIME") == 0)
-	{
-	    strcpy(out_cfg->dutycycle_maxConnectTime, str2);
-	    continue;
-	}
-	if (strcmp(str1, "DUTYCYCLE_SLEEPTIME") == 0)
-	{
-	    strcpy(out_cfg->dutycycle_sleepTime, str2);
-	    continue;
-	}
-	if (strcmp(str1, "DUTYCYCLE_BUFFERLEVEL") == 0)
-	{
-	    strcpy(out_cfg->dutycycle_bufferLevel, str2);
-	    continue;
-	}
-	if (strcmp(str1, "MULTICASTENABLED") == 0)
-	{
-	    strcpy(out_cfg->multicastEnabled, str2);
-	    continue;
-	}
 	if (strcmp(str1, "MULTICASTPORT") == 0)
 	{
 	    strcpy(out_cfg->multicastPort, str2);
-	    continue;
-	}
-	if (strcmp(str1, "MULTICASTHOST") == 0)
-	{
-	    strcpy(out_cfg->multicastHost, str2);
-	    continue;
-	}
-	if (strcmp(str1, "MULTICASTCHANNELLIST") == 0)
-	{
-	    strcpy(out_cfg->multicastChannelList, str2);
 	    continue;
 	}
     }

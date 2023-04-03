@@ -85,6 +85,7 @@ EXTERN int mcastSocketFD;
 #endif
 EXTERN char multicastChannelList[256][8];
 
+extern tcontext g_stationContext;	//:: DEBUG
 
 class Lib660Interface {
 public:

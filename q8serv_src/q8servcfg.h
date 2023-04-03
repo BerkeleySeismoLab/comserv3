@@ -41,7 +41,7 @@ struct q8serv_cfg
     /* Info from either global NETWORK_INI or server's STATION_INI file. */
     char logdir[CFGWIDTH];
     char logtype[CFGWIDTH];
-    char udpaddr[CFGWIDTH];
+    char tcpaddr[CFGWIDTH];
     char contFileDir[CFGWIDTH];
     char statusinterval[CFGWIDTH];
     char baseport[CFGWIDTH];

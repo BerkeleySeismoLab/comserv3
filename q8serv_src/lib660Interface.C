@@ -26,6 +26,8 @@
 #include "lib660Interface.h"
 #include "portingtools.h"
 
+#define MAXWAITLIBSHUTDOWN      10
+
 //: #define DEBUG_Lib660Interface
 //: #define DEBUG_MULTICAST
 //: #define DEBUG_FILE_CALLBACK	1
@@ -98,10 +100,23 @@ Lib660Interface::Lib660Interface(char *stationName, ConfigVO ourConfig) {
 	}
     }
 
-    // Allocate intermediate PacketQueue.
+    // Allocate intermediate PacketQueue if needed.  
+    // Reuse existing PacketQueue if one was previously created.
     int npackets = ourConfig.getPacketQueueSize();
     if (npackets <= 0) npackets = DEFAULT_PACKETQUEUE_QUEUE_SIZE;
-    packetQueue = new PacketQueue(npackets);
+    if (g_packetQueue == NULL) {
+	packetQueue = new PacketQueue(npackets);
+	g_packetQueue = packetQueue;
+	if (g_packetQueue != NULL) {
+	    g_log << "+++ Created intermediate PacketQueue of " << npackets << " packets"<< std::endl;
+	}
+	else {
+	    g_log << "+++ ERROR - unable to created intermediate PacketQueue of " << npackets << " packets"<< std::endl;
+	}
+    }
+    else {
+	g_log << "+++ Using existing intermediate PacketQueue of " << npackets << " packets"<< std::endl;
+    }
 
     // Set thresholds for the intermediate PacketQueue.
     throttle_free_packet_threshold = (0.2 * npackets);
@@ -110,7 +125,8 @@ Lib660Interface::Lib660Interface(char *stationName, ConfigVO ourConfig) {
 
     lib_create_context(&(this->stationContext), &(this->creationInfo));
     if(this->creationInfo.resp_err == LIBERR_NOERR) {
-	g_log << "+++ Station thread created" << std::endl;
+	g_log << "+++ Station context created: address is " << (void *)this->stationContext << std::endl;
+	g_stationContext = this->stationContext;	//:: DEBUG
     } else {
 	this->handleError(creationInfo.resp_err);
     }
@@ -119,15 +135,46 @@ Lib660Interface::Lib660Interface(char *stationName, ConfigVO ourConfig) {
 
 Lib660Interface::~Lib660Interface() {
     enum tliberr errcode;
+    topstat opstat;
+    int countdown;
+
     g_log << "+++ Cleaning up lib660 Interface" << std::endl;
+
+    // Stop the thread.
     this->startDeregistration();
-    while(this->getLibState() != LIBSTATE_IDLE) {
+    countdown = MAXWAITLIBSHUTDOWN;
+
+    while(this->stationContext && countdown--) {
+	this->currentLibState = lib_get_state(this->stationContext, &errcode, &opstat);
+	// wait for IDLE state
+	if (errcode == LIBERR_INVCTX) {
+	    // library already closed somehow
+	    break;
+	}
+	if (this->currentLibState == LIBSTATE_IDLE || this->currentLibState == LIBSTATE_TERM) {
+	    // proceed to TERM
+	    break;
+	}
 	sleep(1);
     }
+
     this->changeState(LIBSTATE_TERM, LIBERR_CLOSED);
-    while(getLibState() != LIBSTATE_TERM) {
+    countdown = MAXWAITLIBSHUTDOWN;
+
+    while (this->stationContext && countdown--) {
+	// wait for TERM state
+	this->currentLibState = lib_get_state(this->stationContext, &errcode, &opstat);
+	if (errcode == LIBERR_INVCTX) {
+	    // library already closed somehow
+	    break;
+	}
+	if (this->currentLibState == LIBSTATE_TERM) {
+	    // proceed to shutdown
+	    break;
+	}
 	sleep(1);
     }
+
     if (mcastSocketFD >= 0) {
 	g_log << "+++ Multicast socket close" << std::endl;
 	int err = close(mcastSocketFD);
@@ -138,6 +185,7 @@ Lib660Interface::~Lib660Interface() {
     if(errcode != LIBERR_NOERR) {
 	this->handleError(errcode);
     }
+    g_stationContext = NULL;	//:: DEBUG
     g_log << "+++ lib660 Interface destroyed" << std::endl;
 }
 
@@ -146,7 +194,7 @@ void Lib660Interface::initializeRegistrationInfo(ConfigVO ourConfig) {
     // First zero the registrationInfo structure.
     memset (&this->registrationInfo, 0, sizeof(this->registrationInfo));
     strcpy(this->registrationInfo.q660id_pass, ourConfig.getQ660Password());
-    strcpy(this->registrationInfo.q660id_address, ourConfig.getQ660UdpAddr());
+    strcpy(this->registrationInfo.q660id_address, ourConfig.getQ660TcpAddr());
     this->registrationInfo.q660id_baseport = ourConfig.getQ660BasePort();
     /* Start of new items in lib660.  Possibly configurable items or change. */
     this->registrationInfo.spare1 = FALSE;
@@ -237,7 +285,7 @@ void Lib660Interface::startRegistration() {
 
 void Lib660Interface::startDeregistration() {
     g_log << "+++ Starting deregistration from Q660" << std::endl;
-    this->changeState(LIBSTATE_IDLE, LIBERR_NOERR);
+    this->changeState(LIBSTATE_IDLE, LIBERR_CLOSED);
 }
 
 
@@ -360,7 +408,7 @@ void Lib660Interface::log_q8serv_config(ConfigVO ourConfig) {
     g_log << "+++   SeedNetwork =                    " << ourConfig.getSeedNetwork() << std::endl;
     g_log << "+++   LogDir =                         " << ourConfig.getLogDir() << std::endl;
     g_log << "+++   LogType =                        " << ourConfig.getLogType() << std::endl;
-    g_log << "+++   Q660UdpAddr =                    " << ourConfig.getQ660UdpAddr() << std::endl;
+    g_log << "+++   Q660TcpAddr =                    " << ourConfig.getQ660TcpAddr() << std::endl;
     g_log << "+++   Q660BasePort =                   " << ourConfig.getQ660BasePort() << std::endl;
     g_log << "+++   Q660Priority =                   " << ourConfig.getQ660Priority() << std::endl;
     g_log << "+++   Q660SerialNumber =               " << ourConfig.getQ660SerialNumber() << std::endl;

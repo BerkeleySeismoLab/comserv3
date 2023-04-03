@@ -1,1 +1,9 @@
-Source code from lib330	version 2015/09/30
+Source code from lib330	version 2015/09/30.
+Updated on 2023/02/28 to incorporate:
+	Fix to libclient.c/loadpinginfo() from BSL.
+	Changes from ISTI (mostly const added so some types).
+	Changes to resolve all -Wall compilation warnings/errors.
+	Fixes and debugging info for TCP support:
+	      still does not work well due to Q330 limited buffering.
+
+

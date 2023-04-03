@@ -182,7 +182,7 @@ begin
 
   if (rate >= 0)
     then
-	sprintf((char *)result, "%d", rate) ;
+      sprintf((char *)result, "%d", rate) ;
     else
       realtostr(-1.0 / rate, 4, (pointer)result) ;
   return (char *)result ;
@@ -606,7 +606,7 @@ begin
       lastpr = NIL ;
       while (buffers > 0)
         begin
-	  getbuf (q330, (pointer *)addr(pr), sizeof(tcompressed_buffer_ring)) ;
+          getbuf (q330, (pointer *)addr(pr), sizeof(tcompressed_buffer_ring)) ;
           pr->link = NIL ;
           pr->full = FALSE ;
           if (pl->com->ring == NIL)

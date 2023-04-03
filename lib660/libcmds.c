@@ -343,7 +343,7 @@ void send_user_message (pq660 q660, pchar msg)
 
 void send_logger_stat (pq660 q660, int val, double tage)
 {
-    string15 s ;
+    string95 s ;
 
     init_xmlbuf (q660) ;
     writeln_socket (q660, "<Q660_Data>") ;

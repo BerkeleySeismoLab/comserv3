@@ -33,6 +33,12 @@ Edit History:
 #ifndef OMIT_SEED /* Can't use without seed generation */
 #ifndef OMIT_NETWORK /* or without network */
 
+#ifdef X86_WIN32
+#include <io.h>				/* close() */
+#else
+#include <unistd.h>			/* close() */
+#endif
+
 #ifndef libdss_h
 #include "libdss.h"
 #endif
@@ -232,11 +238,7 @@ typedef struct {
   boolean sockopen ;
   boolean sockfull ; /* last send failed */
   tdss dss_par ; /* creation parameters */
-#ifdef X86_WIN32
   struct sockaddr dsockin, sock ; /* dss address descriptors */
-#else
-  struct sockaddr dsockin, sock ; /* dss address descriptors */
-#endif
   pmemory free ;       /* head of free memory list */
   integer total ;      /* total memory obtained from system */
   integer mem_allowed ; /* memory allowed to be used */
@@ -549,9 +551,13 @@ end
 
 static void open_socket (pdssstr dssstr)
 begin
-  integer lth ;
-  integer err, flags ;
-  longint flag ;
+  socklen_t lth ;
+  integer err ;
+#ifdef X86_WIN32
+  longword flag ;
+#else
+  integer flags ;
+#endif
   string63 s ;
   struct sockaddr xyz ;
   struct sockaddr_in *psock ;
@@ -587,13 +593,8 @@ begin
     else
       psock->sin_port = htons(dssstr->dss_par.port_number) ;
   psock->sin_addr.s_addr = INADDR_ANY ;
-#ifdef X86_WIN32
   err = bind(dssstr->q330->dsspath, addr(dssstr->dsockin), sizeof(struct sockaddr)) ;
   if (err)
-#else
-  err = bind(dssstr->q330->dsspath, addr(dssstr->dsockin), sizeof(struct sockaddr)) ;
-  if (err)
-#endif
     then
       begin
         err =
@@ -1591,7 +1592,7 @@ begin
       incn(*dlth, 4) ;
       break ;
     case FMT_F64 :
-      plw = (longword *)addr(r) ;
+      plw = (pointer)addr(r) ;
 #ifdef DOUBLE_HYBRID_ENDIAN
       storelongword (p, *plw) ;
       inc(plw) ;
@@ -1618,7 +1619,8 @@ begin
   pdssstr dssstr ;
   longint expcrc ;
   pdss_client pcli ;
-  integer err, lth ;
+  socklen_t lth ;
+  integer err ;
   pbyte p ;
   string63 s ;
 

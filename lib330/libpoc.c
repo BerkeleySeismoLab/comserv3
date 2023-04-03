@@ -29,6 +29,12 @@ Edit History:
 */
 #ifndef OMIT_NETWORK
 
+#ifdef X86_WIN32
+#include <io.h>				/* close() */
+#else
+#include <unistd.h>			/* close() */
+#endif
+
 #ifndef q330types_h
 #include "q330types.h"
 #endif
@@ -152,7 +158,7 @@ end
 static void read_poc_socket (ppocstr pocstr)
 begin
   longint thiscrc ;
-  integer lth ;
+  socklen_t lth ;
   pbyte p ;
   integer err ;
 
@@ -193,8 +199,12 @@ end
 
 static void open_socket (ppocstr pocstr)
 begin
-  integer err, flags ;
-  longint flag ;
+  integer err ;
+#ifdef X86_WIN32
+  longword flag ;
+#else
+  integer flags ;
+#endif
   struct sockaddr_in *psock ;
 
   close_socket (pocstr) ;
@@ -212,13 +222,8 @@ begin
   psock->sin_family = AF_INET ;
   psock->sin_port = htons(pocstr->poc_par.poc_port) ;
   psock->sin_addr.s_addr = INADDR_ANY ;
-#ifdef X86_WIN32
   err = bind(pocstr->cpath, addr(pocstr->csockin), sizeof(struct sockaddr)) ;
   if (err)
-#else
-  err = bind(pocstr->cpath, addr(pocstr->csockin), sizeof(struct sockaddr)) ;
-  if (err)
-#endif
     then
       begin
 #ifdef X86_WIN32
@@ -229,8 +234,8 @@ begin
         pocstr->cpath = INVALID_SOCKET ;
         return ;
       end
-  flag = 1 ;
 #ifdef X86_WIN32
+  flag = 1 ;
   ioctlsocket (pocstr->cpath, FIONBIO, addr(flag)) ;
 #else
   flags = fcntl (pocstr->cpath, F_GETFL, 0) ;

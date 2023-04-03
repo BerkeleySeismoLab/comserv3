@@ -50,7 +50,7 @@ ConfigVO::ConfigVO(q8serv_cfg cfg) {
     // Info from global defaults or program section.
     setLogDir(cfg.logdir);
     setLogType(cfg.logtype);
-    setQ660UdpAddr(cfg.udpaddr);
+    setQ660TcpAddr(cfg.tcpaddr);
     setQ660BasePort(cfg.baseport);
     setQ660Priority(cfg.priority);
     setQ660SerialNumber(cfg.serialnumber);
@@ -93,7 +93,7 @@ ConfigVO::ConfigVO()
     memset(p_seed_network, 0, sizeof(p_seed_network));
     memset(p_logdir, 0, sizeof(p_logdir));
     memset(p_logtype, 0, sizeof(p_logtype));
-    memset(p_q660_udpaddr, 0, sizeof(p_q660_udpaddr));
+    memset(p_q660_tcpaddr, 0, sizeof(p_q660_tcpaddr));
     p_q660_base_port = 0;
     p_q660_priority = 0;
     p_q660_serial_number = 0;
@@ -172,9 +172,9 @@ char * ConfigVO::getLogType() const
     return (char *)p_logtype; 
 }
 
-char * ConfigVO::getQ660UdpAddr() const
+char * ConfigVO::getQ660TcpAddr() const
 {
-    return (char *)p_q660_udpaddr; 
+    return (char *)p_q660_tcpaddr; 
 }
 
 uint32_t ConfigVO::getQ660BasePort() const
@@ -344,9 +344,9 @@ void ConfigVO::setLogType(char* input)
     strcpy(p_logtype, input);
 }
  
-void ConfigVO::setQ660UdpAddr(char* input)
+void ConfigVO::setQ660TcpAddr(char* input)
 {
-    strcpy(p_q660_udpaddr, input);
+    strcpy(p_q660_tcpaddr, input);
 }
  
 void ConfigVO::setQ660BasePort(char* input)

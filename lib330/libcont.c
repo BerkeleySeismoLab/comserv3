@@ -430,7 +430,7 @@ begin
             begin
               if (result)
                 then
-		    strcpy((char *)result, "Thread Continuity Format Mis-match") ;
+                  strcpy((char *)result, "Thread Continuity Format Mis-match") ;
               lib_file_delete (q330->par_create.file_owner, fname) ;
               return ;
             end
@@ -439,7 +439,7 @@ begin
             begin
               if (result)
                 then
-		  sprintf((char *)result, "Thread Continuity Version Mis-match, Got=%d, Expected=%d", statstor.version, CT_VER) ;
+                  sprintf((char *)result, "Thread Continuity Version Mis-match, Got=%d, Expected=%d", statstor.version, CT_VER) ;
               lib_file_delete (q330->par_create.file_owner, fname) ;
               return ;
             end
@@ -448,7 +448,7 @@ begin
             begin
               if (result)
                 then
-		  strcpy((char *)result, "Thread Continuity CRC Error, Ignoring rest of file") ;
+                  strcpy((char *)result, "Thread Continuity CRC Error, Ignoring rest of file") ;
               lib_file_delete (q330->par_create.file_owner, fname) ;
               return ;
             end
@@ -497,7 +497,7 @@ begin
                     build_fake_log_lcq (paqs, TRUE) ;
                 return ;
               end
-	      getthrbuf (q330, (pointer)addr(cur_lcq), sizeof(tlcq)) ;
+          getthrbuf (q330, (pointer)addr(cur_lcq), sizeof(tlcq)) ;
           if (paqs->dplcqs == NIL)
             then
               paqs->dplcqs = cur_lcq ;
@@ -883,7 +883,7 @@ begin
               else
                 q = q->link ;
           while (pdest)
-	      if (strcmp((char *)addr(pdest->def->fname), (char *)addr(psrc->fn)) == 0)
+            if (strcmp((char *)addr(pdest->def->fname), (char *)addr(psrc->fn)) == 0)
               then
                 begin
                   if (q->rate > 0)
@@ -952,7 +952,7 @@ begin
                         memcpy (q->dholdq, addr(plsrc->multbuf), sizeof(dholdqtype)) ;
                         if (q->dholdq->ppkt) /* if non-nil, ppkt signals a valid packet */
                           then
-			      q->dholdq->ppkt = (pointer)addr(q->dholdq->pkt) ;
+                            q->dholdq->ppkt = (pointer)addr(q->dholdq->pkt) ;
                       end
                   q->dtsequence = plsrc->lastdtsequence ;
   #ifndef OMIT_SEED
@@ -1006,7 +1006,7 @@ begin
               else
                 q = q->link ;
           while (pdp)
-	      if (strcmp((char *)addr(pdp->detector_def->detname), (char *)addr(pmsrc->dn)) == 0)
+            if (strcmp((char *)addr(pdp->detector_def->detname), (char *)addr(pmsrc->dn)) == 0)
               then
                 begin
                   pmc = pdp->cont ;
@@ -1042,7 +1042,7 @@ begin
               else
                 q = q->link ;
           while (pdp)
-	      if (strcmp((char *)addr(pdp->detector_def->detname), (char *)addr(ptsrc->dn)) == 0)
+            if (strcmp((char *)addr(pdp->detector_def->detname), (char *)addr(ptsrc->dn)) == 0)
               then
                 begin
                   pmt = pdp->cont ;
@@ -1108,7 +1108,7 @@ begin
       end
     else
       begin /* must allocate a new one */
-	getthrbuf (q330, (pointer)addr(pcc), size + sizeof(tcont_cache)) ;
+        getthrbuf (q330, (pointer)addr(pcc), size + sizeof(tcont_cache)) ;
         pcc->size = size ;
         pcc->allocsize = size ;
         pcc->payload = (pointer)((pntrint)pcc + sizeof(tcont_cache)) ; /* skip cache header */

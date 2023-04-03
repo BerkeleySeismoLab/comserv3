@@ -373,7 +373,7 @@ begin
               sprintf(s1, ", Lth=%d Seq=%d Ack=%d", q330->recvhdr.datalength, q330->recvhdr.sequence,
                       q330->recvhdr.acknowledge) ;
               strcat(s, s1) ;
-              libmsgadd(q330, LIBMSG_PKTOUT, addr(s)) ;
+              libmsgadd(q330, LIBMSG_PKTOUT, (const pointer) addr(s)) ;
             end
 #ifndef OMIT_NETWORK
         if (q330->usesock)
@@ -413,21 +413,22 @@ begin
                           libmsgadd (q330, LIBMSG_ROUTEFAULT, (pointer)"Waiting 10 minutes") ;
                         end
                     else if (err != EWOULDBLOCK)
-                      then
+                      then begin
                         if (q330->tcp)
                           then
                             begin
                               purge_cmdq (q330) ;
                               sprintf(s1, "%d, Waiting 10 minutes", err) ;
-                              tcp_error (q330, addr(s1)) ;
+                              tcp_error (q330, (const pointer) addr(s1)) ;
                             end
                           else
                             begin
                               sprintf(s1, "%d", err) ;
-                              libmsgadd(q330, LIBMSG_CANTSEND, addr(s1)) ;
+                              libmsgadd(q330, LIBMSG_CANTSEND, (const pointer) addr(s1)) ;
                               add_status (q330, AC_IOERR, 1) ; /* add one I/O error */
                               pc->ctrl_retries = 10 ;
                             end
+                      end
                   end
                 else
                   add_status (q330, AC_WRITE, msglth + IP_HDR_LTH + UDP_HDR_LTH) ;
@@ -778,7 +779,7 @@ begin
 /*  with *q330, recvhdr, commands */
   pcmd = addr(pc->cmdq[pc->cmdout]) ;
   if (pc->cphase == CP_WAIT)
-    then
+    then begin
       if (q330->recvhdr.acknowledge == pc->lastctrlseq)
         then
           if (q330->recvhdr.command == C1_CERR)
@@ -796,7 +797,7 @@ begin
                     break ;
                   case CERR_TMSERV :
                     sprintf(s, "%d seconds", q330->piu_retry) ;
-                    libmsgadd(q330, LIBMSG_PIU, addr(s)) ;
+                    libmsgadd(q330, LIBMSG_PIU, (const pointer) addr(s)) ;
                     q330->registered = FALSE ;
                     q330->reg_wait_timer = q330->piu_retry ;
                     lib_change_state (q330, LIBSTATE_WAIT, LIBERR_TMSERV) ;
@@ -805,7 +806,7 @@ begin
                     lib_change_state (q330, LIBSTATE_WAIT, LIBERR_NOTR) ;
                     q330->registered = FALSE ;
                     sprintf(s, "%d seconds", NR_TIME) ;
-                    libmsgadd(q330, LIBMSG_SNR, addr(s)) ;
+                    libmsgadd(q330, LIBMSG_SNR, (const pointer) addr(s)) ;
                     q330->reg_wait_timer = NR_TIME ;
                     break ;
                   case CERR_INVREG :
@@ -828,7 +829,7 @@ begin
                             begin
                               lib_change_state (q330, LIBSTATE_WAIT, LIBERR_INVAL_TOKENS) ;
                               sprintf(s, ", will retry in %d seconds", NR_TIME) ;
-                              libmsgadd (q330, LIBMSG_INVTOK, addr(s)) ;
+                              libmsgadd (q330, LIBMSG_INVTOK, (const pointer) addr(s)) ;
                               q330->reg_wait_timer = NR_TIME ;
                             end
                         break ;
@@ -930,7 +931,7 @@ begin
                         sprintf(s2, " - Data%d (%s)", q330->par_create.q330id_dataport + 1,
                                 showdot(q330->q330ip, (pointer)addr(s1))) ;
                         strcat(s, s2) ;
-                        libmsgadd (q330, LIBMSG_REGISTERED, addr(s)) ;
+                        libmsgadd (q330, LIBMSG_REGISTERED, (const pointer) addr(s)) ;
                         q330->registered = TRUE ;
                         q330->reg_tries = 0 ;
                         lib330_reboot (q330, FALSE) ;
@@ -1015,7 +1016,7 @@ begin
                             new_cmd (q330, C2_RQEPD, sizeof(tepdelay)) ;
                         if (q330->q335)
                           then
-			      libmsgadd(q330, LIBMSG_Q335, (pointer)"") ;
+                              libmsgadd(q330, LIBMSG_Q335, (pointer)"") ;
                       end
                   break ;
                 case C1_SLOG :
@@ -1036,7 +1037,7 @@ begin
                                 q330->share.log.dataseq, s2) ;
                         q330->piggyok = (q330->share.log.flags and LNKFLG_PIGGY) == 0 ;
                         unlock (q330) ;
-                        libmsgadd (q330, LIBMSG_WINDOW, addr(s)) ;
+                        libmsgadd (q330, LIBMSG_WINDOW, (const pointer) addr(s)) ;
                         new_cfg (q330, make_bitmap(CRB_LOG)) ;
                       end
                   break ;
@@ -1066,7 +1067,7 @@ begin
                               showdot (q330->share.newuser.sender, (pointer)addr(s)) ;
                               strcat (s, ":") ;
                               strcat (s, q330->share.newuser.msg) ;
-                              libmsgadd (q330, LIBMSG_USER, addr(s)) ;
+                              libmsgadd (q330, LIBMSG_USER, (const pointer) addr(s)) ;
                               lock (q330) ;
                               q330->share.newuser.msg[0] = 0 ; /* clear it */
                               unlock (q330) ;
@@ -1136,7 +1137,7 @@ begin
                                                   then
                                                     begin /* change it */
                                                       sprintf(s, "%3.1f to %3.1f Hours", q330->zone_adjust / 3600.0, l * 0.5) ;
-                                                      libmsgadd(q330, LIBMSG_ZONE, addr(s)) ;
+                                                      libmsgadd(q330, LIBMSG_ZONE, (const pointer) addr(s)) ;
                                                       q330->zone_adjust = l * 1800 ; /* to seconds */
                                                     end
                                               end
@@ -1429,7 +1430,7 @@ begin
                         if (q330->back.flags and BA_MANUAL)
                           then
                             strcat (s, ", Manual On") ;
-                        libmsgadd (q330, LIBMSG_BACK, addr(s)) ;
+                        libmsgadd (q330, LIBMSG_BACK, (const pointer) addr(s)) ;
                         q330->share.access_timer = INITIAL_ACCESS_TIMOUT ; /* Force staying on a minimum amount of time */
                         if (q330->par_create.call_baler)
                           then
@@ -1491,6 +1492,7 @@ begin
               end
         else
           add_status (q330, AC_SEQERR, 1) ;
+    end
 end
 
 void lib_timer (pq330 q330)
@@ -1564,6 +1566,8 @@ begin
               case LIBSTATE_WAIT :
                 new_state (q330, q330->share.target_state) ;
                 break ;
+              default :
+                break ;
             end
             break ;
           case LIBSTATE_RUNWAIT :
@@ -1573,7 +1577,7 @@ begin
                 strcpy(s, q330->station_ident) ;
                 strcat(s, ", ") ;
                 strcat(s, q330->par_create.host_software) ;
-                libmsgadd(q330, LIBMSG_NETSTN, addr(s)) ;
+                libmsgadd(q330, LIBMSG_NETSTN, (const pointer) addr(s)) ;
                 if (q330->cur_verbosity and VERB_SDUMP)
                   then
                     log_all_info (q330) ;
@@ -1588,6 +1592,8 @@ begin
                 break ;
               case LIBSTATE_WAIT :
                 lib_start_registration (q330) ;
+                break ;
+              default :
                 break ;
             end
             break ;
@@ -1604,12 +1610,16 @@ begin
                     lib_dss_start (addr(paqs->dss_def), q330, q330->par_register.opt_dss_memory) ;
 #endif
                 break ;
+              default :
+                break ;
             end
             break ;
           case LIBSTATE_PING :
             switch (q330->libstate) begin
               case LIBSTATE_IDLE :
                 lib_start_ping (q330) ;
+                break ;
+              default :
                 break ;
             end
             break ;
@@ -1630,6 +1640,8 @@ begin
                   new_state (q330, LIBSTATE_TERM) ;
 #endif
                 end
+            break ;
+          default :
             break ;
         end
       end
@@ -1666,6 +1678,8 @@ begin
             continuity_timer (q330) ;
           end
       return ;
+    default :
+      break ;
   end
   lock (q330) ;
   if (q330->share.abort_requested)
@@ -1750,7 +1764,7 @@ begin
                   end
               if (q330->cur_verbosity and VERB_RETRY)
                 then
-		  libmsgadd (q330, LIBMSG_RETRY, (pointer)command_name (pc->cmdq[pc->cmdout].cmd, (pointer)addr(s))) ;
+                  libmsgadd (q330, LIBMSG_RETRY, (pointer)command_name (pc->cmdq[pc->cmdout].cmd, (pointer)addr(s))) ;
             end
       end
   if (q330->share.log_changed)
@@ -1880,7 +1894,7 @@ begin
                   lib_change_state (q330, LIBSTATE_WAIT, LIBERR_DATATO) ;
                   q330->reg_wait_timer = q330->data_timeout_retry ;
                   sprintf(s, "%d Minutes", q330->data_timeout_retry div 60) ;
-                  libmsgadd (q330, LIBMSG_DATATO, addr(s)) ;
+                  libmsgadd (q330, LIBMSG_DATATO, (const pointer) addr(s)) ;
                   add_status (q330, AC_COMATP, 1) ;
                 end
             if ((q330->share.log.flags and LNKFLG_FREEZE) == 0)
@@ -1968,8 +1982,10 @@ begin
                     else
                       q330->reg_wait_timer = 120 ;
                   sprintf(s, "%d Minutes", q330->reg_wait_timer div 60) ;
-                  libmsgadd (q330, LIBMSG_SNR, addr(s)) ;
+                  libmsgadd (q330, LIBMSG_SNR, (const pointer) addr(s)) ;
                 end
+            break ;
+          default :
             break ;
         end
         if ((q330->libstate >= LIBSTATE_READCFG) land (q330->libstate <= LIBSTATE_DEALLOC))
@@ -1983,7 +1999,7 @@ begin
                     lib_change_state (q330, LIBSTATE_WAIT, LIBERR_STATTO) ;
                     q330->reg_wait_timer = q330->status_timeout_retry ;
                     sprintf(s, "%d Minutes", q330->status_timeout_retry div 60) ;
-                    libmsgadd (q330, LIBMSG_STATTO, addr(s)) ;
+                    libmsgadd (q330, LIBMSG_STATTO, (const pointer) addr(s)) ;
                     add_status (q330, AC_COMATP, 1) ;
                   end
             end

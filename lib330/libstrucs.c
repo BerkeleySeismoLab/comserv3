@@ -38,6 +38,11 @@ Edit History:
    12 2010-08-21 rdr In lib_destroy_330 clear ct before doing any deallocations.
    13 2015-09-25 dsn Configure pthread for libthread as detached thread, 
                      libthread calls pthread_detach() and pthread_exit().
+   14 2019-04-11 baker realloc() (actually, free(), malloc()) in getbuf() after
+                     advancing to next memory block when it is too small (fixes
+                     crash caused by buffer overflow past end of memory block).
+                     New static getmem() called by getbuf() and getthrbuf() to
+                     allocate memory buffers (fixes memory leak in getthrbuf()).
 */
 /* Make sure libstrucs.h is included */
 #ifndef libstrucs_h
@@ -184,44 +189,57 @@ end
 #endif
 #endif
 
-void getbuf (pq330 q330, pointer *p, integer size)
+static void getmem (pmem_manager *pcurmem, pointer *p, integer size)
 begin
   pbyte newblock ;
   pmem_manager pm ;
 
-  pm = q330->cur_memory ;
-
+  pm = *pcurmem ;
   size = (size + 3) and 0xFFFFFFFC ; /* make multiple of longword */
+  /* is there room in the current memory block? */
   if ((pm->sofar + size) > pm->alloc_size)
-    then
-      begin /* need a new block of memory */
-        if (q330->cur_memory->next)
-          then
-            begin /* already available from before */
-              q330->cur_memory = q330->cur_memory->next ;
-              q330->cur_memory->sofar = 0 ;
-            end
-          else
-            begin /* need new allocation */
+    then /* no, need a new block of memory */
+      begin
+        /* does the memory blocks list have more entries? */
+        if (pm->next)
+          then /* yes, use the next memory block */
+            pm = pm->next ;
+          else /* no, need a new memory blocks list entry */
+            begin
               pm->next = malloc (sizeof(tmem_manager)) ;
               pm = pm->next ;
               pm->next = NIL ;
+              pm->alloc_size = 0 ;
+              pm->base = NIL ;
+            end
+        /* is there room in the next memory block? */
+        if (size > pm->alloc_size)
+          then /* no, need new (re-) allocation */
+            begin
+              free (pm->base) ;
               if (size > DEFAULT_MEM_INC)
                 then
                   pm->alloc_size = size ;
                 else
                   pm->alloc_size = DEFAULT_MEM_INC ;
-              pm->sofar = 0 ;
               pm->base = malloc (pm->alloc_size) ;
-              q330->cur_memory = pm ;
             end
+        pm->sofar = 0 ;
+        /* update the current memory block to the next memory block */
+        *pcurmem = pm ;
       end
-  newblock = q330->cur_memory->base ;
-  incn(newblock, q330->cur_memory->sofar) ;
-  q330->cur_memory->sofar = q330->cur_memory->sofar + size ;
+  newblock = pm->base ;
+  incn(newblock, pm->sofar) ;
+  pm->sofar = pm->sofar + size ;
   memset (newblock, 0, size) ; /* make sure is zeroed out */
   *p = newblock ;
 end
+
+void getbuf (pq330 q330, pointer *p, integer size)
+begin
+  getmem (addr(q330->cur_memory), p, size) ;
+end
+
 
 void mem_release (pq330 q330)
 begin
@@ -229,7 +247,7 @@ begin
 
   pm = q330->memory_head ;
   while (pm)
-    begin /* release  blocks */
+    begin /* release memory blocks for reuse */
       pm->sofar = 0 ;
       pm = pm->next ;
     end
@@ -494,7 +512,7 @@ begin
   fd_set readfds, writefds, exceptfds ;
   struct timeval timeout ;
 #endif
-  integer res, err ;
+  integer res ;
   double now_, diff ;
   longint new_ten_sec ;
 
@@ -571,11 +589,6 @@ begin
                               lib_dss_read (q330->dssstruc) ;
 #endif
                         end
-                  end
-              else if (res < 0)
-                then
-                  begin
-                    err = errno ;
                   end
             end
 #endif

@@ -481,25 +481,27 @@ begin
   con_ptr->haf_per = per_sc shr 1 ;
 
   if ((con_ptr->buf_sc[flg_m1] - con_ptr->buf_sc[flg_m2]) <= per_sc)
-    then
+    then begin
       if (abs(con_ptr->buf_amp[flg_m2]) >= con_ptr->th3)
-        then
+        then begin
           if ((con_ptr->buf_sc[flg_m2] - con_ptr->buf_sc[flg_m3]) > con_ptr->haf_per)
             then
               kase = 1 ;
             else
               kase = 2 ;
-
+         end
+    end 
   if ((kase == 0) land ((con_ptr->buf_sc[con_ptr->fst_flg] - con_ptr->buf_sc[flg_m1]) <= per_sc))
-    then
+    then begin
       if (abs(con_ptr->buf_amp[flg_m1]) >= con_ptr->th3)
-        then
+        then begin
           if ((con_ptr->buf_sc[flg_m1] - con_ptr->buf_sc[flg_m2]) > con_ptr->haf_per)
             then
               kase = 3 ;
             else
               kase = 4 ;
-
+         end
+    end
   if ((kase == 0) land ((con_ptr->buf_sc[con_ptr->fst_flg] - con_ptr->buf_sc[flg_m1]) <= con_ptr->haf_per))
     then
       kase = 5 ;

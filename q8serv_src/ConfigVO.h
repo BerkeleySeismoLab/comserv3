@@ -50,7 +50,7 @@ public:
     char *   getSeedNetwork() const;
     char *   getLogDir() const;
     char *   getLogType() const;
-    char *   getQ660UdpAddr() const;
+    char *   getQ660TcpAddr() const;
     uint32_t getQ660BasePort() const;
     uint32_t getQ660Priority() const; // 1-4
     uint64_t getQ660SerialNumber() const;
@@ -89,7 +89,7 @@ public:
     void setSeedNetwork(char *input);
     void setLogDir(char *input);
     void setLogType(char *input);
-    void setQ660UdpAddr(char* input);
+    void setQ660TcpAddr(char* input);
     void setQ660BasePort(char* input);
     void setQ660Priority(char* input);
     void setQ660SerialNumber(char* input);
@@ -146,7 +146,7 @@ private:
     char p_seed_network[CFGWIDTH];
     char p_logdir[CFGWIDTH];
     char p_logtype[CFGWIDTH];
-    char     p_q660_udpaddr[CFGWIDTH];
+    char     p_q660_tcpaddr[CFGWIDTH];
     uint16_t p_q660_base_port;
     uint16_t p_q660_priority;
     uint64_t p_q660_serial_number;

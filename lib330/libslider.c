@@ -194,7 +194,7 @@ begin
         sprintf(s1, ", Lth=%d Seq=%d Ack=%d", q330->recvhdr.datalength, q330->recvhdr.sequence,
                 q330->recvhdr.acknowledge) ;
         strcat(s, s1) ;
-        libmsgadd(q330, LIBMSG_PKTOUT, addr(s)) ;
+        libmsgadd(q330, LIBMSG_PKTOUT, (const pointer) addr(s)) ;
       end
 #ifndef OMIT_NETWORK
   if (q330->usesock)
@@ -217,7 +217,7 @@ begin
               sprintf(s1, ", TCPSendLth=%d Seq=%d Ack=%d", msglth+4, q330->recvhdr.sequence,
                       q330->recvhdr.acknowledge) ;
               strcat(s, s1) ;
-              libmsgadd(q330, LIBMSG_PKTOUT, addr(s)) ;
+              libmsgadd(q330, LIBMSG_PKTOUT, (const pointer) addr(s)) ;
 #endif
               err = send(q330->cpath, (pchar)pref, msglth + 4, 0) ;
             end
@@ -233,7 +233,7 @@ begin
               sprintf(s1, ", UDPSendtoLth=%d Seq=%d Ack=%d", msglth, q330->recvhdr.sequence,
                       q330->recvhdr.acknowledge) ;
               strcat(s, s1) ;
-              libmsgadd(q330, LIBMSG_PKTOUT, addr(s)) ;
+              libmsgadd(q330, LIBMSG_PKTOUT, (const pointer) addr(s)) ;
 #endif
               err = sendto(q330->dpath, addr(q330->dataout.qdp), msglth, 0, addr(q330->dsockout), sizeof(struct sockaddr)) ;
             end
@@ -250,12 +250,12 @@ begin
                 then
                   begin
                     sprintf(s1, "%d, Waiting 10 minutes", err) ;
-                    tcp_error (q330, addr(s1)) ;
+                    tcp_error (q330, (const pointer) addr(s1)) ;
                   end
                 else
                   begin
                     sprintf(s1, "%d", err) ;
-                    libmsgadd(q330, LIBMSG_CANTSEND, addr(s1)) ;
+                    libmsgadd(q330, LIBMSG_CANTSEND, (const pointer) addr(s1)) ;
                     add_status (q330, AC_IOERR, 1) ; /* add one I/O error */
                   end
             end
@@ -1175,7 +1175,7 @@ begin
             if (strlen(s) >= 88)
               then
                 begin
-                  libmsgadd(q330, LIBMSG_PKTOUT, addr(s)) ;
+                  libmsgadd(q330, LIBMSG_PKTOUT, (const pointer) addr(s)) ;
                   added = FALSE ;
                   sprintf(s, "%s%s, Acking ", packet_time (now(), (pchar)addr(s2)), command_name (q330->recvhdr.command, addr(s1))) ;
                 end
@@ -1183,7 +1183,7 @@ begin
           end
         if (added)
           then
-            libmsgadd(q330, LIBMSG_PKTOUT, addr(s)) ;
+            libmsgadd(q330, LIBMSG_PKTOUT, (const pointer) addr(s)) ;
       end
 #ifndef OMIT_NETWORK
   if (q330->usesock)
@@ -1221,12 +1221,12 @@ begin
                 then
                   begin
                     sprintf(s1, "%d, Waiting 10 minutes", err) ;
-                    tcp_error (q330, addr(s1)) ;
+                    tcp_error (q330, (const pointer) addr(s1)) ;
                   end
                 else
                   begin
                     sprintf(s1, "%d", err) ;
-                    libmsgadd(q330, LIBMSG_CANTSEND, addr(s1)) ;
+                    libmsgadd(q330, LIBMSG_CANTSEND, (const pointer) addr(s1)) ;
                     add_status (q330, AC_IOERR, 1) ; /* add one I/O error */
                   end
             end
@@ -1348,7 +1348,7 @@ begin
             strcat(s, " Inside the Window") ;
           else
             strcat(s, " Outside the Window") ;
-        libmsgadd(q330, LIBMSG_PKTIN, addr(s)) ;
+        libmsgadd(q330, LIBMSG_PKTIN, (const pointer) addr(s)) ;
       end
   if (good)
     then

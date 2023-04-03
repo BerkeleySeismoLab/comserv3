@@ -66,7 +66,7 @@ public:
     uint16_t getDutyCycle_MaxConnectTime() const;
     uint16_t getDutyCycle_SleepTime() const;
     uint16_t getDutyCycle_BufferLevel() const;
-    int8_t   getMulticastEnabled() const;
+    uint16_t getMulticastEnabled() const;
     uint16_t getMulticastPort() const;
     char *   getMulticastHost() const;
     char *   getMulticastChannelList() const;
@@ -143,7 +143,7 @@ private:
     uint16_t p_dutycycle_maxConnectTime;
     uint16_t p_dutycycle_sleepTime;
     uint16_t p_dutycycle_bufferLevel;
-    int8_t   p_multicast_enabled;
+    uint16_t p_multicast_enabled;
     uint16_t p_multicast_port;
     char     p_multicast_host[256];
     char     p_multicast_channellist[512];

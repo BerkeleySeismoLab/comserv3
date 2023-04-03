@@ -79,7 +79,7 @@ begin
             begin
               sprintf(s, "%s %s", seed2string(addr(q->location), addr(q->seedname), (pchar)addr(s2)),
                       realtostr(q330->dpstat_timestamp - q->last_timetag - q->gap_offset, 6, addr(s1))) ;
-              libdatamsg (q330, LIBMSG_TIMEDISC, addr(s)) ;
+              libdatamsg (q330, LIBMSG_TIMEDISC, (const pointer) addr(s)) ;
             end
 #ifndef OMIT_SEED
         flush_lcq (paqs, q, pcom) ; /* gap in the data */
@@ -152,7 +152,7 @@ void lib_stats_timer (pq330 q330)
 begin
   enum tacctype acctype ;
   integer minute, last_minute, comeff_valids ;
-  longint total, sentdif, resdif, val, duty ;
+  longint total, sentdif, resdif, val ;
   paqstruc paqs ;
   taccmstat *paccm ;
 
@@ -172,7 +172,6 @@ begin
       end
     else
       q330->share.accmstats[AC_COMEFF].accum_ds = 0 ;
-  duty = q330->share.accmstats[AC_DUTY].accum_ds ;
   for (acctype = AC_FIRST ; acctype <= AC_LAST ; acctype++)
     begin
       paccm = addr(q330->share.accmstats[acctype]) ;
@@ -243,7 +242,7 @@ begin
       paccm = addr(q330->share.accmstats[acctype]) ;
       paccm->minutes[last_minute] = paccm->accum ;
       if (q330->share.stat_minutes == 0)
-        then
+        then begin
           if (acctype != AC_COMEFF)
             then
               begin /* new hour, update current hour */
@@ -270,6 +269,7 @@ begin
                     total = INVALID_ENTRY ;
                 paccm->hours[q330->share.stat_hours] = total ;
               end
+        end
       paccm->accum = 0 ; /* start counting the new minute as zero */
     end
   if (q330->share.stat_minutes == 0)

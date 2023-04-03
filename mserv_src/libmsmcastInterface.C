@@ -267,9 +267,9 @@ void LibmsmcastInterface::log_mserv_config(ConfigVO ourConfig) {
     g_log << "+++   SeedNetwork =                    " << ourConfig.getSeedNetwork() << std::endl;
     g_log << "+++   LogDir =                         " << ourConfig.getLogDir() << std::endl;
     g_log << "+++   LogType =                        " << ourConfig.getLogType() << std::endl;
-    g_log << "+++   McastIF =                        " << ourConfig.getMcastIf() << std::endl;
-    g_log << "+++   UDPAddrF =                       " << ourConfig.getUdpAddr() << std::endl;
-    g_log << "+++   IPPort =                         " << ourConfig.getIPPort() << std::endl;
+    g_log << "+++   McastIF (Input) =                " << ourConfig.getMcastIf() << std::endl;
+    g_log << "+++   UDPAddr (Input) =                " << ourConfig.getUdpAddr() << std::endl;
+    g_log << "+++   IPPort (Input) =                 " << ourConfig.getIPPort() << std::endl;
     g_log << "+++   LockFile =                       " << ourConfig.getLockFile() << std::endl;
     g_log << "+++   StartMsg =                       " << ourConfig.getStartMsg() << std::endl;
     g_log << "+++   StatusInterval =                 " << ourConfig.getStatusInterval() << std::endl;

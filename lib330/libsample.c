@@ -668,7 +668,7 @@ begin
                   begin
                     sprintf(s, "%s %s", seed2string((pointer)q->location, (pointer)q->seedname, (pointer)addr(s1)),
                             realtostr(paqs->data_timetag - q->last_timetag - q->gap_offset, 6, addr(s2))) ;
-                    libdatamsg (q330, LIBMSG_TIMEDISC, addr(s)) ;
+                    libdatamsg (q330, LIBMSG_TIMEDISC, (const pointer) addr(s)) ;
                   end
 #ifndef OMIT_SEED
               flush_lcq (paqs, q, q->com) ; /* gap in the data */
@@ -905,7 +905,7 @@ begin
               then
                 begin
                   sprintf(s, "%s, %d samples left", seed2string((pointer)q->location, (pointer)q->seedname, (pchar)addr(s1)), samples) ;
-                  libdatamsg (q330, LIBMSG_RECOMP, addr(s)) ;
+                  libdatamsg (q330, LIBMSG_RECOMP, (const pointer) addr(s)) ;
                   samples = 0 ;
                 end
               else
@@ -950,6 +950,8 @@ begin
             then
               flush_lcq (paqs, q, q->com) ;
           break ;
+        default :
+          break ;
       end
       q = q->link ;
     end
@@ -970,6 +972,8 @@ begin
           break ;
         case PKC_MESSAGE :
           flush_messages (paqs) ;
+          break ;
+        default :
           break ;
       end
       q = q->link ;
@@ -1097,7 +1101,7 @@ begin
         q->seg_next = (pointer)((pntrint)q->seg_next + size + sizeof(pointer)) ;
         if (((pntrint)q->seg_next - (pntrint)q->segbuf) > q->segsize)
           then
-	    libdatamsg (q330, LIBMSG_SEGOVER, (pointer)addr(s)) ;
+            libdatamsg (q330, LIBMSG_SEGOVER, (pointer)addr(s)) ;
         inc(q->seg_count) ;
       end
     else
@@ -1135,12 +1139,13 @@ begin
             ps = ps->link ;
           end
         if (ps == NIL)
-          then /* this is new highest */
+          then begin /* this is new highest */
             if (lps)
               then
                 lps->link = q->seg_next ; /* add this to end of current list */
               else
                 q->pseg = q->seg_next ; /* first one in list */
+           end
         q->seg_next = (pointer)((pntrint)q->seg_next + size + sizeof(pointer)) ;
         if (((pntrint)q->seg_next - (pntrint)q->segbuf) > q->segsize)
           then

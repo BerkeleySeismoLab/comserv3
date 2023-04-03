@@ -4,6 +4,7 @@
  * Modification History:
  *  2020-09-29 DSN Updated for comserv3.
  *  2022-02-07 DSN Updated to allow enviromental override of STATIONS_INI.
+ *  2023-03-10 DSN Changed 1 second sleep to shorter sleep.
  ************************************************************************/
 
 #include <stdio.h>
@@ -113,17 +114,17 @@ extern char* seednamestring (seed_name_type *, location_type *);
 
 /*  Signal handler variables and functions.	    */
 void finish_handler(int sig);
-void terminate_program (int error);
+int terminate_comserv (int error);
 extern int write_to_ring (seed_record_header *pseed);
 
 /*  Comserv variables.		*/
 pclient_struc me = NULL;
 
 /************************************************************************
- *  terminate_program
+ *  terminate_comserv
  *	Terminate prog and return error code.  Clean up on the way out.
  ************************************************************************/
-void terminate_program (int error) 
+int terminate_comserv (int error) 
 {
     pclient_station thist;
     char time_str[TIMESTRLEN];
@@ -163,7 +164,7 @@ void terminate_program (int error)
     if (error == 1) {
 	fprintf (stdout, "Exiting through signal handler\n");
     }
-    exit(error);
+    exit (error);
 }
 
 char *selector_type_str[] = {"DAT", "DET", "CAL", "TIM", "MSG", "BLK"};
@@ -419,13 +420,14 @@ int fill_from_comserv (char *station)
 		    pdat = (pdata_user) ((long) pdat + thist->dbufsize) ;
 		}
 	    }
+	    if (terminate_proc) break;
 	}
 	else {
 	    if (verbosity & 2) {
 		fprintf (info, "sleeping...");
 		fflush (info);
 	    }
-	    sleep (1) ; /* Bother the server once every second */
+	    usleep (500000) ; /* short sleep between queries for more data */
 	    if (verbosity & 2)  {
 		fprintf (info, "awake\n");
 		fflush (info);
@@ -721,4 +723,3 @@ int selector_match (char *str1, char *str2)
     }
     return (TRUE);
 }
-

@@ -210,7 +210,7 @@ begin
       break ;
   end
   strcpy ((char *)result, s) ;
-return (char *)result ;
+  return (char *)result ;
 end
 
 #ifndef OMIT_SEED
@@ -234,11 +234,7 @@ begin
 end
 #endif
 
-#ifdef CONSTMSG
 void msgadd (pq330 q330, word msgcode, longword dt, const string95 *msgsuf, boolean client)
-#else
-void msgadd (pq330 q330, word msgcode, longword dt, string95 *msgsuf, boolean client)
-#endif
 begin
   string s, s1, s2 ;
   paqstruc paqs ;
@@ -286,7 +282,7 @@ begin
                         log_message (q330, (pointer)addr(paqs->msgq_out->msg)) ;
                         paqs->msgq_out = paqs->msgq_out->link ;
                       end
-		      log_message (q330, (pointer)addr(s)) ;
+                      log_message (q330, (pointer)addr(s)) ;
                   end
             end
 #endif
@@ -297,21 +293,13 @@ begin
   msgunlock (q330) ;
 end
 
-#ifdef CONSTMSG
 void libmsgadd (pq330 q330, word msgcode, const string95 *msgsuf)
-#else
-void libmsgadd (pq330 q330, word msgcode, string95 *msgsuf)
-#endif
 begin
 
   msgadd (q330, msgcode, 0, msgsuf, FALSE) ;
 end
 
-#ifdef CONSTMSG
 void libdatamsg (pq330 q330, word msgcode, const string95 *msgsuf)
-#else
-void libdatamsg (pq330 q330, word msgcode, string95 *msgsuf)
-#endif
 begin
   longword dt ;
   paqstruc paqs ;
@@ -448,8 +436,8 @@ begin
         sprintf(s, "$%x", h) ;
       end
   end
-      strcpy ((char *)result, s) ;
-return (char *)result ;
+  strcpy ((char *)result, s) ;
+  return (char *)result ;
 end
 
 char *lib_gps_state (enum tgps_stat gs, string63 *result)
@@ -469,7 +457,7 @@ begin
     default : strcpy(s, "Florida") ;
   end
   strcpy ((char *)result, s) ;
-return (char *)result ;
+  return (char *)result ;
 end
 
 char *lib_gps_fix (enum tgps_fix gf, string63 *result)

@@ -66,17 +66,17 @@ bool validateq8servConfig(const struct q8serv_cfg& aCfg)
     int len;
     //
     // Required fields are 
-    // udpaddr
+    // tcpaddr
     // baseport
     // priority
     // serial number
     // password
 
-    len = strlen(aCfg.udpaddr);
+    len = strlen(aCfg.tcpaddr);
     if (len < 1)
     {
 	g_log << 
-	    "xxx Configuration file is missing value for udpaddr:" << std::endl;
+	    "xxx Configuration file is missing value for tcpaddr:" << std::endl;
 	return false;
     }
 

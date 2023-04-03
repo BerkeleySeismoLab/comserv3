@@ -630,7 +630,7 @@ begin
                         pss->exttemp = loadlongint (p) ;
                       end
                 end
-	    p = (pbyte *)pnext ;
+            p = (pbyte *)pnext ;
           end
         else
           break ; /* invalid entry, skip entire block */
@@ -770,9 +770,9 @@ begin
   for (w = PP_SER1 ; w <= PP_ETH ; w++)
     pinginfo->triggers[w] = loadlongword (p) ;
   for (w = PP_SER1 ; w <= PP_ETH ; w++)
-    pinginfo->advflags[w] = loadlongword (p) ;
+    pinginfo->advflags[w] = loadword (p) ;
   for (w = PP_SER1 ; w <= PP_ETH ; w++)
-    pinginfo->dataport[w] = loadlongword (p) ;
+    pinginfo->dataport[w] = loadword (p) ;
   pinginfo->calibration_errors = loadword (p) ;
   pinginfo->sys_ver = loadword (p) ;
 end
@@ -977,7 +977,7 @@ begin
       pfs->sensor_serial[0] = loadlongword (p) ;
       pfs->sensor_serial[1] = loadlongword (p) ;
 #endif
-      for (j = 0 ; j <= 3 ; i++)
+      for (j = 0 ; j <= 3 ; j++)
         pfs->booms[j] = loadbyte (p) ;
     end
 end

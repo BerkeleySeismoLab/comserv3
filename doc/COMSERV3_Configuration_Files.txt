@@ -1,6 +1,6 @@
-COMSERV3 Configuration Files:
+COMSERV3.1 Configuration Files:
 	 Doug Neuhauser, doug@seismo.berkeley.edu
-	 2020/10/04
+	 2023/03/30
 
 COMSERV3 Configuration files contains one or more sections, and each
 section contains 0 or more lines of configuration commands (or
@@ -13,9 +13,15 @@ A section header line has the format:
 where the string within the brackets is the section name.
 A section name may NOT include any whitespace.
 
-A configuration line has the format 
-
+A configuration line has the format of either
     keyword=value
+or a directive specifying the pathname of a file
+to be included at this point in the current config file.
+    @pathname
+
+An include file may contain all or any portion of one or more
+configuration sections.  Include files can be nested up to 10
+levels.
 
 A keyword is a string with no whitespace that begins with an
 alphanumeric character.  Keywords are always case insensitive.  The
@@ -37,16 +43,27 @@ server_instance).
 
 I.  Systemwide files:
 
-1. /etc/stations.ini	(referred to as STATIONS_INI file)
+As of comserv3.1, the two systemwide configuration files
+   STATIONS_INI
+   NETWORK_INI
+can have their default pathnames overrided at runtime by setting and
+exporting the above environment variable names.  If you use netmon,
+you should set and export these variable in the netmon startup script,
+and they will be used by netmon and inherited by all servers and
+clients started by netmon.
 
-The STATION_INI file contains 1 section for each server_instance.
-The server_instance configuration commands are:
+1. STATIONS_INI file (default pathname is /etc/stations.ini)
+
+The STATIONS_INI file contains 1 section for each server_instance
+that provides a brief description of each server.
+
+The mandatory server_instance configuration parameters are:
 
     desc=string
 	Descriptive string for the server_instance.
     dir=Pathname
 	Pathname of the directory containing the server_instance's station.ini file.
-    source=comserv|comlink
+    source=comserv
 	The value MUST be comserv (or comlink for comserv2 compatability).
     station|site=SEED_station_code
 	The SEED station code in the MiniSEED data delivered by the server.
@@ -54,6 +71,9 @@ The server_instance configuration commands are:
     network|net=SEED_network_code
 	The SEED network code in the MiniSEED data delivered by the server.
 	The network and net keyworkd are considered equivalent keywords.
+
+The optional server-instance configuration parameters are:
+
     group=group_name
 	The name of a group in which the server_instance should be included.
 	There may be multiple group configuration commands for a single server_instance.
@@ -95,18 +115,21 @@ Example:
     group=BK
     group=mserv
 
-2.  /etc/network.ini	(referred to as NETWORK_INI file)
+2.  NETWORK_INIT	(default pathname is /etc/network.ini)
 
-The NETWORK_INI file contains a [netmon] section for the netmon
-program, and an optional [global_defaults] section for default
-configuration lines that may be used by multiple server_instance's
-program.  Any configuration line in the [global_defaults] section may
-be overriden by a configuration line in the server_instances's
-STATION_INI file.
+The NETWORK_INI file is used by the netmon control daemon that can
+start, restart, and shudown server specified in the STATIONS_INI file
+and managed clients specified in each servers's station.ini file.  
 
-The [netmon] section can contain the following configuration lines:
+It contains a [netmon] section for the netmon program, and an optional
+[global_defaults] section for default configuration parameters that may be
+used by one or more server_instance's program.  Any configuration parameter
+set in the [global_defaults] section may be overriden by a configuration
+parameter line in any server_instance's STATION_INI file.
 
-A.  The following parameters are use to control basic operations of
+A.  The [netmon] section can contain the following configuration lines:
+
+A.1.  The following parameters are use to control basic operations of
 the netmon program.
 
     logdir=Logging_directory
@@ -125,7 +148,7 @@ the netmon program.
 	Netmon may increase this paramter if it is smaller than the
 	CS_CHECK_INTERVAL used when compiling netmon.
 
-B.  The following parameters are used to control netmon's startup
+A.2.  The following parameters are used to control netmon's startup
 and shutdown of servers and clients.
 
     server_startup_delay=N
@@ -141,7 +164,7 @@ and shutdown of servers and clients.
 	Maximum number of times netmon will try to check for a program to
 	shut down before it will kill it "with prejudice".
 
-C.  The following paramters are used to control netmon's timeout
+A.3.  The following paramters are used to control netmon's timeout
 notification for no data packets being inserted into the
 server_instance's comserv storage rings.  Most networks no longer
 use netmon to provide notification of data timeouts, as they have
@@ -165,20 +188,39 @@ other methods of detecting data timeouts or hith data latencies.
         Boolean value that specified whether netmon should notify
 	operations staff when a timeout condition has been cleared.
 
-The [global_defaults] section contains default parameters for one
+B.  The [global_defaults] section contains default parameters for one
 or more server_instances.  Any parameter in this section may be
-overriden by a corresponding parameter in a server_instance's section
+overriden by a corresponding parameter line in a server_instance's section
 in its STATION_INI file.
 
-    logdir=Logging_directory
-	Pathname for the logfiles created by the station_instance' server program.
-    logtype=logfile|stdoug
-	Specifies whether the program should create and manage it's own daily
-	logfiles, or whether it should write log messages to stdout, which may
-	be redirected to a logfile by the netmon program.
-    contfiledir=/home/doug/config/state
+Directives for all servers:
+    logdir=logging_directory
+	Directory name for the logfiles created by netmon for the
+	server programs and clients started by netmon.
+    logtype=logfile|stdout
+	Specifies whether the server programs should create and manage
+	it's own daily logfiles, or whether it should write log
+	messages to stdout, which may be redirected to a single
+	logfile by the netmon program.  Logfiles managed by server a
+	broken into daily logfiles based on UTC days.
+    contfiledir=pathname_for_continuity_state_files
         Directory name in which the server_instance's program should read and
 	write continuity files.
+    verbosity=N
+	Specifies the level of verbosity of the comserv section of the
+	server_instance. Default value is 0.  Possible values are 0, 1
+	or 2, which specify increaed levels of logging.
+    diagnostic=N
+	Specifies the level of diagnostic logging on the server_instance.
+	Currently not used?
+    loglevel=comma_delimited_string
+	Specifies the types of logging for the server_instance's input
+	library (lib330, lib660, libmcast).  Possible values are:  
+		PD for loggine packet data info, 
+		RM for logging regular messages, 
+		SD for logging dump info from the input library, 
+		SM for logging auxmsgs,
+		VB for logging other verbose info.
     statusinterval=N
 	Specifies how often (in seconds) the server_instance's server program
 	should output data telemetry status info.
@@ -186,10 +228,14 @@ in its STATION_INI file.
 	Specifies in seconds how long the server_instance's server program 
 	should wait after program startup for clients to be started by netmon
 	before starting data telemetry from the data logger.
+    packetqueusize=N
+	Specifies the number of 512-byte MiniSEED packets to allocate for
+	the volatile intermediate queue for buffering between the server's 
+	input thread and the main thread that writes the MiniSEED packets
+	to the non-volatile comserv server shared memory.
+	The default value is 500.
 
-B.  The following parameters are used to control whether low-latency data packets
-for channels are multicast.
-
+Directives for q8serv and q330serv:
     multicastenabled=0|1
 	Boolean value to specify whether low-latency data packets should
 	be multicasted.
@@ -198,6 +244,27 @@ for channels are multicast.
     multicastchannellist=channel_list
 	Comma-delimited channel list specifying which channels should
 	have low-latency data multicasted.
+    failedregistrationbeforesleep=N
+
+    minutestosleepbeforeretry=N
+
+    dutycycle_maxconnecttime=N
+
+    dutycycle_sleeptime=N
+
+Directives for q8serv:
+    limitbackfill=N
+	Specifies the maximum number of seconds to backfill on server startup.
+	Default value of 0 implies no limit on backfill.
+    optthrottlekbitpersec=N
+
+    optbwfillbittarget=N
+
+    optbwfillprobeinterval=N
+
+    optbfwillexceedtrigger=N    
+
+    optbwfillmaxlatency=N
 
 Example:
 
@@ -206,9 +273,9 @@ Example:
     * Netmon daemon configuration parameters.
     *
     logtype=logfile
-    logdir=/home/doug/config/logs
-    cmddir=/home/doug/config/cmds
-    lockfile=/home/doug/config/lock/netmon.lock
+    logdir=/home/ncss/config/logs
+    cmddir=/home/ncss/config/cmds
+    lockfile=/home/ncss/config/lock/netmon.lock
     poll_interval=5
     *
     * Default Startup/Shutdown parameters.
@@ -230,11 +297,15 @@ Example:
 
     [global_defaults]
     * Global defaults for all servers and netmon.
+    logdir=/home/ncss/config/logs
     logtype=logfile
-    logdir=/home/doug/config/logs
-    contfiledir=/home/doug/config/state
-    statusinterval=30
+    contfiledir=/home/ncss/config/state
+    verbosity=0
+    diagnostic=0
+    statusinterval=10
     waitforclients=0
+    packetqueuesize=500
+    * Global defaults for all servers
     multicastenabled=1
     multicasthost=224.0.0.121
     multicastchannellist=HHE,HHN,HHZ,HNE,HNN,HNZ
@@ -244,14 +315,14 @@ II. Server configuration (one per server_instance):
 
 1.  station.ini		(referred to as STATION_INI file)a
 
-Each server_instance has a configuration file named station.ini
-located in the unique directory defined by the server_instance's DIR
-directive in the STATIONS_INI file.
+Each server_instance has a configuration file with the fixed namd
+station.ini located in the unique directory defined by the
+server_instance's DIR parameter in the STATIONS_INI file.
 
-The STATION_INI file has at least multiple configuration sections.
+The STATION_INI file has at least 2 configuration sections.
 
 A.  Comserv_subsystem section.  See the comserv3_subsystem configuration
-info file for details.
+that may be useful 
 
 B.  Server_program section, based on the server_program's name.
 Currently supported COMSERV3 server_program program are:
@@ -260,11 +331,11 @@ Currently supported COMSERV3 server_program program are:
 	[mserv]
 See the appropriate server program configuration info file for details.
 
-C.  Sections for each client run by netmon, as specified in the
+C.  Optinnal sections for each client run by netmon, as specified in the
 [netmon] section of the STATION_INI file.  The client sections are
 normally named according to the COMSERV3 clientname.  If there are
-multiple instances of a client run by nemon for for a single
-server_instance, each client must have a unique clientname.
+multiple instances of the same blocking or registerd client run by nemon for 
+for a single server_instance, each client must have a unique clientname.
 See the documenation file for each client.  Many clients have 
 the following configuration commands:
 
@@ -276,3 +347,6 @@ the following configuration commands:
     pidfile=pidfile_pathname
 	Pathname of the PID file for this client.
 	The PID file must be created by the client.
+
+Clients may have their own client-specific paramters specified in
+their named section.

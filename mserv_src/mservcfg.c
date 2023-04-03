@@ -141,6 +141,7 @@ int GetGlobalParamsFromNetworkIni(struct mserv_cfg* out_cfg)
 	{
 	    break;
 	}
+	/* Possible global parameters for this server. */
 	if (strcmp(str1, "LOGDIR") == 0)
 	{
 	    strcpy(out_cfg->logdir, str2);
@@ -156,14 +157,24 @@ int GetGlobalParamsFromNetworkIni(struct mserv_cfg* out_cfg)
 	    strcpy(out_cfg->contFileDir, str2);
 	    continue;
 	}
-	if (strcmp(str1, "STATUSINTERVAL") == 0)
-	{
-	    strcpy(out_cfg->statusinterval, str2) ;
-	    continue;
-	}
 	if (strcmp(str1, "VERBOSITY") == 0)
 	{
 	    strcpy(out_cfg->verbosity, str2) ;
+	    continue;
+	}
+	if (strcmp(str1, "DIAGNOSTIC") == 0)
+	{
+	    strcpy(out_cfg->diagnostic, str2) ;
+	    continue;
+	}
+	if (strcmp(str1, "LOGLEVEL") == 0)
+	{
+	    strcpy(out_cfg->loglevel, str2);
+	    continue;
+	}
+	if (strcmp(str1, "STATUSINTERVAL") == 0)
+	{
+	    strcpy(out_cfg->statusinterval, str2) ;
 	    continue;
 	}
 	if (strcmp(str1, "WAITFORCLIENTS") == 0)
@@ -209,7 +220,7 @@ int GetServerParamsFromStationIni(struct mserv_cfg* out_cfg, char *section_name)
 	{
 	    break ;
 	}
-	/* Possible global parameters. */
+	/* Possible global parameters for this server. */
 	if (strcmp(str1, "LOGDIR") == 0)
 	{
 	    strcpy(out_cfg->logdir, str2);
@@ -223,6 +234,21 @@ int GetServerParamsFromStationIni(struct mserv_cfg* out_cfg, char *section_name)
 	if (strcmp(str1, "CONTFILEDIR") == 0)
 	{
 	    strcpy(out_cfg->contFileDir, str2);
+	    continue;
+	}
+	if (strcmp(str1, "VERBOSITY") == 0)
+	{
+	    strcpy(out_cfg->verbosity, str2) ;
+	    continue;
+	}
+	if (strcmp(str1, "DIAGNOSTIC") == 0)
+	{
+	    strcpy(out_cfg->diagnostic, str2) ;
+	    continue;
+	}
+	if (strcmp(str1, "LOGLEVEL") == 0)
+	{
+	    strcpy(out_cfg->loglevel, str2);
 	    continue;
 	}
 	if (strcmp(str1, "STATUSINTERVAL") == 0)
@@ -264,21 +290,6 @@ int GetServerParamsFromStationIni(struct mserv_cfg* out_cfg, char *section_name)
 	if (strcmp(str1, "STARTMSG") == 0)
 	{
 	    strcpy(out_cfg->startmsg, str2) ;
-	    continue;
-	}
-	if (strcmp(str1, "VERBOSITY") == 0)
-	{
-	    strcpy(out_cfg->verbosity, str2) ;
-	    continue;
-	}
-	if (strcmp(str1, "DIAGNOSTIC") == 0)
-	{
-	    strcpy(out_cfg->diagnostic, str2) ;
-	    continue;
-	}
-	if (strcmp(str1, "LOGLEVEL") == 0)
-	{
-	    strcpy(out_cfg->loglevel, str2);
 	    continue;
 	}
     }

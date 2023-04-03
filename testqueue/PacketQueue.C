@@ -6,6 +6,7 @@
  */
 
 #include <string.h>
+#include <stdlib.h>
 
 #include "PacketQueue.h"
 #include "Logger.h"
@@ -162,36 +163,56 @@ void PacketQueue::advanceHead() {
 }
   
 /**
- * Test code
+ * Test code */
 
 Logger g_log;
+int npackets = 500;
 
 int main(int argc, char *argv[]) {
-  PacketQueue pq = PacketQueue(100);
+
+  char *LogDir = (char *) ".";
+  char *logname = (char *) "testqueue";
+  int log_mode = CS_LOG_MODE_TO_STDOUT;
+  char buffer[512];
+  int ptype;
 
   g_log.logToStdout(true);
   g_log.logToFile(false);
 
-  printf("NumQueued: %d  NumFree: %d\n", pq.numQueued(), pq.numFree());
+  if (LogInit(log_mode, LogDir, logname, 2048) != 0) {
+    g_log << "Error: LogInit() problems - exiting" << std::endl;
+    exit(12) ;
+  }
+
+  PacketQueue *pq = new PacketQueue(npackets);
+  if (pq != NULL) {
+    g_log << "+++ Created intermediate PacketQueue of " << npackets << " packets"<< std::endl;
+  }
+  else {
+    g_log << "+++ ERROR - unable to created intermediate PacketQueue of " << npackets << " packets"<< std::endl;
+  }
+
+  printf("NumQueued: %d  NumFree: %d\n", pq->numQueued(), pq->numFree());
   printf ("===> Start queueing\n");
-  for(int i = 0; i < 129; i++) {
-    pq.enqueuePacket((char *)"packet1", strlen("packet1")+1, i);
-    printf("Queued: %d\n", i);
-    printf("NumQueued: %d  NumFree: %d\n", pq.numQueued(), pq.numFree());
+  for(int i = 1; i <= npackets * 100; i++) {
+    sprintf (buffer, "%-10d", i);
+    ptype = (i-1)%100 + 1;
+    pq->enqueuePacket((char *)buffer, 512, ptype);
+    printf("Queued: pn: %d content: %s ptype: %d\n", i, buffer, ptype);
+    printf("NumQueued: %d  NumFree: %d\n", pq->numQueued(), pq->numFree());
   }
   printf ("===> End queueing\n");
-  
+  printf ("\n");
   printf ("===> Start dequeueing\n");
-  printf("NumQueued: %d  NumFree: %d\n", pq.numQueued(), pq.numFree());
-
-  QueuedPacket thisPacket = pq.dequeuePacket();
-
-
+  printf("NumQueued: %d  NumFree: %d\n", pq->numQueued(), pq->numFree());
+  QueuedPacket thisPacket = pq->dequeuePacket();
   while(thisPacket.dataSize != 0) {
-    printf("Dequeued: %d\n", thisPacket.packetType);
-    printf("NumQueued: %d  NumFree: %d\n", pq.numQueued(), pq.numFree());
-    thisPacket = pq.dequeuePacket();
+    printf("Dequeued: content: %s ptype: %d\n", thisPacket.data, thisPacket.packetType);
+    printf("NumQueued: %d  NumFree: %d\n", pq->numQueued(), pq->numFree());
+    thisPacket = pq->dequeuePacket();
   }
   printf ("===> End dequeueing\n");
+
+  delete pq;
 }
-*/
+/* */
