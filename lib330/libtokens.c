@@ -278,7 +278,7 @@ begin
               seed2string((pointer)cur_lcq->location, (pointer)cur_lcq->seedname, (pchar)addr(s2)) ;
               sprintf (s, "in Token:%d Actual:%d For %s", (integer)cur_lcq->rate,
                        (integer)real_rate, s2) ;
-              libmsgadd(q330, LIBMSG_HFRATE, addr(s)) ;
+              libmsgadd(q330, LIBMSG_HFRATE, (const pointer) addr(s)) ;
               cur_lcq->rate = real_rate ; /* correct */
             end
       end
@@ -327,7 +327,7 @@ begin
         if (b != 0xFF)
           then
             cur_lcq->avg_source = find_iir(paqs, b) ;
-            getbuf (q330, (pointer)addr(cur_lcq->avg), sizeof(tavg_packet)) ;
+        getbuf (q330, (pointer)addr(cur_lcq->avg), sizeof(tavg_packet)) ;
 #else
         loadlongword (p) ;
         loadbyte (p) ;
@@ -340,7 +340,10 @@ begin
 #ifndef OMIT_SEED
         if (b != 0xFF)
           then
-            cur_lcq->ctrl = (pcontrol_detector)((pntrint)0xFFFFFF00 or (pntrint)b) ; /* have to resolve these later */
+            /* these are resolved later in resolve_control_detectors(), below */
+            /* cur_lcq->ctrl must be non-zero                                 */
+            /* set some high-order bits in case b is 0; any will do           */
+            cur_lcq->ctrl = (pcontrol_detector)((pntrint)0xFFFFFF00 or (pntrint)b) ;
 #endif
       end
   if (cur_lcq->lcq_opt and LO_DEC)
@@ -371,7 +374,7 @@ begin
                 then
                   begin
                     seed2string((pointer)cur_lcq->location, (pointer)cur_lcq->seedname, (pchar)addr(s)) ;
-                    libmsgadd(q330, LIBMSG_DECNOTFOUND, addr(s)) ;
+                    libmsgadd(q330, LIBMSG_DECNOTFOUND, (const pointer) addr(s)) ;
                   end
             end
 #endif
@@ -876,7 +879,7 @@ begin
           break ;
         default :
           if (tok >= 0x80)
-            then /* variable length */
+            then begin /* variable length */
               if (tok >= 0xC0)
                 then
                   begin /* two byte length */
@@ -890,6 +893,7 @@ begin
                     next = loadbyte (addr(p)) ;
                     p = tonext(pref, next) ;
                   end
+            end
           break ;
       end
     end

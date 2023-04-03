@@ -40,7 +40,7 @@ extern void close_sockets (pq330 q330) ;
 extern boolean open_sockets (pq330 q330, boolean both, boolean fromback) ;
 extern void read_cmd_socket (pq330 q330) ;
 extern void read_data_socket (pq330 q330) ;
-extern void tcp_error (pq330 q330, string95 *msgsuf) ;
+extern void tcp_error (pq330 q330, const string95 *msgsuf) ;
 #endif
 
 #ifndef OMIT_SERIAL

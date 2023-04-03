@@ -1,5 +1,11 @@
+
+
+
+
 /*   Lib660 Detector Routines
-     Copyright 2017 Certified Software Corporation
+     Copyright 2017 by
+     Kinemetrics, Inc.
+     Pasadena, CA 91107 USA.
 
     This file is part of Lib660
 
@@ -21,6 +27,8 @@ Edit History:
    Ed Date       By  Changes
    -- ---------- --- ---------------------------------------------------
     0 2017-06-08 rdr Created
+    1 2021-12-24 rdr Copyright assignment to Kinemetrics.
+------2022-02-24 jms remove pseudo-pascal macros------
 */
 #include "libdetect.h"
 #include "libseed.h"
@@ -28,324 +36,292 @@ Edit History:
 
 /* this is a little weird because it was originally a nested procedure
    within te_detect and had to be moved outside of te_detect */
-static void gettime (boolean high, pthreshold_control_struc ptcs,
+static void gettime (BOOLEAN high, pthreshold_control_struc ptcs,
                      tonset_base *pob, tdet_packet *pdet)
-begin
-  longint adj ;
+{
+    I32 adj ;
 
-  ptcs->new_onset = TRUE ;
-  memset(pob, 0, sizeof(tonset_mh)) ;
-  if (high)
-    then
-      begin
+    ptcs->new_onset = TRUE ;
+    memset(pob, 0, sizeof(tonset_mh)) ;
+
+    if (high) {
         pob->signal_amplitude = ptcs->peakhi ;
         pob->background_estimate = ptcs->parent->ucon.filhi ;
-      end
-    else
-      begin
+    } else {
         pob->signal_amplitude = ptcs->peaklo ;
         pob->background_estimate = ptcs->parent->ucon.fillo ;
-      end
-  adj = pdet->sam_no - (ptcs->parent->ucon.n_hits - 1) ;
-  pob->signal_onset_time.seed_fpt = ptcs->etime + adj / ptcs->sample_rate ;
-end
+    }
 
-boolean Te_detect (tdet_packet *detector)
-begin
-  pdataarray indatar ;
-  psinglearray realdata ;
-  boolean realflag ;
-  longint in_data ;
-  pthreshold_control_struc tcs_ptr ;
-  tdetload *pdl ;
+    adj = pdet->sam_no - (ptcs->parent->ucon.n_hits - 1) ;
+    pob->signal_onset_time.seed_fpt = ptcs->etime + adj / ptcs->sample_rate ;
+}
 
-  tcs_ptr = detector->cont ;
-  indatar = detector->indatar ;
-  realdata = (pointer)indatar ;
-  realflag = detector->singleflag ;
-  pdl = addr(tcs_ptr->parent->ucon) ;
-  tcs_ptr->new_onset = FALSE ;
-  if (lnot detector->remaining)
-    then
-      begin
+BOOLEAN Te_detect (tdet_packet *detector)
+{
+    pdataarray indatar ;
+    psinglearray realdata ;
+    BOOLEAN realflag ;
+    I32 in_data ;
+    pthreshold_control_struc tcs_ptr ;
+    tdetload *pdl ;
+
+    tcs_ptr = detector->cont ;
+    indatar = detector->indatar ;
+    realdata = (pointer)indatar ;
+    realflag = detector->singleflag ;
+    pdl = &(tcs_ptr->parent->ucon) ;
+    tcs_ptr->new_onset = FALSE ;
+
+    if (! detector->remaining) {
         detector->sam_ch = detector->datapts ;
         tcs_ptr->etime = tcs_ptr->startt ;
         detector->sam_no = 0 ;
-      end
-  while (detector->sam_no < detector->sam_ch)
-    begin
-      if (realflag)
-        then
-          in_data = lib_round((*realdata)[detector->sam_no]) ;
+    }
+
+    while (detector->sam_no < detector->sam_ch) {
+        if (realflag)
+            in_data = lib_round((*realdata)[detector->sam_no]) ;
         else
-          in_data = (*indatar)[detector->sam_no] ;
-      if (in_data > tcs_ptr->peakhi)
-        then
-          tcs_ptr->peakhi = in_data ;
-      if (in_data < tcs_ptr->peaklo)
-        then
-          tcs_ptr->peaklo = in_data ;
-      if (in_data > pdl->filhi)
-        then
-          begin
-            if (lnot tcs_ptr->hevon)
-              then
-                begin
-                  inc(tcs_ptr->overhi) ;
-                  if (tcs_ptr->overhi >= pdl->n_hits)
-                    then
-                      begin
-                        tcs_ptr->hevon = TRUE ;
-                        gettime (TRUE, tcs_ptr, tcs_ptr->onsetdata, detector) ;
-                        inc(detector->sam_no) ;
-                        break ;
-                      end
-                end
+            in_data = (*indatar)[detector->sam_no] ;
+
+        if (in_data > tcs_ptr->peakhi)
+            tcs_ptr->peakhi = in_data ;
+
+        if (in_data < tcs_ptr->peaklo)
+            tcs_ptr->peaklo = in_data ;
+
+        if (in_data > pdl->filhi) {
+            if (! tcs_ptr->hevon) {
+                (tcs_ptr->overhi)++ ;
+
+                if (tcs_ptr->overhi >= pdl->n_hits) {
+                    tcs_ptr->hevon = TRUE ;
+                    gettime (TRUE, tcs_ptr, tcs_ptr->onsetdata, detector) ;
+                    (detector->sam_no)++ ;
+                    break ;
+                }
+            }
+
             tcs_ptr->waitdly = 0 ;
-          end
-      else if ((tcs_ptr->hevon) land (in_data < pdl->filhi - pdl->iwin))
-        then
-          begin
-            inc(tcs_ptr->waitdly) ;
-            if (tcs_ptr->waitdly > pdl->wait_blk)
-              then
-                begin
-                  tcs_ptr->peakhi = -MAXLINT ;
-                  tcs_ptr->overhi = 0 ;
-                  tcs_ptr->hevon = FALSE ;
-                end
-          end
-      if (in_data < pdl->fillo)
-        then
-          begin
-            if (lnot tcs_ptr->levon)
-              then
-                begin
-                  inc(tcs_ptr->overlo) ;
-                  if (tcs_ptr->overlo >= pdl->n_hits)
-                    then
-                      begin
-                        tcs_ptr->levon = TRUE ;
-                        gettime (FALSE, tcs_ptr, tcs_ptr->onsetdata, detector) ;
-                        inc(detector->sam_no) ;
-                        break ;
-                      end
-                end
+        } else if ((tcs_ptr->hevon) && (in_data < pdl->filhi - pdl->iwin)) {
+            (tcs_ptr->waitdly)++ ;
+
+            if (tcs_ptr->waitdly > pdl->wait_blk) {
+                tcs_ptr->peakhi = -MAXLINT ;
+                tcs_ptr->overhi = 0 ;
+                tcs_ptr->hevon = FALSE ;
+            }
+        }
+
+        if (in_data < pdl->fillo) {
+            if (! tcs_ptr->levon) {
+                (tcs_ptr->overlo)++ ;
+
+                if (tcs_ptr->overlo >= pdl->n_hits) {
+                    tcs_ptr->levon = TRUE ;
+                    gettime (FALSE, tcs_ptr, tcs_ptr->onsetdata, detector) ;
+                    (detector->sam_no)++ ;
+                    break ;
+                }
+            }
+
             tcs_ptr->waitdly = 0 ;
-          end
-      else if ((tcs_ptr->levon) land (in_data > pdl->fillo + pdl->iwin))
-        then
-          begin
-            inc(tcs_ptr->waitdly) ;
-            if (tcs_ptr->waitdly > pdl->wait_blk)
-              then
-                begin
-                  tcs_ptr->peaklo = MAXLINT ;
-                  tcs_ptr->overlo = 0 ;
-                  tcs_ptr->levon = FALSE ;
-                end
-          end
-      inc(detector->sam_no) ;
-    end
-  detector->remaining = (detector->sam_no < detector->sam_ch) ;
-  return (tcs_ptr->hevon lor tcs_ptr->levon) ;
-end
+        } else if ((tcs_ptr->levon) && (in_data > pdl->fillo + pdl->iwin)) {
+            (tcs_ptr->waitdly)++ ;
+
+            if (tcs_ptr->waitdly > pdl->wait_blk) {
+                tcs_ptr->peaklo = MAXLINT ;
+                tcs_ptr->overlo = 0 ;
+                tcs_ptr->levon = FALSE ;
+            }
+        }
+
+        (detector->sam_no)++ ;
+    }
+
+    detector->remaining = (detector->sam_no < detector->sam_ch) ;
+    return (tcs_ptr->hevon || tcs_ptr->levon) ;
+}
 
 static void Tcs_setup (tdet_packet *detector)
-begin
-  pthreshold_control_struc tcs_ptr ;
+{
+    pthreshold_control_struc tcs_ptr ;
 
-  tcs_ptr = detector->cont ;
-  memset(tcs_ptr, 0, sizeof(threshold_control_struc)) ;
-  detector->remaining = FALSE ;
-  tcs_ptr->first_detection = FALSE ;
-  tcs_ptr->detector_enabled = TRUE ;
-  tcs_ptr->default_enabled = TRUE ;
-  tcs_ptr->peaklo = MAXLINT ;
-  tcs_ptr->peakhi = -MAXLINT ;
-  tcs_ptr->onsetdata = (tonset_base *)addr(detector->onset) ;
-  tcs_ptr->parent = detector ;
-  tcs_ptr->sample_rate = detector->samrte ;
-end
+    tcs_ptr = detector->cont ;
+    memset(tcs_ptr, 0, sizeof(threshold_control_struc)) ;
+    detector->remaining = FALSE ;
+    tcs_ptr->first_detection = FALSE ;
+    tcs_ptr->detector_enabled = TRUE ;
+    tcs_ptr->default_enabled = TRUE ;
+    tcs_ptr->peaklo = MAXLINT ;
+    tcs_ptr->peakhi = -MAXLINT ;
+    tcs_ptr->onsetdata = (tonset_base *)&(detector->onset) ;
+    tcs_ptr->parent = detector ;
+    tcs_ptr->sample_rate = detector->samrte ;
+}
 
 void initialize_detector (pq660 q660, pdet_packet pdp, piirfilter pi)
-begin
-  boolean sl ;
-  integer i, j ;
-  pthreshold_control_struc pt ;
-  plcq q ;
-  pdetect pdef ;
+{
+    BOOLEAN sl ;
+    int i, j ;
+    pthreshold_control_struc pt ;
+    plcq q ;
+    pdetect pdef ;
 
-  pdef = pdp->detector_def ;
-  q = pdp->parent ;
-  sl = (pdef->dtype == STALTA) ;
-  if (q->gen_src == GDS_DEC)
-    then
-      begin
-        pdp->indatar = (pvoid)addr(q->processed_stream) ;
+    pdef = pdp->detector_def ;
+    q = pdp->parent ;
+    sl = (pdef->dtype == STALTA) ;
+
+    if (q->gen_src == GDS_DEC) {
+        pdp->indatar = (pvoid)&(q->processed_stream) ;
         pdp->singleflag = TRUE ;
-      end
-    else
-      begin
+    } else {
         pdp->indatar = (pvoid)q->databuf ;
         pdp->singleflag = FALSE ;
-      end
-  if (sl)
-    then
-      begin
-        if (q->rate > 0)
-          then
-            begin
-              pdp->samrte = q->rate ;
-              if (q->rate >= MINPOINTS)
-                then
-                  begin
-                    pdp->datapts = q->rate ;
-                    if (q->gen_src == GDS_DEC)
-                      then
-                        pdp->grpsize = 1 ; /* processed data */
-                      else
-                        pdp->grpsize = 0 ; /*nonbuffered*/
-                  end
+    }
+
+    if (sl) {
+        if (q->rate > 0) {
+            pdp->samrte = q->rate ;
+
+            if (q->rate >= MINPOINTS) {
+                pdp->datapts = q->rate ;
+
+                if (q->gen_src == GDS_DEC)
+                    pdp->grpsize = 1 ; /* processed data */
                 else
-                  begin
-                    if (q->gen_src == GDS_DEC)
-                      then
-                        pdp->grpsize = 1  ; /* processed data */
-                      else
-                        pdp->grpsize = q->rate ;
-                    i = MINPOINTS ;
-                    j = i div pdp->grpsize ;
-                    if ((pdp->grpsize * j) != i) /*doesn't go evenly*/
-                      then
-                        i = pdp->grpsize * (j + 1) ;
-                    pdp->datapts = i ;
-                  end
-            end
-          else
-            begin
-              pdp->samrte = 1.0 / abs(q->rate) ;
-              pdp->datapts = MINPOINTS ;
-              pdp->grpsize = 1 ;
-            end
-        if (pdp->grpsize)
-          then
-            begin /*buffered*/
-              if (pi)
-                then
-                  pdp->insamps_size = pdp->datapts * sizeof(tfloat) ;
+                    pdp->grpsize = 0 ; /*nonbuffered*/
+            } else {
+                if (q->gen_src == GDS_DEC)
+                    pdp->grpsize = 1  ; /* processed data */
                 else
-                  pdp->insamps_size = pdp->datapts * sizeof(longint) ;
-              getbuf (addr(q660->connmem), (pointer)addr(pdp->insamps), pdp->insamps_size) ;
-            end
-          else
+                    pdp->grpsize = q->rate ;
+
+                i = MINPOINTS ;
+                j = i / pdp->grpsize ;
+
+                if ((pdp->grpsize * j) != i) /*doesn't go evenly*/
+                    i = pdp->grpsize * (j + 1) ;
+
+                pdp->datapts = i ;
+            }
+        } else {
+            pdp->samrte = 1.0 / abs(q->rate) ;
+            pdp->datapts = MINPOINTS ;
+            pdp->grpsize = 1 ;
+        }
+
+        if (pdp->grpsize) {
+            /*buffered*/
+            if (pi)
+                pdp->insamps_size = pdp->datapts * sizeof(tfloat) ;
+            else
+                pdp->insamps_size = pdp->datapts * sizeof(I32) ;
+
+            getbuf (&(q660->connmem), (pointer)&(pdp->insamps), pdp->insamps_size) ;
+        } else
             pdp->insamps = NIL ;
-      end
-    else
-      begin
-        if (q->rate > 0)
-          then
-            begin
-              pdp->datapts = q->rate ;
-              pdp->samrte = q->rate ;
-            end
-          else
-            begin
-              pdp->datapts = 1 ;
-              pdp->samrte = 1.0 / abs(q->rate) ;
-            end
+    } else {
+        if (q->rate > 0) {
+            pdp->datapts = q->rate ;
+            pdp->samrte = q->rate ;
+        } else {
+            pdp->datapts = 1 ;
+            pdp->samrte = 1.0 / abs(q->rate) ;
+        }
+
         pdp->insamps = NIL ;
-      end
-  if (sl)
-    then
-      begin
+    }
+
+    if (sl) {
 #ifdef adsfadsfadsf
-        getbuf (q660, addr(pmh), sizeof(con_sto)) ;
+        getbuf (q660, &(pmh), sizeof(con_sto)) ;
         pdp->cont = pmh ;
         pdp->cont_size = sizeof(con_sto) ;
         Cont_setup (pdp);
-        memcpy(addr(pmh->parent->ucon), addr(pdef->uconst), sizeof(tdetload)) ;
+        memcpy(&(pmh->parent->ucon), &(pdef->uconst), sizeof(tdetload)) ;
 #endif
-      end
-    else
-      begin
-        getbuf (addr(q660->connmem), (pvoid)addr(pt), sizeof(threshold_control_struc)) ;
+    } else {
+        getbuf (&(q660->connmem), (pvoid)&(pt), sizeof(threshold_control_struc)) ;
         pdp->cont = pt ;
         pdp->cont_size = sizeof(threshold_control_struc) ;
         Tcs_setup (pdp) ;
-        memcpy(addr(pt->parent->ucon), addr(pdef->uconst), sizeof(tdetload)) ;
-      end
-  if (pi)
-    then
-      begin
-        pdp->indatar = (pvoid)addr(pi->out) ;
+        memcpy(&(pt->parent->ucon), &(pdef->uconst), sizeof(tdetload)) ;
+    }
+
+    if (pi) {
+        pdp->indatar = (pvoid)&(pi->out) ;
         pdp->singleflag = TRUE ;
-      end
-end
+    }
+}
 
 enum tliberr lib_detstat (pq660 q660, tdetstat *detstat)
-begin
-  plcq q ;
-  pdet_packet pd ;
-  con_common *pcc ;
-  tonedetstat *pone ;
-  string15 s ;
+{
+    plcq q ;
+    pdet_packet pd ;
+    con_common *pcc ;
+    tonedetstat *pone ;
+    string15 s ;
 
-  detstat->count = 0 ;
-  if (q660->libstate != LIBSTATE_RUN)
-    then
-      return LIBERR_NOSTAT ;
-  q = q660->lcqs ;
-  while ((detstat->count < MAX_DETSTAT) land (q))
-    begin
-      pd = q->det ;
-      while ((detstat->count < MAX_DETSTAT) land (pd != NIL))
-        begin
-          pcc = pd->cont ;
-          pone = addr(detstat->entries[detstat->count]) ;
-          sprintf(pone->name, "%s:%s", seed2string(q->location, q->seedname, s),
-                  pd->detector_def->detname) ;
-          pone->ison = pcc->detector_on ;
-          pone->declared = pcc->detection_declared ;
-          pone->first = pcc->first_detection ;
-          pone->enabled = pcc->detector_enabled ;
-          inc(detstat->count) ;
-          pd = pd->link ;
-        end
-      q = q->link ;
-    end
-  return LIBERR_NOERR ;
-end
+    detstat->count = 0 ;
+
+    if (q660->libstate != LIBSTATE_RUN)
+        return LIBERR_NOSTAT ;
+
+    q = q660->lcqs ;
+
+    while ((detstat->count < MAX_DETSTAT) && (q)) {
+        pd = q->det ;
+
+        while ((detstat->count < MAX_DETSTAT) && (pd != NIL)) {
+            pcc = pd->cont ;
+            pone = &(detstat->entries[detstat->count]) ;
+            sprintf(pone->name, "%s:%s", seed2string(q->location, q->seedname, s),
+                    pd->detector_def->detname) ;
+            pone->ison = pcc->detector_on ;
+            pone->declared = pcc->detection_declared ;
+            pone->first = pcc->first_detection ;
+            pone->enabled = pcc->detector_enabled ;
+            (detstat->count)++ ;
+            pd = pd->link ;
+        }
+
+        q = q->link ;
+    }
+
+    return LIBERR_NOERR ;
+}
 
 void lib_changeenable (pq660 q660, tdetchange *detchange)
-begin
-  plcq q ;
-  pdet_packet pd ;
-  con_common *pcc ;
-  char s[DETECTOR_NAME_LENGTH + 11] ;
+{
+    plcq q ;
+    pdet_packet pd ;
+    con_common *pcc ;
+    char s[DETECTOR_NAME_LENGTH + 11] ;
 
-  if (q660->libstate != LIBSTATE_RUN)
-    then
-      return ;
-  q = q660->lcqs ;
-  while (q)
-    begin
-      pd = q->det ;
-      while (pd)
-        begin
-          pcc = pd->cont ;
-          sprintf(s, "%s:%s", seed2string(q->location, q->seedname, s),
-                  pd->detector_def->detname) ;
-          if (strcmp(detchange->name, s) == 0)
-            then
-              begin
+    if (q660->libstate != LIBSTATE_RUN)
+        return ;
+
+    q = q660->lcqs ;
+
+    while (q) {
+        pd = q->det ;
+
+        while (pd) {
+            pcc = pd->cont ;
+            sprintf(s, "%s:%s", seed2string(q->location, q->seedname, s),
+                    pd->detector_def->detname) ;
+
+            if (strcmp(detchange->name, s) == 0) {
                 pcc->detector_enabled = detchange->run_detector ;
                 return ;
-              end
-          pd = pd->link ;
-        end
-      q = q->link ;
-    end
-end
+            }
+
+            pd = pd->link ;
+        }
+
+        q = q->link ;
+    }
+}
 
 

@@ -506,8 +506,10 @@ void lib_timer (pmsmcast msmcast)
 		break ;
 	    case LIBSTATE_RUNWAIT :
 	    case LIBSTATE_RUN :
-		DBPRINT (printf("doing deall #1\n"));
-		start_deallocation(msmcast) ;
+//::		DBPRINT (printf("doing deall #1\n"));
+//::		start_deallocation(msmcast) ;
+                new_state (msmcast, msmcast->share.target_state) ;
+		DBPRINT (printf("settarg #5 = %d\n",msmcast->share.target_state));
                 break ;
 	    case LIBSTATE_WAIT :
                 new_state (msmcast, msmcast->share.target_state) ;

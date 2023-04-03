@@ -114,8 +114,8 @@ begin
       end
     end
   sprintf(s, "Channels Enabled: %s Preamps ON channels: %s", chenb, prenb) ;
-  libmsgadd(q330, LIBMSG_CHANINFO, addr(s)) ;
-libmsgadd(q330, LIBMSG_CHANINFO, (pointer)"Channel Sensitivities (uV per count):") ;
+  libmsgadd(q330, LIBMSG_CHANINFO, (const pointer) addr(s)) ;
+  libmsgadd(q330, LIBMSG_CHANINFO, (pointer)"Channel Sensitivities (uV per count):") ;
   s[0] = 0 ;
   for (w = 0 ; w <= CHANNELS - 1 ; w++)
     if (vpct[w] > 0.0)
@@ -124,7 +124,7 @@ libmsgadd(q330, LIBMSG_CHANINFO, (pointer)"Channel Sensitivities (uV per count):
           sprintf(s1, "%d:%6.4f ", w + 1, vpct[w] * 1.0e6) ;
           strcat(s, s1) ;
         end
-  libmsgadd(q330, LIBMSG_CHANINFO, addr(s)) ;
+  libmsgadd(q330, LIBMSG_CHANINFO, (const pointer) addr(s)) ;
 end
 
 static char *getgain (pq330 q330, integer idx, string31 *result)
@@ -153,14 +153,14 @@ begin
       sprintf(s1, " %d:%d, %s", i + 1, (integer)q330->dcp.offsets[i], getgain(q330, i, (pointer)addr(s2))) ;
       strcat(s, s1) ;
     end
-  libmsgadd(q330, LIBMSG_CAL, addr(s)) ;
+  libmsgadd(q330, LIBMSG_CAL, (const pointer) addr(s)) ;
   s[0] = 0 ;
   for (i = 3 ; i <= 5 ; i++)
     begin
       sprintf(s1, " %d:%d, %s", i + 1, (integer)q330->dcp.offsets[i], getgain(q330, i, (pointer)addr(s2))) ;
       strcat(s, s1) ;
     end
-  libmsgadd(q330, LIBMSG_CAL, addr(s)) ;
+  libmsgadd(q330, LIBMSG_CAL, (const pointer) addr(s)) ;
 end
 
 static void log_nonblank (pq330 q330, string95 *s)
@@ -168,7 +168,7 @@ begin
 
   if ((*s)[0])
     then
-      libmsgadd (q330, LIBMSG_GPSIDS, s) ;
+      libmsgadd (q330, LIBMSG_GPSIDS, (const pointer) s) ;
 end
 
 #endif
@@ -192,31 +192,31 @@ begin
 
   pfix = addr(q330->share.fixed) ;
   sprintf(s, "Q330 Serial Number: %s", showsn((pointer)pfix->sys_num, addr(s1))) ;
-  libmsgadd(q330, LIBMSG_FIXED, addr(s)) ;
+  libmsgadd(q330, LIBMSG_FIXED, (const pointer) addr(s)) ;
   if (lnot q330->q335)
     then
       begin
         sprintf(s, "AMB Serial Number: %s", showsn((pointer)pfix->amb_num, addr(s1))) ;
-        libmsgadd(q330, LIBMSG_FIXED, addr(s)) ;
+        libmsgadd(q330, LIBMSG_FIXED, (const pointer) addr(s)) ;
       end
   sprintf(s, "Seismo 1 Serial Number: %s", showsn((pointer)pfix->seis1_num, addr(s1))) ;
-  libmsgadd(q330, LIBMSG_FIXED, addr(s)) ;
+  libmsgadd(q330, LIBMSG_FIXED, (const pointer) addr(s)) ;
   sprintf(s, "Seismo 2 Serial Number: %s", showsn((pointer)pfix->seis2_num, addr(s1))) ;
-  libmsgadd(q330, LIBMSG_FIXED, addr(s)) ;
+  libmsgadd(q330, LIBMSG_FIXED, (const pointer) addr(s)) ;
   sprintf(s, "QAPCHP 1 Serial Number: %d", (integer)pfix->qapchp1_num) ;
-  libmsgadd(q330, LIBMSG_FIXED, addr(s)) ;
+  libmsgadd(q330, LIBMSG_FIXED, (const pointer) addr(s)) ;
   sprintf(s, "QAPCHP 2 Serial Number: %d", (integer)pfix->qapchp2_num) ;
-  libmsgadd(q330, LIBMSG_FIXED, addr(s)) ;
+  libmsgadd(q330, LIBMSG_FIXED, (const pointer) addr(s)) ;
   sprintf(s, "KMI Property Tag Number: %d", (integer)pfix->property_tag) ;
-  libmsgadd(q330, LIBMSG_FIXED, addr(s)) ;
+  libmsgadd(q330, LIBMSG_FIXED, (const pointer) addr(s)) ;
   sprintf(s, "System Software Version: %d.%d", pfix->sys_ver shr 8, (integer)(pfix->sys_ver and 255)) ;
-  libmsgadd(q330, LIBMSG_FIXED, addr(s)) ;
+  libmsgadd(q330, LIBMSG_FIXED, (const pointer) addr(s)) ;
   if (q330->q335)
     then
       sprintf(s, "Core Processor Version: %d.%d", pfix->sp_ver shr 8, (integer)(pfix->sp_ver and 255)) ;
     else
       sprintf(s, "Slave Processor Version: %d.%d", pfix->sp_ver shr 8, (integer)(pfix->sp_ver and 255)) ;
-  libmsgadd(q330, LIBMSG_FIXED, addr(s)) ;
+  libmsgadd(q330, LIBMSG_FIXED, (const pointer) addr(s)) ;
   switch (pfix->cal_type) begin
     case 33 :
       strcpy(s1, "QCAL330") ;
@@ -228,14 +228,14 @@ begin
       strcpy(s1, "Unknown") ;
   end
   sprintf(s, "Calibrator Type: %s", s1) ;
-  libmsgadd(q330, LIBMSG_FIXED, addr(s)) ;
+  libmsgadd(q330, LIBMSG_FIXED, (const pointer) addr(s)) ;
   sprintf(s, "Calibrator Version: %d.%d", (integer)(pfix->cal_ver shr 8), (integer)(pfix->cal_ver and 255)) ;
-  libmsgadd(q330, LIBMSG_FIXED, addr(s)) ;
+  libmsgadd(q330, LIBMSG_FIXED, (const pointer) addr(s)) ;
   switch (pfix->aux_type) begin
     case AUXAD_ID :
       libmsgadd(q330, LIBMSG_FIXED, (pointer)"Auxiliary Board Type: AUXAD") ;
       sprintf(s, "Auxiliary Board Version: %d.%d", (integer)(pfix->aux_ver shr 8), (integer)(pfix->aux_ver and 255)) ;
-      libmsgadd(q330, LIBMSG_FIXED, addr(s)) ;
+      libmsgadd(q330, LIBMSG_FIXED, (const pointer) addr(s)) ;
       break ;
     default :
       libmsgadd(q330, LIBMSG_FIXED, (pointer)"Auxiliary Board Type: None") ;
@@ -250,12 +250,12 @@ begin
       strcpy(s1, "None") ;
   end
   sprintf(s, "Clock Type: %s", s1) ;
-  libmsgadd(q330, LIBMSG_FIXED,  addr(s)) ;
+  libmsgadd(q330, LIBMSG_FIXED,  (const pointer) addr(s)) ;
   if (lnot q330->q335)
     then
       begin
         sprintf(s, "PLD Version: %d.%d", (integer)(pfix->pld_ver shr 8), (integer)(pfix->pld_ver and 255)) ;
-        libmsgadd(q330, LIBMSG_FIXED, addr(s)) ;
+        libmsgadd(q330, LIBMSG_FIXED, (const pointer) addr(s)) ;
       end
   if (q330->share.gpsids[0][0])
     then
@@ -276,19 +276,19 @@ begin
   pclk = addr(q330->qclock) ;
   psglob = addr(q330->share.stat_global) ;
   sprintf(s, "Total Hours: %4.2f", (float)(psglob->total_time / 3600)) ;
-  libmsgadd(q330, LIBMSG_GLSTAT, addr(s)) ;
+  libmsgadd(q330, LIBMSG_GLSTAT, (const pointer) addr(s)) ;
   sprintf(s, "Power On Hours: %4.2f", (float)(psglob->power_time / 3600)) ;
-  libmsgadd(q330, LIBMSG_GLSTAT, addr(s)) ;
+  libmsgadd(q330, LIBMSG_GLSTAT, (const pointer) addr(s)) ;
   l = q330->share.fixed.last_reboot ;
   sprintf(s, "Time of Last Boot: %s", jul_string(l, (pchar)addr(s1))) ;
-  libmsgadd(q330, LIBMSG_GLSTAT, addr(s)) ;
+  libmsgadd(q330, LIBMSG_GLSTAT, (const pointer) addr(s)) ;
   sprintf(s, "Total Number of Boots: %d", (integer)q330->share.fixed.reboots) ;
-  libmsgadd(q330, LIBMSG_GLSTAT, addr(s)) ;
+  libmsgadd(q330, LIBMSG_GLSTAT, (const pointer) addr(s)) ;
   l = psglob->last_resync ;
   sprintf(s, "Time of Last Re-Sync: %s", jul_string(l, (pchar)addr(s1))) ;
-  libmsgadd(q330, LIBMSG_GLSTAT, addr(s)) ;
+  libmsgadd(q330, LIBMSG_GLSTAT, (const pointer) addr(s)) ;
   sprintf(s, "Total Number of Re-Syncs: %d", (integer)psglob->resyncs) ;
-  libmsgadd(q330, LIBMSG_GLSTAT, addr(s)) ;
+  libmsgadd(q330, LIBMSG_GLSTAT, (const pointer) addr(s)) ;
   i = pglob->samp_rates ;
   if ((i shr 8) and 3)
     then
@@ -301,7 +301,7 @@ begin
             else
               strcat(s1, "0") ;
         sprintf(s, "Status Inputs: %s", s1) ;
-        libmsgadd(q330, LIBMSG_GLSTAT, addr(s)) ;
+        libmsgadd(q330, LIBMSG_GLSTAT, (const pointer) addr(s)) ;
       end
   w = psglob->misc_inp ;
   if (w and 1)
@@ -325,19 +325,19 @@ begin
     else
       strcpy(s4, "Off") ;
   sprintf(s, "AC OK: %s, Input 1,2: %s,%s, Analog Fault: %s", s1, s2, s2, s4) ;
-  libmsgadd(q330, LIBMSG_GLSTAT, addr(s)) ;
+  libmsgadd(q330, LIBMSG_GLSTAT, (const pointer) addr(s)) ;
   sprintf(s, "Clock Quality: %d%%", (integer)translate_clock(pclk, psglob->clock_qual, psglob->clock_loss)) ;
-  libmsgadd(q330, LIBMSG_CLOCK, addr(s)) ;
+  libmsgadd(q330, LIBMSG_CLOCK, (const pointer) addr(s)) ;
   sprintf(s, "Clock quality mapping: L=%d T=%d H=%d N=%d zone=%d", (integer)pclk->q_locked, (integer)pclk->q_track,
           (integer)pclk->q_hold, (integer)pclk->q_never, (integer)pclk->zone) ;
-  libmsgadd (q330, LIBMSG_CLOCK, addr(s)) ;
+  libmsgadd (q330, LIBMSG_CLOCK, (const pointer) addr(s)) ;
   if (psglob->usec_offset < 500000)
     then
       v = psglob->usec_offset ;
     else
       v = (psglob->usec_offset - 1000000) ;
   sprintf(s, "Clock Phase: %d usec. max allowed=%d", (integer)v, (integer)pglob->drift_tol) ;
-  libmsgadd(q330, LIBMSG_CLOCK, addr(s)) ;
+  libmsgadd(q330, LIBMSG_CLOCK, (const pointer) addr(s)) ;
 
   pboom = addr(q330->share.stat_boom) ;
   libmsgadd(q330, LIBMSG_BOOM, (pointer)"Boom positions:") ;
@@ -348,65 +348,65 @@ begin
       sprintf(s1, "Ch%d: %d ", i + 1, j) ;
       strcat(s, s1) ;
     end
-  libmsgadd(q330, LIBMSG_BOOM, addr(s)) ;
+  libmsgadd(q330, LIBMSG_BOOM, (const pointer) addr(s)) ;
   libmsgadd(q330, LIBMSG_BOOM, (pointer)"Analog Status") ;
   sprintf(s, "Analog Positive Supply: %4.2fV", pboom->amb_pos * 0.01) ;
-  libmsgadd(q330, LIBMSG_BOOM, addr(s)) ;
+  libmsgadd(q330, LIBMSG_BOOM, (const pointer) addr(s)) ;
   sprintf(s, "Input Voltage: %4.2fV", pboom->supply * 0.15) ;
-  libmsgadd(q330, LIBMSG_BOOM, addr(s)) ;
+  libmsgadd(q330, LIBMSG_BOOM, (const pointer) addr(s)) ;
   sprintf(s, "System Temperature: %dC", (integer)sex(pboom->sys_temp)) ;
-  libmsgadd(q330, LIBMSG_BOOM, addr(s)) ;
+  libmsgadd(q330, LIBMSG_BOOM, (const pointer) addr(s)) ;
   sprintf(s, "Main Current: %dma", pboom->main_cur) ;
-  libmsgadd(q330, LIBMSG_BOOM, addr(s)) ;
+  libmsgadd(q330, LIBMSG_BOOM, (const pointer) addr(s)) ;
   sprintf(s, "Antenna Current: %dma", pboom->ant_cur) ;
-  libmsgadd(q330, LIBMSG_BOOM, addr(s)) ;
+  libmsgadd(q330, LIBMSG_BOOM, (const pointer) addr(s)) ;
   i = sex(pboom->seis1_temp) ;
   if (i != TEMP_UNKNOWN)
     then
       begin
         sprintf(s, "Seismo 1 Temperature: %dC", i) ;
-        libmsgadd(q330, LIBMSG_BOOM, addr(s)) ;
+        libmsgadd(q330, LIBMSG_BOOM, (const pointer) addr(s)) ;
       end
   i = sex(pboom->seis2_temp) ;
   if (i != TEMP_UNKNOWN)
     then
       begin
         sprintf(s, "Seismo 2 Temperature: %dC", i) ;
-        libmsgadd(q330, LIBMSG_BOOM, addr(s)) ;
+        libmsgadd(q330, LIBMSG_BOOM, (const pointer) addr(s)) ;
       end
 
   psgps = addr(q330->share.stat_gps) ;
   libmsgadd(q330, LIBMSG_GPS, (pointer)"GPS Status") ;
   sprintf(s, "Time: %s", (char *)addr(psgps->time)) ;
-  libmsgadd(q330, LIBMSG_GPS, addr(s)) ;
+  libmsgadd(q330, LIBMSG_GPS, (const pointer) addr(s)) ;
   sprintf(s, "Date: %s", (char *)addr(psgps->date)) ;
-  libmsgadd(q330, LIBMSG_GPS, addr(s)) ;
+  libmsgadd(q330, LIBMSG_GPS, (const pointer) addr(s)) ;
   sprintf(s, "Fix Type: %s", (char *)addr(psgps->fix)) ;
-  libmsgadd(q330, LIBMSG_GPS, addr(s)) ;
+  libmsgadd(q330, LIBMSG_GPS, (const pointer) addr(s)) ;
   sprintf(s, "Height: %s", (char *)addr(psgps->height)) ;
-  libmsgadd(q330, LIBMSG_GPS, addr(s)) ;
+  libmsgadd(q330, LIBMSG_GPS, (const pointer) addr(s)) ;
   sprintf(s, "Latitude: %s", (char *)addr(psgps->lat)) ;
-  libmsgadd(q330, LIBMSG_GPS, addr(s)) ;
+  libmsgadd(q330, LIBMSG_GPS, (const pointer) addr(s)) ;
   sprintf(s, "Longitude: %s", (char *)addr(psgps->longt)) ;
-  libmsgadd(q330, LIBMSG_GPS, addr(s)) ;
+  libmsgadd(q330, LIBMSG_GPS, (const pointer) addr(s)) ;
   if (psgps->gpson)
     then
       sprintf(s, "On Time: %dmin", (integer)psgps->gpstime) ;
     else
       sprintf(s, "Off Time: %dmin", (integer)psgps->gpstime) ;
-  libmsgadd(q330, LIBMSG_GPS, addr(s)) ;
+  libmsgadd(q330, LIBMSG_GPS, (const pointer) addr(s)) ;
   sprintf(s, "Sat. Used: %d", (integer)psgps->sat_used) ;
-  libmsgadd(q330, LIBMSG_GPS, addr(s)) ;
+  libmsgadd(q330, LIBMSG_GPS, (const pointer) addr(s)) ;
   sprintf(s, "In View: %d", (integer)psgps->sat_view) ;
-  libmsgadd(q330, LIBMSG_GPS, addr(s)) ;
+  libmsgadd(q330, LIBMSG_GPS, (const pointer) addr(s)) ;
   sprintf(s, "Checksum Errors: %d", (integer)psgps->check_err) ;
-  libmsgadd(q330, LIBMSG_GPS, addr(s)) ;
+  libmsgadd(q330, LIBMSG_GPS, (const pointer) addr(s)) ;
   l = psgps->last_good ;
   if (l)
     then
       begin
         sprintf(s, "Last GPS timemark: %s", jul_string(l, (pchar)addr(s1))) ;
-        libmsgadd(q330, LIBMSG_GPS, addr(s)) ;
+        libmsgadd(q330, LIBMSG_GPS, (const pointer) addr(s)) ;
       end
 
   pspll = addr(q330->share.stat_pll) ;
@@ -425,20 +425,20 @@ begin
       strcpy(s1, "Unknown") ;
   end
   sprintf(s, "State: %s", s1) ;
-  libmsgadd(q330, LIBMSG_PLL, addr(s)) ;
+  libmsgadd(q330, LIBMSG_PLL, (const pointer) addr(s)) ;
   sprintf(s, "Intitial VCO: %8.6f", (float)pspll->start_km) ;
-  libmsgadd(q330, LIBMSG_PLL, addr(s)) ;
+  libmsgadd(q330, LIBMSG_PLL, (const pointer) addr(s)) ;
   sprintf(s, "Time Error: %8.6f", (float)pspll->time_error) ;
-  libmsgadd(q330, LIBMSG_PLL, addr(s)) ;
+  libmsgadd(q330, LIBMSG_PLL, (const pointer) addr(s)) ;
   sprintf(s, "RMS VCO: %9.7f", (float)pspll->rms_vco) ;
-  libmsgadd(q330, LIBMSG_PLL, addr(s)) ;
+  libmsgadd(q330, LIBMSG_PLL, (const pointer) addr(s)) ;
   sprintf(s, "Best VCO: %4.2f", (float)(pspll->best_vco + 2048.0)) ;
-  libmsgadd(q330, LIBMSG_PLL, addr(s)) ;
+  libmsgadd(q330, LIBMSG_PLL, (const pointer) addr(s)) ;
   sprintf(s, "Seconds Since Track or Lock: %3.1f", (float)(pspll->ticks_track_lock / 1000.0)) ;
-  libmsgadd(q330, LIBMSG_PLL, addr(s)) ;
+  libmsgadd(q330, LIBMSG_PLL, (const pointer) addr(s)) ;
   i = sex(pspll->km) ;
   sprintf(s, "Vco Control: %d", (integer)(i + 2048)) ;
-  libmsgadd(q330, LIBMSG_PLL, addr(s)) ;
+  libmsgadd(q330, LIBMSG_PLL, (const pointer) addr(s)) ;
 
   pgps = addr(q330->gps2) ;
   switch (pgps->mode and 7) begin
@@ -461,7 +461,7 @@ begin
       strcpy(s1, "Unknown") ;
   end
   sprintf(s, "timing mode: %s", s1) ;
-  libmsgadd(q330, LIBMSG_GPSCFG, addr(s)) ;
+  libmsgadd(q330, LIBMSG_GPSCFG, (const pointer) addr(s)) ;
   if ((pgps->mode and 7) == AG_INT)
     then
       begin
@@ -479,7 +479,7 @@ begin
             strcpy(s1, "Until GPS time acquisition") ;
         end
         sprintf(s, "internal GPS power management mode: %s", s1) ;
-        libmsgadd(q330, LIBMSG_GPSCFG, addr(s)) ;
+        libmsgadd(q330, LIBMSG_GPSCFG, (const pointer) addr(s)) ;
       end
   if (pgps->initial_pll and 1)
     then
@@ -496,24 +496,24 @@ begin
       strcat(s, "WARNING: EXPERIMENTAL TEMPCO ENABLED") ;
     else
       strcat(s, "tempco normal") ;
-  libmsgadd(q330, LIBMSG_GPSCFG, addr(s)) ;
+  libmsgadd(q330, LIBMSG_GPSCFG, (const pointer) addr(s)) ;
   if (((pgps->mode and 7) == AG_INT) land (pgps->flags and 3))
     then
       begin
         sprintf(s, "power off-time: %dm max on-time: %dm resync at: %d",
                 (integer)pgps->off_time, (integer)pgps->max_on, (integer)pgps->resync) ;
-        libmsgadd(q330, LIBMSG_GPSCFG, addr(s)) ;
+        libmsgadd(q330, LIBMSG_GPSCFG, (const pointer) addr(s)) ;
       end
   sprintf(s, "PLL update: %ds  PLL lock criterion: %dus", (integer)pgps->interval, (integer)pgps->lock_usec) ;
-  libmsgadd(q330, LIBMSG_GPSCFG, addr(s)) ;
+  libmsgadd(q330, LIBMSG_GPSCFG, (const pointer) addr(s)) ;
   sprintf(s, "Pfrac: %4.2f", (float)pgps->pfrac) ;
-  libmsgadd(q330, LIBMSG_GPSCFG, addr(s)) ;
+  libmsgadd(q330, LIBMSG_GPSCFG, (const pointer) addr(s)) ;
   sprintf(s, "VCO slope: %9.7f", (float)pgps->vco_slope) ;
-  libmsgadd(q330, LIBMSG_GPSCFG, addr(s)) ;
+  libmsgadd(q330, LIBMSG_GPSCFG, (const pointer) addr(s)) ;
   sprintf(s, "VCO intercept: %9.7f", pgps->vco_intercept) ;
-  libmsgadd(q330, LIBMSG_GPSCFG, addr(s)) ;
+  libmsgadd(q330, LIBMSG_GPSCFG, (const pointer) addr(s)) ;
   sprintf(s, "Km delta: %9.7f", pgps->km_delta) ;
-  libmsgadd(q330, LIBMSG_GPSCFG, addr(s)) ;
+  libmsgadd(q330, LIBMSG_GPSCFG, (const pointer) addr(s)) ;
 
   pslog = addr(q330->share.stat_log) ;
   switch (pslog->log_num) begin
@@ -530,17 +530,17 @@ begin
       strcpy(s, "Logical Port 4 Status") ;
       break ;
   end
-  libmsgadd(q330, LIBMSG_LOG, addr(s)) ;
+  libmsgadd(q330, LIBMSG_LOG, (const pointer) addr(s)) ;
   sprintf(s, "Data Packets Sent: %d", (integer)pslog->sent) ;
-  libmsgadd(q330, LIBMSG_LOG, addr(s)) ;
+  libmsgadd(q330, LIBMSG_LOG, (const pointer) addr(s)) ;
   sprintf(s, "Flood Packets Sent: %d", (integer)pslog->fill) ;
-  libmsgadd(q330, LIBMSG_LOG, addr(s)) ;
+  libmsgadd(q330, LIBMSG_LOG, (const pointer) addr(s)) ;
   sprintf(s, "Packets Re-Sent: %d", (integer)pslog->resends) ;
-  libmsgadd(q330, LIBMSG_LOG, addr(s)) ;
+  libmsgadd(q330, LIBMSG_LOG, (const pointer) addr(s)) ;
   sprintf(s, "Sequence Errors: %d", (integer)pslog->seq) ;
-  libmsgadd(q330, LIBMSG_LOG, addr(s)) ;
+  libmsgadd(q330, LIBMSG_LOG, (const pointer) addr(s)) ;
   sprintf(s, "Packet Buffer Used: %d", (integer)pslog->pack_used) ;
-  libmsgadd(q330, LIBMSG_LOG, addr(s)) ;
+  libmsgadd(q330, LIBMSG_LOG, (const pointer) addr(s)) ;
   if (q330->share.stat_log.flags and LPSF_BADMEM)
     then
       libmsgadd(q330, LIBMSG_LOG, (pointer)"WARNING: PACKET MEMORY REDUCED BECAUSE OF Q330 MEMORY FAULT") ;
@@ -561,7 +561,7 @@ begin
       strcpy(s1, "None") ;
   end
   sprintf(s, "Physical Port: %s", s1) ;
-  libmsgadd(q330, LIBMSG_LOG, addr(s)) ;
+  libmsgadd(q330, LIBMSG_LOG, (const pointer) addr(s)) ;
   report_channel_and_preamp_settings (q330) ;
   if (lnot q330->q335)
     then

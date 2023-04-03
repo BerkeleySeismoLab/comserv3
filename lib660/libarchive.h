@@ -1,5 +1,11 @@
+
+
+
+
 /*   Lib660 Archival Miniseed Definitions
-     Copyright 2017 Certified Software Corporation
+     Copyright 2017 by
+     Kinemetrics, Inc.
+     Pasadena, CA 91107 USA.
 
     This file is part of Lib660
 
@@ -21,11 +27,13 @@ Edit History:
    Ed Date       By  Changes
    -- ---------- --- ---------------------------------------------------
     0 2017-06-07 rdr Created
+    1 2021-12-24 rdr Copyright assignment to Kinemetrics.
+------2022-02-24 jms remove pseudo-pascal macros------
 */
 #ifndef libarchive_h
 /* Flag this file as included */
 #define libarchive_h
-#define VER_LIBARCHIVE 0
+#define VER_LIBARCHIVE 1
 
 #include "libtypes.h"
 #include "libsampglob.h"
@@ -33,6 +41,6 @@ Edit History:
 
 extern void flush_archive (pq660 q660, plcq q) ;
 extern void archive_512_record (pq660 q660, plcq q, pcompressed_buffer_ring pbuf) ;
-extern void preload_archive (pq660 q660, boolean from660, plcq onelcq) ;
+extern void preload_archive (pq660 q660, BOOLEAN from660, plcq onelcq) ;
 
 #endif

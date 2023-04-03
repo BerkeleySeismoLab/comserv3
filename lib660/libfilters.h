@@ -1,5 +1,11 @@
+
+
+
+
 /*   Lib660 Filter Definitions
-     Copyright 2017 Certified Software Corporation
+     Copyright 2017 by
+     Kinemetrics, Inc.
+     Pasadena, CA 91107 USA.
 
     This file is part of Lib660
 
@@ -21,11 +27,13 @@ Edit History:
    Ed Date       By  Changes
    -- ---------- --- ---------------------------------------------------
     0 2017-06-06 rdr Created
+    1 2021-12-24 rdr Copyright assignment to Kinemetrics.
+------2022-02-24 jms remove pseudo-pascal macros------
 */
 #ifndef libfilters_h
 /* Flag this file as included */
 #define libfilters_h
-#define VER_LIBFILTERS 0
+#define VER_LIBFILTERS 1
 
 #include "utiltypes.h"
 #include "xmlseed.h"
@@ -39,12 +47,12 @@ typedef double *pdouble ;
 extern void load_firfilters (pq660 q660) ;
 extern void append_firfilters (pq660 q660, pfilter src) ;
 extern pfir_packet create_fir (pq660 q660, pfilter src) ;
-extern piirfilter create_iir (pq660 q660, piirdef src, integer points) ;
+extern piirfilter create_iir (pq660 q660, piirdef src, int points) ;
 extern void allocate_lcq_filters (pq660 q660, plcq q) ;
 extern tfloat mac_and_shift (pfir_packet pf) ;
 extern pfilter find_fir (pq660 q660, pchar name) ;
 extern double multi_section_filter (piirfilter resp, double s) ;
 extern void calc_section (tsect_base *sect) ;
-extern void bwsectdes (pdouble a, pdouble b, integer npoles, boolean high, tfloat ratio) ;
+extern void bwsectdes (pdouble a, pdouble b, int npoles, BOOLEAN high, tfloat ratio) ;
 
 #endif

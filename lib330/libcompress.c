@@ -312,7 +312,7 @@ begin
         v1 = curval ;
         v2 = pcmp->prev_value ;
         sprintf(s, "%s %d %d", seed2string((pointer)q->location, (pointer)q->seedname, (pointer)addr(s1)), v1, v2) ;
-        libdatamsg (q330, LIBMSG_CONTERR, addr(s)) ;
+        libdatamsg (q330, LIBMSG_CONTERR, (const pointer) addr(s)) ;
       end
   dblocks = pcmp->blocks ;
   pd = pcmp->pdata ;

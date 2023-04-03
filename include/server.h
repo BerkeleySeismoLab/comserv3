@@ -13,6 +13,7 @@ Edit History:
     4  9 Jun 96 WHO Add xfersize field to tring to transfer only the
                     valid bytes to a client.
     5 29 Sep 2020 DSN Updated for comserv3.
+    6 20 Dec 2020 DSN Make all uid and pid int32_t (signed) to allow for NOCLIENT (-1).
 */
 
 #ifndef SERVER_H
@@ -67,17 +68,18 @@ typedef struct
     int client_uid ;                 /* client's user ID */
     complong client_name ;           /* client's name */
 #else
+    /* Make uid and pid signed 32-bit int to allow for NOCLIENT (-1) value. */
     int client_memid ;               /* client's shared memory ID */
-    pid_t client_pid ;                 /* client's process ID */
-    uid_t client_uid ;                 /* client's user ID */
-    tclientname client_name ;           /* client's name */
+    int32_t client_pid ;             /* client's process ID */
+    int32_t client_uid ;             /* client's user ID */
+    tclientname client_name ;        /* client's name */
 #endif
     pclient_struc client_address ;   /* where client's shared memory appears */
     pchar outbuf ;                   /* For reading detector parameters, etc. */
-    int32_t outsize ;                   /* Size of destination buffer */
+    int32_t outsize ;                /* Size of destination buffer */
     boolean blocking ;               /* blocking if set */
     boolean active ;                 /* is current active */
-    int32_t timeout ;                   /* blocking allowed if non-zero */
+    int32_t timeout ;                /* blocking allowed if non-zero */
     double last_service ;            /* time of last blocking service */
     last_struc last[NUMQ] ;          /* Internal ring pointers for last data */
 } tclients ;

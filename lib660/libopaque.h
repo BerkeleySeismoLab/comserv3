@@ -1,5 +1,11 @@
+
+
+
+
 /*   Lib660 Opaque Blockette Definitions
-     Copyright 2017 Certified Software Corporation
+     Copyright 2017 by
+     Kinemetrics, Inc.
+     Pasadena, CA 91107 USA.
 
     This file is part of Lib660
 
@@ -21,11 +27,13 @@ Edit History:
    Ed Date       By  Changes
    -- ---------- --- ---------------------------------------------------
     0 2017-06-10 rdr Created
+    1 2021-12-24 rdr Copyright assignment to Kinemetrics.
+------2022-02-24 jms remove pseudo-pascal macros------
 */
 #ifndef libopaque_h
 /* Flag this file as included */
 #define libopaque_h
-#define VER_LIBOPAQUE 0
+#define VER_LIBOPAQUE 1
 
 #include "libtypes.h"
 #include "libstrucs.h"

@@ -21,18 +21,16 @@
 #define MIN_STATUS_INTERVAL 5
 #define MAX_STATUS_INTERVAL 200
 
-#define DEFAULT_DATA_RATE_INTERVAL 3
-#define MIN_DATA_RATE_INTERVAL 1
-#define MAX_DATA_RATE_INTERVAL 100
+#define DEFAULT_PACKETQUEUE_QUEUE_SIZE	500
 
 #define QUOTE(x)        #x
 #define STRING(x)       QUOTE(x)
 
 #define APP_IDENT_STRING "q330serv"
 #define MAJOR_VERSION 1
-#define MINOR_VERSION 0
-#define RELEASE_VERSION 4
-#define RELEASE_DATE "2022.075"
+#define MINOR_VERSION 1
+#define RELEASE_VERSION 1
+#define RELEASE_DATE "2023.093-beta"
 #define APP_VERSION_STRING APP_IDENT_STRING " v" STRING(MAJOR_VERSION) "." STRING(MINOR_VERSION) "." STRING(RELEASE_VERSION) " (" RELEASE_DATE ")"
 
 #define STATION_INI	"station.ini"
@@ -45,6 +43,7 @@ extern int log_inited;
 #include "lib330Interface.h"
 extern Logger g_log;
 extern Lib330Interface *g_libInterface;
+extern PacketQueue *g_packetQueue;
 extern bool g_reset;
 #endif
 

@@ -1,5 +1,11 @@
+
+
+
+
 /*   Lib660 Data Packet Processing headers
-     Copyright 2017 Certified Software Corporation
+     Copyright 2017 by
+     Kinemetrics, Inc.
+     Pasadena, CA 91107 USA.
 
     This file is part of Lib660
 
@@ -21,11 +27,13 @@ Edit History:
    Ed Date       By  Changes
    -- ---------- --- ---------------------------------------------------
     0 2017-06-09 rdr Created
+    1 2021-12-24 rdr Copyright assignment to Kinemetrics.
+------2022-02-24 jms remove pseudo-pascal macros------
 */
 #ifndef libdata_h
 /* Flag this file as included */
 #define libdata_h
-#define VER_LIBDATA 3
+#define VER_LIBDATA 9
 
 #include "utiltypes.h"
 #include "libtypes.h"
@@ -40,7 +48,6 @@ Edit History:
 #define GPS_ONAUTO 5 /* Powered on automatically */
 #define GPS_ONCMD 6 /* Powered on by command */
 
-extern void process_data (pq660 q660, pbyte p, integer lth) ;
-extern void process_low_latency (pq660 q660, pbyte p, integer lth) ;
+extern void process_data (pq660 q660, PU8 p, int lth) ;
 
 #endif

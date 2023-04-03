@@ -1,5 +1,11 @@
+
+
+
+
 /*   Lib660 Continuity definitions
-     Copyright 2017 Certified Software Corporation
+     Copyright 2017 by
+     Kinemetrics, Inc.
+     Pasadena, CA 91107 USA.
 
     This file is part of Lib660
 
@@ -21,20 +27,22 @@ Edit History:
    Ed Date       By  Changes
    -- ---------- --- ---------------------------------------------------
     0 2017-06-08 rdr Created
+    1 2021-12-24 rdr Copyright assignment to Kinemetrics.
+------2022-02-24 jms remove pseudo-pascal macros------
 */
 #ifndef libcont_h
 /* Flag this file as included */
 #define libcont_h
-#define VER_LIBCONT 0
+#define VER_LIBCONT 2
 
 #include "libtypes.h"
 #include "libstrucs.h"
 
-extern void restore_thread_continuity (pq660 q660, boolean pass1, pchar result) ;
+extern void restore_thread_continuity (pq660 q660, BOOLEAN pass1, pchar result) ;
 extern void save_continuity (pq660 q660) ;
 extern void save_thread_continuity (pq660 q660) ;
 extern void check_continuity (pq660 q660) ;
-extern boolean restore_continuity (pq660 q660) ;
+extern BOOLEAN restore_continuity (pq660 q660) ;
 extern void purge_continuity (pq660 q660) ;
 extern void purge_thread_continuity (pq660 q660) ;
 extern void continuity_timer (pq660 q660) ;

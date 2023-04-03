@@ -1,6 +1,12 @@
+
+
+
+
 /*
     Q660 Data & Status Record Conversion Routines
-    Copyright 2016 - 2019 Certified Software Corporation
+    Copyright 2016 - 2021 by
+    Kinemetrics, Inc.
+    Pasadena, CA 91107 USA.
 
     This file is part of Lib660
 
@@ -37,460 +43,525 @@ Edit History:
    11 2018-08-27 rdr Changes to loadstatsm.
    12 2018-10-30 rdr Add loadstatidl
    13 2019-06-25 rdr Add loadgps.
+   14 2020-05-28 jms remove DOUBLE_HYBRID_ENDIAN handling of BE double
+   15 2021-02-03 rdr Add new GPS field to engineering data.
+   16 2021-03-20 rdr Add loadstatdust.
+   17 2021-12-24 rdr Copyright assignment to Kinemetrics.
+------2022-02-24 jms remove pseudo-pascal macros------
 */
-#include "pascal.h"
+#include "platform.h"
 #include "xmlsup.h"
 #include "readpackets.h"
 
-byte loadbyte (pbyte *p)
-begin
-  byte temp ;
+U8 loadbyte (PU8 *p)
+{
+    U8 temp ;
 
-  temp = **p ;
-  incn(*p, 1) ;
-  return temp ;
-end
+    temp = **p ;
+    *p = *p + (1) ;
+    return temp ;
+}
 
-shortint loadshortint (pbyte *p)
-begin
-  byte temp ;
+I8 loadshortint (PU8 *p)
+{
+    U8 temp ;
 
-  temp = **p ;
-  incn(*p, 1) ;
-  return (shortint) temp ;
-end
+    temp = **p ;
+    *p = *p + (1) ;
+    return (I8) temp ;
+}
 
-word loadword (pbyte *p)
-begin
-  word w ;
+U16 loadword (PU8 *p)
+{
+    U16 w ;
 
-  memcpy(addr(w), *p, 2) ;
+    memcpy(&(w), *p, 2) ;
 #ifdef ENDIAN_LITTLE
-  w = ntohs(w) ;
+    w = ntohs(w) ;
 #endif
-  incn(*p, 2) ;
-  return w ;
-end
+    *p = *p + (2) ;
+    return w ;
+}
 
-int16 loadint16 (pbyte *p)
-begin
-  int16 i ;
+I16 loadint16 (PU8 *p)
+{
+    I16 i ;
 
-  memcpy(addr(i), *p, 2) ;
+    memcpy(&(i), *p, 2) ;
 #ifdef ENDIAN_LITTLE
-  i = ntohs(i) ;
+    i = ntohs(i) ;
 #endif
-  incn(*p, 2) ;
-  return i ;
-end
+    *p = *p + (2) ;
+    return i ;
+}
 
-longword loadlongword (pbyte *p)
-begin
-  longword lw ;
+U32 loadlongword (PU8 *p)
+{
+    U32 lw ;
 
-  memcpy(addr(lw), *p, 4) ;
+    memcpy(&(lw), *p, 4) ;
 #ifdef ENDIAN_LITTLE
-  lw = ntohl(lw) ;
+    lw = ntohl(lw) ;
 #endif
-  incn(*p, 4) ;
-  return lw ;
-end
+    *p = *p + (4) ;
+    return lw ;
+}
 
-longint loadlongint (pbyte *p)
-begin
-  longint li ;
+I32 loadlongint (PU8 *p)
+{
+    I32 li ;
 
-  memcpy(addr(li), *p, 4) ;
+    memcpy(&(li), *p, 4) ;
 #ifdef ENDIAN_LITTLE
-  li = ntohl(li) ;
+    li = ntohl(li) ;
 #endif
-  incn(*p, 4) ;
-  return li ;
-end
+    *p = *p + (4) ;
+    return li ;
+}
 
-single loadsingle (pbyte *p)
-begin
-  longint li, exp ;
-  single s ;
+float loadsingle (PU8 *p)
+{
+    I32 li, exp ;
+    float s ;
 
-  memcpy(addr(li), *p, 4) ;
+    memcpy(&(li), *p, 4) ;
 #ifdef ENDIAN_LITTLE
-  li = ntohl(li) ;
+    li = ntohl(li) ;
 #endif
-  exp = (li shr 23) and 0xFF ;
-  if ((exp < 1) lor (exp > 254))
-    then
-      li = 0 ; /* replace with zero */
-  else if (li == (longint)0x80000000)
-    then
-      li = 0 ; /* replace with positive zero */
-  memcpy(addr(s), addr(li), 4) ;
-  incn(*p, 4) ;
-  return s ;
-end
+    exp = (li >> 23) & 0xFF ;
 
-double loaddouble (pbyte *p)
-begin
-  double d ;
-  plword plw ;
+    if ((exp < 1) || (exp > 254))
+        li = 0 ; /* replace with zero */
+    else if (li == (I32)0x80000000)
+        li = 0 ; /* replace with positive zero */
 
-  plw = (plword)addr(d) ;
-#ifdef DOUBLE_HYBRID_ENDIAN
-  *plw = loadlongword (p) ;
-  inc(plw) ;
-  *plw = loadlongword (p) ;
+    memcpy(&(s), &(li), 4) ;
+    *p = *p + (4) ;
+    return s ;
+}
+
+double loaddouble (PU8 *p)
+{
+    double d ;
+    PU32 plw ;
+
+    plw = (PU32)&(d) ;
+#ifdef ENDIAN_LITTLE
+    (plw)++ ;
+    *plw = loadlongword (p) ;
+    plw = (PU32)&(d) ;
+    *plw = loadlongword (p) ;
 #else
-#ifdef ENDIAN_LITTLE
-  inc(plw) ;
-  *plw = loadlongword (p) ;
-  plw = (plword)addr(d) ;
-  *plw = loadlongword (p) ;
-#else
-  *plw = loadlongword (p) ;
-  inc(plw) ;
-  *plw = loadlongword (p) ;
+    *plw = loadlongword (p) ;
+    (plw)++ ;
+    *plw = loadlongword (p) ;
 #endif
-#endif
-  return d ;
-end
+    return d ;
+}
 
-void loadstring (pbyte *p, integer fieldwidth, pchar s)
-begin
+void loadstring (PU8 *p, int fieldwidth, pchar s)
+{
 
-  memcpy(s, *p, fieldwidth) ;
-  incn(*p, fieldwidth) ;
-end
+    memcpy(s, *p, fieldwidth) ;
+    *p = *p + (fieldwidth) ;
+}
 
-void loadt64 (pbyte *p, t64 *six4)
-begin
+void loadt64 (PU8 *p, t64 *six4)
+{
 
 #ifdef ENDIAN_LITTLE
-  (*six4)[1] = loadlongword (p) ;
-  (*six4)[0] = loadlongword (p) ;
+    (*six4)[1] = loadlongword (p) ;
+    (*six4)[0] = loadlongword (p) ;
 #else
-  (*six4)[0] = loadlongword (p) ;
-  (*six4)[1] = loadlongword (p) ;
+    (*six4)[0] = loadlongword (p) ;
+    (*six4)[1] = loadlongword (p) ;
 #endif
-end
+}
 
-void loadblock (pbyte *p, integer size, pointer pdest)
-begin
+void loadblock (PU8 *p, int size, pointer pdest)
+{
 
-  memcpy(pdest, *p, size) ;
-  incn(*p, size) ;
-end
+    memcpy(pdest, *p, size) ;
+    *p = *p + (size) ;
+}
 
 /* Returns Datalength, zero if error */
-integer loadqdphdr (pbyte *p, tqdp *hdr)
-begin
-  pbyte pstart ;
-  longint *pcrc ;
-  longint crc ;
-  integer lth ;
+int loadqdphdr (PU8 *p, tqdp *hdr)
+{
+    PU8 pstart ;
+    I32 *pcrc ;
+    I32 crc ;
+    int lth ;
 
-  pstart = *p ;
-  hdr->cmd_ver = loadbyte (p) ;
-  hdr->seqs = loadbyte (p) ;
-  hdr->dlength = loadbyte (p) ;
-  hdr->complth = loadbyte (p) ;
-  lth = ((word)hdr->dlength + 1) shl 2 ;
-  if ((lth > MAXDATA) lor (hdr->complth != ((not hdr->dlength) and 0xFF)))
-    then
-      return 0 ;
-  pcrc = (pointer)((pntrint)pstart + lth + QDP_HDR_LTH) ;
-  crc = gcrccalc (pstart, lth + QDP_HDR_LTH) ;
-  if (crc == loadlongint((pbyte *)addr(pcrc)))
-    then
-      return lth ;
+    pstart = *p ;
+    hdr->cmd_ver = loadbyte (p) ;
+    hdr->seqs = loadbyte (p) ;
+    hdr->dlength = loadbyte (p) ;
+    hdr->complth = loadbyte (p) ;
+    lth = ((U16)hdr->dlength + 1) << 2 ;
+
+    if ((lth > MAXDATA) || (hdr->complth != ((~ hdr->dlength) & 0xFF)))
+        return 0 ;
+
+    pcrc = (pointer)((PNTRINT)pstart + lth + QDP_HDR_LTH) ;
+    crc = gcrccalc (pstart, lth + QDP_HDR_LTH) ;
+
+    if (crc == loadlongint((PU8 *)&(pcrc)))
+        return lth ;
     else
-      return 0 ;
-end
+        return 0 ;
+}
 
-void loadstatsm (pbyte *p, tstat_sm *psm)
-begin
-  integer i ;
+void loadstatsm (PU8 *p, tstat_sm *psm)
+{
+    int i ;
 
-  psm->stype = (enum tstype) loadbyte (p) ;
-  psm->flags = loadbyte (p) ;
-  psm->pll_status = (enum tpllstat) loadbyte (p) ;
-  psm->blk_size = loadbyte (p) ;
-  psm->gpio1 = loadbyte (p) ;
-  psm->gpio2 = loadbyte (p) ;
-  psm->pkt_buf = loadbyte (p) ;
-  psm->humidity = loadbyte (p) ;
-  for (i = 0 ; i < SENSOR_COUNT ; i++)
-    psm->sensor_cur[i] = loadword (p) ;
-  for (i = 0 ; i < BOOM_COUNT ; i++)
-    psm->booms[i] = loadint16 (p) ;
-  psm->sys_cur = loadword (p) ;
-  psm->ant_cur = loadword (p) ;
-  psm->input_volts = loadword (p) ;
-  psm->sys_temp = loadint16 (p) ;
-  psm->spare3 = loadlongint (p) ;
-  psm->sec_offset = loadlongword (p) ;
-  psm->usec_offset = loadlongint (p) ;
-  psm->total_time = loadlongword (p) ;
-  psm->power_time = loadlongword (p) ;
-  psm->last_resync = loadlongword (p) ;
-  psm->resyncs = loadlongword (p) ;
-  psm->clock_loss = loadword (p) ;
-  for (i = 0 ; i < SENSOR_COUNT ; i++)
-    psm->gain_status[i] = (enum tadgain) loadbyte (p) ;
-  psm->sensor_ctrl_map = loadword (p) ;
-  psm->fault_code = loadbyte (p) ;
-  psm->spare4 = loadbyte (p) ;
-  psm->gps_pwr = (enum tgpspwr) loadbyte (p) ;
-  psm->gps_fix = (enum tgpsfix) loadbyte (p) ;
-  psm->clock_qual = loadbyte (p) ;
-  psm->cal_stat = loadbyte (p) ;
-  psm->elevation = loadsingle (p) ;
-  psm->latitude = loadsingle (p) ;
-  psm->longitude = loadsingle (p) ;
-  psm->ant_volts = loadword (p) ;
-  psm->spare5 = loadword (p) ;
-end
+    psm->stype = (enum tstype) loadbyte (p) ;
+    psm->flags = loadbyte (p) ;
+    psm->pll_status = (enum tpllstat) loadbyte (p) ;
+    psm->blk_size = loadbyte (p) ;
+    psm->gpio1 = loadbyte (p) ;
+    psm->gpio2 = loadbyte (p) ;
+    psm->pkt_buf = loadbyte (p) ;
+    psm->humidity = loadbyte (p) ;
 
-void loadstatgps (pbyte *p, tstat_gps *pgp)
-begin
-  integer i ;
-  tstat_gpssat *psat ;
+    for (i = 0 ; i < SENSOR_COUNT ; i++)
+        psm->sensor_cur[i] = loadword (p) ;
 
-  pgp->stype = (enum tstype) loadbyte (p) ;
-  pgp->spare1 = loadbyte (p) ;
-  pgp->sat_count = loadbyte (p) ;
-  pgp->blk_size = loadbyte (p) ;
-  pgp->sat_used = loadbyte (p) ;
-  pgp->sat_view = loadbyte (p) ;
-  pgp->check_errors = loadword (p) ;
-  pgp->gpstime = loadword (p) ;
-  pgp->spare2 = loadword (p) ;
-  pgp->last_good = loadlongword (p) ;
-  for (i = 0 ; i < MAX_SAT ; i++)
-    begin
-      psat = addr(pgp->gps_sats[i]) ;
-      psat->num = loadword (p) ;
-      psat->elevation = loadint16 (p) ;
-      psat->azimuth = loadint16 (p) ;
-      psat->snr = loadword (p) ;
-    end
-end
+    for (i = 0 ; i < BOOM_COUNT ; i++)
+        psm->booms[i] = loadint16 (p) ;
 
-void loadstatpll (pbyte *p, tstat_pll *pll)
-begin
+    psm->sys_cur = loadword (p) ;
+    psm->ant_cur = loadword (p) ;
+    psm->input_volts = loadword (p) ;
+    psm->sys_temp = loadint16 (p) ;
+    psm->spare3 = loadlongint (p) ;
+    psm->sec_offset = loadlongword (p) ;
+    psm->usec_offset = loadlongint (p) ;
+    psm->total_time = loadlongword (p) ;
+    psm->power_time = loadlongword (p) ;
+    psm->last_resync = loadlongword (p) ;
+    psm->resyncs = loadlongword (p) ;
+    psm->clock_loss = loadword (p) ;
 
-  pll->stype = (enum tstype) loadbyte (p) ;
-  pll->spare1 = loadbyte (p) ;
-  pll->spare2 = loadbyte (p) ;
-  pll->blk_size = loadbyte (p) ;
-  pll->start_km = loadsingle (p) ;
-  pll->time_error = loadsingle (p) ;
-  pll->best_vco = loadsingle (p) ;
-  pll->ticks_track_lock = loadlongword (p) ;
-  pll->km = loadint16 (p) ;
-  pll->cur_vco = loadint16 (p) ;
-end
+    for (i = 0 ; i < SENSOR_COUNT ; i++)
+        psm->gain_status[i] = (enum tadgain) loadbyte (p) ;
 
-void loadstatlogger (pbyte *p, tstat_logger *plog)
-begin
-  pbyte pb, pstart ;
-  integer i, j ;
+    psm->sensor_ctrl_map = loadword (p) ;
+    psm->fault_code = loadbyte (p) ;
+    psm->spare4 = loadbyte (p) ;
+    psm->gps_pwr = (enum tgpspwr) loadbyte (p) ;
+    psm->gps_fix = (enum tgpsfix) loadbyte (p) ;
+    psm->clock_qual = loadbyte (p) ;
+    psm->cal_stat = loadbyte (p) ;
+    psm->elevation = loadsingle (p) ;
+    psm->latitude = loadsingle (p) ;
+    psm->longitude = loadsingle (p) ;
+    psm->ant_volts = loadword (p) ;
+    psm->spare5 = loadword (p) ;
+}
 
-  pstart = *p ;
-  plog->stype = (enum tstype) loadbyte (p) ;
-  plog->id_count = loadbyte (p) ;
-  plog->status = loadbyte (p) ;
-  plog->blk_size = loadbyte (p) ;
-  plog->last_on = loadlongword (p) ;
-  plog->powerups = loadlongword (p) ;
-  plog->timeouts = loadword (p) ;
-  plog->baler_time = loadword (p) ;
-  if (plog->id_count)
-    then
-      begin /* need to copy idents in */
+void loadstatgps (PU8 *p, tstat_gps *pgp)
+{
+    int i ;
+    tstat_gpssat *psat ;
+
+    pgp->stype = (enum tstype) loadbyte (p) ;
+    pgp->spare1 = loadbyte (p) ;
+    pgp->sat_count = loadbyte (p) ;
+    pgp->blk_size = loadbyte (p) ;
+    pgp->sat_used = loadbyte (p) ;
+    pgp->sat_view = loadbyte (p) ;
+    pgp->check_errors = loadword (p) ;
+    pgp->gpstime = loadword (p) ;
+    pgp->spare2 = loadword (p) ;
+    pgp->last_good = loadlongword (p) ;
+
+    for (i = 0 ; i < MAX_SAT ; i++) {
+        psat = &(pgp->gps_sats[i]) ;
+        psat->num = loadword (p) ;
+        psat->elevation = loadint16 (p) ;
+        psat->azimuth = loadint16 (p) ;
+        psat->snr = loadword (p) ;
+    }
+}
+
+void loadstatpll (PU8 *p, tstat_pll *pll)
+{
+
+    pll->stype = (enum tstype) loadbyte (p) ;
+    pll->spare1 = loadbyte (p) ;
+    pll->spare2 = loadbyte (p) ;
+    pll->blk_size = loadbyte (p) ;
+    pll->start_km = loadsingle (p) ;
+    pll->time_error = loadsingle (p) ;
+    pll->best_vco = loadsingle (p) ;
+    pll->ticks_track_lock = loadlongword (p) ;
+    pll->km = loadint16 (p) ;
+    pll->cur_vco = loadint16 (p) ;
+}
+
+void loadstatlogger (PU8 *p, tstat_logger *plog)
+{
+    PU8 pb, pstart ;
+    int i, j ;
+
+    pstart = *p ;
+    plog->stype = (enum tstype) loadbyte (p) ;
+    plog->id_count = loadbyte (p) ;
+    plog->status = loadbyte (p) ;
+    plog->blk_size = loadbyte (p) ;
+    plog->last_on = loadlongword (p) ;
+    plog->powerups = loadlongword (p) ;
+    plog->timeouts = loadword (p) ;
+    plog->baler_time = loadword (p) ;
+
+    if (plog->id_count) {
+        /* need to copy idents in */
         pb = *p ;
-        j = (pntrint)pb - (pntrint)pstart ; /* Size of the above */
-        i = ((word)plog->blk_size + 1) shl 2 ; /* Actual size with idents */
+        j = (PNTRINT)pb - (PNTRINT)pstart ; /* Size of the above */
+        i = ((U16)plog->blk_size + 1) << 2 ; /* Actual size with idents */
         i = i - j ; /* size of idents */
-        if ((i > 0) land (i <= MAX_IDENTS_LTH))
-          then
-            begin /* Looks OK */
-              memcpy (addr(plog->idents), pb, i) ;
-              incn (pb, i) ;
-              *p = pb ; /* update pointer */
-            end
-      end
-end
 
-void loadstatidl (pbyte *p, tstat_idl *pidl)
-begin
-  integer lth ;
-  pbyte pb ;
+        if ((i > 0) && (i <= MAX_IDENTS_LTH)) {
+            /* Looks OK */
+            memcpy (&(plog->idents), pb, i) ;
+            pb = pb + (i) ;
+            *p = pb ; /* update pointer */
+        }
+    }
+}
 
-  pidl->stype = (enum tstype)loadbyte (p) ;
-  pidl->spare1 = loadbyte (p) ;
-  pidl->spare2 = loadbyte (p) ;
-  pidl->blk_size = loadbyte (p) ;
-  lth = ((word)pidl->blk_size + 1) shl 2 ; /* Actual size of blockette */
-  pb = *p ;
-  memcpy (addr(pidl->idlstat), pb, lth - 4) ;
-  incn (pb, lth - 4) ;
-  *p = pb ;
-end
+void loadstatidl (PU8 *p, tstat_idl *pidl)
+{
+    int lth ;
+    PU8 pb ;
 
+    pidl->stype = (enum tstype)loadbyte (p) ;
+    pidl->spare1 = loadbyte (p) ;
+    pidl->spare2 = loadbyte (p) ;
+    pidl->blk_size = loadbyte (p) ;
+    lth = ((U16)pidl->blk_size + 1) << 2 ; /* Actual size of blockette */
+    pb = *p ;
+    memcpy (&(pidl->idlstat), pb, lth - 4) ;
+    pb = pb + (lth - 4) ;
+    *p = pb ;
+}
 
-void loadumsg (pbyte *p, tuser_message *pu)
-begin
-  integer mlth, lth ;
-  pbyte psave ;
+void loadstatdust (PU8 *p, tstat_dust *pdst)
+{
+    tone_dust_stat *pone ;
+    int i, lth ;
 
-  psave = *p ;
-  pu->blk_type = loadbyte (p) ;
-  pu->source = (enum tsource) loadbyte (p) ;
-  pu->msglth = loadbyte (p) ;
-  pu->blk_size = loadbyte (p) ;
-  lth = ((word)pu->blk_size + 1) shl 2 ;
-  if (lth < 4)
-    then
-      lth = 4 ;
-  if (pu->msglth)
-    then
-      begin
-        mlth = (pu->msglth + 3) and 0xFFFC ; /* Round up to multiple of 4 bytes */
-        memcpy (addr(pu->msg), *p, mlth) ;
-      end
-  (pu->msg)[pu->msglth - 1] = 0 ; /* make sure terminated */
-  incn (psave, lth) ; /* Move past blockette */
-  *p = psave ;
-end
+    pdst->stype = (enum tstype)loadbyte (p) ;
+    pdst->flags = loadbyte (p) ;
+    pdst->count = loadbyte (p) ;
+    pdst->blk_size = loadbyte (p) ;
 
-void loadtimehdr (pbyte *p, ttimeblk *pt)
-begin
-  longint l ;
+    for (i = 0 ; i < pdst->count ; i++) {
+        pone = &(pdst->dust_stats[i]) ;
+        pone->stype = (enum tstype)loadbyte (p) ;
+        pone->string_count = loadbyte (p) ;
+        pone->flags_slot = loadbyte (p) ;
+        pone->blk_size = loadbyte (p) ;
+        pone->time = loadlongword (p) ;
+        lth = ((U16)pone->blk_size + 1) << 2 ; /* Actual size of sub-blockette */
+        loadblock (p, lth - 8, &(pone->strings)) ;
+    }
+}
 
-  pt->gds = (enum tgdsrc) loadbyte (p) ;
-  pt->clock_qual = loadbyte (p) ;
-  pt->since_loss = loadword (p) ;
-  l = loadlongint (p) ;
-  pt->flags = l shr 24 ;
-  l = l and 0xFFFFFF ; /* LS 24 bits only */
-  if (l and 0x800000)
-    then
-      l = l or 0xFF000000 ; /* sign extend to 32 bits */
-  pt->usec_offset = l ;
-end
+void loadumsg (PU8 *p, tuser_message *pu)
+{
+    int mlth, lth ;
+    PU8 psave ;
+
+    psave = *p ;
+    pu->blk_type = loadbyte (p) ;
+    pu->source = (enum tsource) loadbyte (p) ;
+    pu->msglth = loadbyte (p) ;
+    pu->blk_size = loadbyte (p) ;
+    lth = ((U16)pu->blk_size + 1) << 2 ;
+
+    if (lth < 4)
+        lth = 4 ;
+
+    if (pu->msglth) {
+        mlth = (pu->msglth + 3) & 0xFFFC ; /* Round up to multiple of 4 bytes */
+        memcpy (&(pu->msg), *p, mlth) ;
+    }
+
+    (pu->msg)[pu->msglth - 1] = 0 ; /* make sure terminated */
+    psave = psave + (lth) ; /* Move past blockette */
+    *p = psave ;
+}
+
+void loadtimehdr (PU8 *p, ttimeblk *pt)
+{
+    I32 l ;
+
+    pt->gds = (enum tgdsrc) loadbyte (p) ;
+    pt->clock_qual = loadbyte (p) ;
+    pt->since_loss = loadword (p) ;
+    l = loadlongint (p) ;
+    pt->flags = l >> 24 ;
+    l = l & 0xFFFFFF ; /* LS 24 bits only */
+
+    if (l & 0x800000)
+        l = l | 0xFF000000 ; /* sign extend to 32 bits */
+
+    pt->usec_offset = l ;
+}
 
 /* Reads a variable number of bytes depending on flags. Leaves p pointing
   at start of map */
-void loaddatahdr (pbyte *p, tdatahdr *datahdr)
-begin
+void loaddatahdr (PU8 *p, tdatahdr *datahdr)
+{
 
-  datahdr->gds = (enum tgdsrc)loadbyte (p) ;
-  datahdr->chan = loadbyte (p) ;
-  datahdr->offset_flag = loadbyte (p) ;
-  datahdr->blk_size = loadbyte (p) ;
-  if (datahdr->offset_flag and DHOF_PREV)
-    then
-      datahdr->prev_offset = loadlongint (p) ;
+    datahdr->gds = (enum tgdsrc)loadbyte (p) ;
+    datahdr->chan = loadbyte (p) ;
+    datahdr->offset_flag = loadbyte (p) ;
+    datahdr->blk_size = loadbyte (p) ;
+
+    if (datahdr->offset_flag & DHOF_PREV)
+        datahdr->prev_offset = loadlongint (p) ;
     else
-      datahdr->prev_offset = 0 ;
-  if (datahdr->offset_flag and DHOF_OFF)
-    then
-      datahdr->sampoff = loadword (p) ;
+        datahdr->prev_offset = 0 ;
+
+    if (datahdr->offset_flag & DHOF_OFF)
+        datahdr->sampoff = loadword (p) ;
     else
-      datahdr->sampoff = 0 ;
-end
+        datahdr->sampoff = 0 ;
+}
 
-void loadsoh (pbyte *p, tsohblk *soh)
-begin
-  integer i ;
+void loadsoh (PU8 *p, tsohblk *soh)
+{
+    int i ;
 
-  soh->gds = (enum tgdsrc)loadbyte (p) ;
-  soh->flags = loadbyte (p) ;
-  soh->spare1 = loadbyte (p) ;
-  soh->blk_size = loadbyte (p) ;
-  soh->gpio1 = loadbyte (p) ; /* General Purpose Input 1 % */
-  soh->gpio2 = loadbyte (p) ; /* General Purpose Input 2 % */
-  soh->pkt_buf = loadbyte (p) ; /* Packet Buffer Percent */
-  soh->humidity = loadbyte (p) ; /* Sensor Humidity % */
-  for (i = 0 ; i < SENSOR_COUNT ; i++)
-    soh->sensor_cur[i] = loadword (p) ;
-  for (i = 0 ; i < BOOM_COUNT ; i++)
-    soh->booms[i] = loadint16 (p) ; /* Booms - 1mv */
-  soh->sys_cur = loadword (p) ; /* System Current - 1ma (100ua) */
-  soh->ant_cur = loadword (p) ; /* GPS antenna current - 100ua */
-  soh->input_volts = loadword (p) ; /* Input Voltage - 10mv (2mv) */
-  soh->sys_temp = loadint16 (p) ; /* System temperature - 0.1C */
-  soh->spare3 = loadlongint (p) ;
-  soh->neg_analog = loadword(p) ;
-  soh->iso_dc = loadword(p) ;
-  soh->vco_control = loadint16(p) ;
-  soh->ups_volts = loadword(p) ;
-  soh->ant_volts = loadword(p) ;
-  soh->spare6 = loadword(p) ;
-  soh->spare4 = loadword(p) ;
-  soh->spare5 = loadword(p) ;
-end
+    soh->gds = (enum tgdsrc)loadbyte (p) ;
+    soh->flags = loadbyte (p) ;
+    soh->spare1 = loadbyte (p) ;
+    soh->blk_size = loadbyte (p) ;
+    soh->gpio1 = loadbyte (p) ; /* General Purpose Input 1 % */
+    soh->gpio2 = loadbyte (p) ; /* General Purpose Input 2 % */
+    soh->pkt_buf = loadbyte (p) ; /* Packet Buffer Percent */
+    soh->humidity = loadbyte (p) ; /* Sensor Humidity % */
 
-void loadeng (pbyte *p, tengblk *eng)
-begin
+    for (i = 0 ; i < SENSOR_COUNT ; i++)
+        soh->sensor_cur[i] = loadword (p) ;
 
-  eng->gds = (enum tgdsrc)loadbyte (p) ;
-  eng->gps_sens = loadbyte (p) ;
-  eng->gps_ctrl = loadbyte (p) ;
-  eng->blk_size = loadbyte (p) ;
-  eng->sensa_dig = loadword (p) ;
-  eng->sensb_dig = loadword (p) ;
-  eng->sens_serial = loadbyte (p) ;
-  eng->misc_io = loadbyte (p) ;
-  eng->dust_io = loadword (p) ;
-  eng->spare = loadlongword (p) ;
-end
+    for (i = 0 ; i < BOOM_COUNT ; i++)
+        soh->booms[i] = loadint16 (p) ; /* Booms - 1mv */
 
-void loadgps (pbyte *p, tgpsblk *gps)
-begin
+    soh->sys_cur = loadword (p) ; /* System Current - 1ma (100ua) */
+    soh->ant_cur = loadword (p) ; /* GPS antenna current - 100ua */
+    soh->input_volts = loadword (p) ; /* Input Voltage - 10mv (2mv) */
+    soh->sys_temp = loadint16 (p) ; /* System temperature - 0.1C */
+    soh->spare3 = loadlongint (p) ;
+    soh->neg_analog = loadword(p) ;
+    soh->iso_dc = loadword(p) ;
+    soh->vco_control = loadint16(p) ;
+    soh->ups_volts = loadword(p) ;
+    soh->ant_volts = loadword(p) ;
+    soh->spare6 = loadword(p) ;
+    soh->spare4 = loadword(p) ;
+    soh->spare5 = loadword(p) ;
+}
 
-  gps->gds = (enum tgdsrc)loadbyte (p) ;
-  gps->sat_used = loadbyte (p) ;
-  gps->fix_type = loadbyte (p) ;
-  gps->blk_size = loadbyte (p) ;
-  gps->lat_udeg = loadlongint (p) ;
-  gps->lon_udeg = loadlongint (p) ;
-  gps->elev_dm = loadlongint (p) ;
-end
+void loadeng (PU8 *p, tengblk *eng)
+{
 
-void loadcalstart (pbyte *p, tcalstart *cals)
-begin
+    eng->gds = (enum tgdsrc)loadbyte (p) ;
+    eng->gps_sens = loadbyte (p) ;
+    eng->gps_ctrl = loadbyte (p) ;
+    eng->blk_size = loadbyte (p) ;
+    eng->sensa_dig = loadword (p) ;
+    eng->sensb_dig = loadword (p) ;
+    eng->sens_serial = loadbyte (p) ;
+    eng->misc_io = loadbyte (p) ;
+    eng->dust_io = loadword (p) ;
+    eng->gps_hal = loadbyte (p) ;
+    eng->gps_state = loadbyte (p) ;
+    eng->spare = loadword (p) ;
+}
 
-  cals->chan = loadbyte (p) ;
-  cals->amplitude = loadbyte (p) ;
-  cals->waveform = loadbyte (p) ;
-  cals->blk_size = loadbyte (p) ;
-  cals->freqdiv = loadword (p) ;
-  cals->duration = loadword (p) ;
-  cals->calbit_map = loadword (p) ;
-  cals->spare = loadword (p) ;
-  cals->settle = loadword (p) ;
-  cals->trailer = loadword (p) ;
-  cals->spare2 = loadlongword (p) ;
-  cals->spare3 = loadlongword (p) ;
-end
+void loadgps (PU8 *p, tgpsblk *gps)
+{
 
-void loadpoc (pbyte *p, tpoc_message *poc)
-begin
+    gps->gds = (enum tgdsrc)loadbyte (p) ;
+    gps->sat_used = loadbyte (p) ;
+    gps->fix_type = loadbyte (p) ;
+    gps->blk_size = loadbyte (p) ;
+    gps->lat_udeg = loadlongint (p) ;
+    gps->lon_udeg = loadlongint (p) ;
+    gps->elev_dm = loadlongint (p) ;
+}
 
-  poc->ptype = loadbyte (p) ;
-  poc->spare1 = loadbyte (p) ;
-  poc->spare2 = loadbyte (p) ;
-  poc->blk_size = loadbyte (p) ; /* Blockette Size */
+void loaddust (PU8 *p, tdustblk *dust)
+{
+    int i, size ;
+    PU8 pb ;
+
+    dust->gds = (enum tgdsrc)loadbyte (p) ;
+    dust->count = loadbyte (p) ;
+    dust->flags_slot = loadbyte (p) ;
+    dust->blk_size = loadbyte (p) ;
+    dust->time = loadlongword (p) ;
+    dust->map = loadlongword (p) ;
+    pb = (PU8)(&(dust->samples)) ;
+    memclr (&(dust->samples), sizeof(I32) * DUST_CHANNELS) ;
+
+    for (i = 0 ; i < DUST_CHANNELS ; i++) {
+        size = (dust->map >> (i * 2)) & 3 ;
+
+        switch (size) {
+        case 1 :
+            dust->samples[i] = loadshortint (p) ;
+            break ;
+
+        case 2 :
+            dust->samples[i] = loadint16 (p) ;
+            break ;
+
+        case 3 :
+            dust->samples[i] = loadlongint (p) ;
+            break ;
+        }
+    }
+}
+
+void loadcalstart (PU8 *p, tcalstart *cals)
+{
+
+    cals->chan = loadbyte (p) ;
+    cals->amplitude = loadbyte (p) ;
+    cals->waveform = loadbyte (p) ;
+    cals->blk_size = loadbyte (p) ;
+    cals->freqdiv = loadword (p) ;
+    cals->duration = loadword (p) ;
+    cals->calbit_map = loadword (p) ;
+    cals->spare = loadword (p) ;
+    cals->settle = loadword (p) ;
+    cals->trailer = loadword (p) ;
+    cals->spare2 = loadlongword (p) ;
+    cals->spare3 = loadlongword (p) ;
+}
+
+void loadpoc (PU8 *p, tpoc_message *poc)
+{
+
+    poc->ptype = loadbyte (p) ;
+    poc->spare1 = loadbyte (p) ;
+    poc->spare2 = loadbyte (p) ;
+    poc->blk_size = loadbyte (p) ; /* Blockette Size */
 #ifdef ENDIAN_LITTLE
-  poc->q660_sn[1] = loadlongword (p) ;
-  poc->q660_sn[0] = loadlongword (p) ;
+    poc->q660_sn[1] = loadlongword (p) ;
+    poc->q660_sn[0] = loadlongword (p) ;
 #else
-  poc->q660_sn[0] = loadlongword (p) ;
-  poc->q660_sn[1] = loadlongword (p) ;
+    poc->q660_sn[0] = loadlongword (p) ;
+    poc->q660_sn[1] = loadlongword (p) ;
 #endif
-  poc->baseport = loadword (p) ; /* Base Port */
-  poc->token = loadword (p) ; /* Registration token */
-end
+    poc->baseport = loadword (p) ; /* Base Port */
+    poc->token = loadword (p) ; /* Registration token */
+}
 
 

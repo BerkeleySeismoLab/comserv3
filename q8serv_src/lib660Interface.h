@@ -9,6 +9,10 @@
 #ifndef __LIB660INTERFACE_H__
 #define __LIB660INTERFACE_H__
 
+#include <iostream>
+#include <map>
+#include <string>
+
 /*
 ** pascal.h and C++ don't get along well (and, or, xor etc... mean something in C++)
 */
@@ -32,7 +36,7 @@ extern "C" {
 #include "ConfigVO.h"
 #include "PacketQueue.h"
 
-#define MAX_MULTICASTCHANNELENTRIES 256
+#define MAX_MULTICASTCHANNELENTRIES	256
 
 typedef struct {
     char channel[4];
@@ -72,7 +76,7 @@ struct onesec_pkt{
 // These variable must be global because they are used in callback routines 
 // called from outside the class, so they cannot be class variables.
 
-EXTERN PacketQueue packetQueue;
+EXTERN PacketQueue *packetQueue;
 EXTERN struct sockaddr_in mcastAddr;
 #ifdef DEFINE_EXTERNAL
 EXTERN int mcastSocketFD = -1;
@@ -81,6 +85,7 @@ EXTERN int mcastSocketFD;
 #endif
 EXTERN char multicastChannelList[256][8];
 
+extern tcontext g_stationContext;	//:: DEBUG
 
 class Lib660Interface {
 public:
@@ -98,13 +103,15 @@ public:
     int processPacketQueue();
     int queueNearFull();
     bool build_multicastChannelList(char *);
-  
+    void log_q8serv_config(ConfigVO ourConfig);
+
     // These functions are static because they are callback routines from lib660.
     static void state_callback(pointer p);
     static void miniseed_callback(pointer p);
     static void archival_miniseed_callback(pointer p);
     static void msg_callback(pointer p);
     static void onesec_callback(pointer p);
+    static void lowlatency_callback(pointer p);
     static void file_callback(pointer p);
     static enum tfilekind translate_file (char *outfile, char *infile, char *prefix, pfile_owner pfo);
 
@@ -112,6 +119,9 @@ public:
     static int num_multicastChannelEntries;
     static multicastChannelEntry multicastChannelList[MAX_MULTICASTCHANNELENTRIES];
     static double timestampOfLastRecord;
+    /* Map and interator for list of lowlatency channels. */
+    static std::map<std::string, int> lowlatencymap;
+    static std::map<std::string,int>::iterator it;
 
 private:
     int sendUserMessage(char *);
@@ -127,7 +137,7 @@ private:
     /* Structures for site-specific info. */
     tfile_owner fowner;
     private_station_info station_info;
-  
+
 };
 
 #endif

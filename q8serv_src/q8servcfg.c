@@ -84,27 +84,27 @@ int GetServerParamsFromStationsIni(struct q8serv_cfg *out_cfg, char *server_name
 	{
 	    break;
 	}
-	if (strcmp(str1,"DIR")==0)
+	if (strcmp(str1, "DIR")==0)
 	{
 	    strcpy(out_cfg->server_dir,str2);
 	    continue;
 	}
-	if (strcmp(str1,"DESC")==0)
+	if (strcmp(str1, "DESC")==0)
 	{
 	    strcpy(out_cfg->server_desc,str2);
 	    continue;
 	}
-	if (strcmp(str1,"SOURCE")==0)
+	if (strcmp(str1, "SOURCE")==0)
 	{
 	    strcpy(out_cfg->server_source,str2);
 	    continue;
 	}
-	if (strcmp(str1,"STATION")==0 || strcmp(str1,"SITE")==0)
+	if (strcmp(str1, "STATION")==0 || strcmp(str1,"SITE")==0)
 	{
 	    strcpy(out_cfg->seed_station,str2);
 	    continue;
 	}
-	if (strcmp(str1,"NETWORK")==0 || strcmp(str1,"NET")==0)
+	if (strcmp(str1, "NETWORK")==0 || strcmp(str1,"NET")==0)
 	{
 	    strcpy(out_cfg->seed_network,str2);
 	    continue;
@@ -117,10 +117,7 @@ int GetServerParamsFromStationsIni(struct q8serv_cfg *out_cfg, char *server_name
 /***********************************************************************
  * GetGlobalParamsFromNetworkIni
  *   Retrieve and return any pertinent global parameters from NETWORK_INI.
- *   Silently ignore any paremters that you are not interested in.
- **********************************************************************/  
-
-int GetGlobalParamsFromNetworkIni(struct q8serv_cfg* out_cfg)
+ *   Silently ignore any paremters that you are not interested int GetGlobalParamsFromNetworkIni(struct q8serv_cfg* out_cfg)
 {
     config_struc network_cfg;           /* structure for config file op */
     char str1[CFGWIDTH], str2[CFGWIDTH];
@@ -142,6 +139,7 @@ int GetGlobalParamsFromNetworkIni(struct q8serv_cfg* out_cfg)
 	{
 	    break;
 	}
+	/* Possible global parameters for this server. */
 	if (strcmp(str1, "LOGDIR") == 0)
 	{
 	    strcpy(out_cfg->logdir, str2);
@@ -157,14 +155,24 @@ int GetGlobalParamsFromNetworkIni(struct q8serv_cfg* out_cfg)
 	    strcpy(out_cfg->contFileDir, str2);
 	    continue;
 	}
-	if (strcmp(str1, "STATUSINTERVAL") == 0)
-	{
-	    strcpy(out_cfg->statusinterval, str2) ;
-	    continue;
-	}
 	if (strcmp(str1, "VERBOSITY") == 0)
 	{
 	    strcpy(out_cfg->verbosity, str2) ;
+	    continue;
+	}
+	if (strcmp(str1, "DIAGNOSTIC") == 0)
+	{
+	    strcpy(out_cfg->diagnostic, str2) ;
+	    continue;
+	}
+	if (strcmp(str1, "LOGLEVEL") == 0)
+	{
+	    strcpy(out_cfg->loglevel, str2);
+	    continue;
+	}
+	if (strcmp(str1, "STATUSINTERVAL") == 0)
+	{
+	    strcpy(out_cfg->statusinterval, str2) ;
 	    continue;
 	}
 	if (strcmp(str1, "WAITFORCLIENTS") == 0)
@@ -172,14 +180,14 @@ int GetGlobalParamsFromNetworkIni(struct q8serv_cfg* out_cfg)
 	    strcpy(out_cfg->waitForClients, str2) ;
 	    continue;
 	}
+	if (strcmp(str1, "PACKETQUEUESIZE") == 0)
+	{
+	    strcpy(out_cfg->packetQueueSize, str2) ;
+	    continue;
+	}
 	if (strcmp(str1, "MULTICASTENABLED") == 0)
 	{
 	    strcpy(out_cfg->multicastEnabled, str2);
-	    continue;
-	}
-	if (strcmp(str1, "MULTICASTPORT") == 0)
-	{
-            strcpy(out_cfg->multicastPort, str2);
 	    continue;
 	}
 	if (strcmp(str1, "MULTICASTHOST") == 0)
@@ -192,6 +200,61 @@ int GetGlobalParamsFromNetworkIni(struct q8serv_cfg* out_cfg)
 	    strcpy(out_cfg->multicastChannelList, str2);
 	    continue;
 	}
+	if (strcmp(str1, "FAILEDREGISTRATIONSBEFORESLEEP") == 0)
+	{
+	    strcpy(out_cfg->failedRegistrationsBeforeSleep, str2);
+	    continue;
+	}
+	if (strcmp(str1, "MINUTESTOSLEEPBEFORERETRY") == 0)
+	{
+	    strcpy(out_cfg->minutesToSleepBeforeRetry, str2);
+	    continue;
+	}
+	if (strcmp(str1, "DUTYCYCLE_MAXCONNECTTIME") == 0)
+	{
+	    strcpy(out_cfg->dutycycle_maxConnectTime, str2);
+	    continue;
+	}
+	if (strcmp(str1, "DUTYCYCLE_SLEEPTIME") == 0)
+	{
+	    strcpy(out_cfg->dutycycle_sleepTime, str2);
+	    continue;
+	}
+	if (strcmp(str1, "LIMITBACKFILL") == 0)
+	{
+	    strcpy(out_cfg->limitBackfill, str2) ;
+	    continue;
+	}
+	if (strcmp(str1, "OPTTHROTTLEKBITPERSEC") == 0)
+	{
+	    strcpy(out_cfg->opt_throttle_kbitpersec, str2);
+	    continue;
+	}
+	if (strcmp(str1, "OPTBWFILLKBITTARGET") == 0)
+	{
+	    strcpy(out_cfg->opt_bwfill_kbit_target, str2);
+	    continue;
+	}
+	if (strcmp(str1, "OPTBWFILLPROBEINTERVAL") == 0)
+	{
+	    strcpy(out_cfg->opt_bwfill_probe_interval, str2);
+	    continue;
+	}
+	if (strcmp(str1, "OPTBWFILLEXCEEDTRIGGER") == 0)
+	{
+	    strcpy(out_cfg->opt_bwfill_exceed_trigger, str2);
+	    continue;
+	}
+	if (strcmp(str1, "OPTBWFILLINCREASEINTERVAL") == 0)
+	{
+	    strcpy(out_cfg->opt_bwfill_increase_interval, str2);
+	    continue;
+	}
+	if (strcmp(str1, "OPTBWFILLMAXLATENCY") == 0)
+	{
+	    strcpy(out_cfg->opt_bwfill_max_latency, str2);
+	    continue;
+	}
     }
     close_cfg(&network_cfg);
     return QSERV_SUCCESS;
@@ -200,7 +263,7 @@ int GetGlobalParamsFromNetworkIni(struct q8serv_cfg* out_cfg)
 /***********************************************************************
  * GetServerParamsFromStationIni
  *	Retrieve server and program specific parameters from STATION_INI.
- *   Silently ignore any paremters that you are not interested in.
+ *   Silently ignore any parameters that you are not interested in.
  **********************************************************************/  
 int GetServerParamsFromStationIni(struct q8serv_cfg* out_cfg, char *section_name)
 {
@@ -218,13 +281,14 @@ int GetServerParamsFromStationIni(struct q8serv_cfg* out_cfg, char *section_name
     }
 
     /* Now with file open, scan for program/server info */
-    while (1) {
+    while (1)
+    {
 	read_cfg(&cfg, str1, str2) ;
 	if (str1[0] == '\0')
 	{
 	    break ;
 	}
-	/* Possible global parameters. */
+	/* Possible global parameters for this server. */
 	if (strcmp(str1, "LOGDIR") == 0)
 	{
 	    strcpy(out_cfg->logdir, str2);
@@ -240,6 +304,21 @@ int GetServerParamsFromStationIni(struct q8serv_cfg* out_cfg, char *section_name
 	    strcpy(out_cfg->contFileDir, str2);
 	    continue;
 	}
+	if (strcmp(str1, "VERBOSITY") == 0)
+	{
+	    strcpy(out_cfg->verbosity, str2) ;
+	    continue;
+	}
+	if (strcmp(str1, "DIAGNOSTIC") == 0)
+	{
+	    strcpy(out_cfg->diagnostic, str2) ;
+	    continue;
+	}
+	if (strcmp(str1, "LOGLEVEL") == 0)
+	{
+	    strcpy(out_cfg->loglevel, str2);
+	    continue;
+	}
 	if (strcmp(str1, "STATUSINTERVAL") == 0)
 	{
 	    strcpy(out_cfg->statusinterval, str2) ;
@@ -250,10 +329,90 @@ int GetServerParamsFromStationIni(struct q8serv_cfg* out_cfg, char *section_name
 	    strcpy(out_cfg->waitForClients, str2) ;
 	    continue;
 	}
-	/* Server/program specific parameters. */
-	if (strcmp(str1, "UDPADDR") == 0)
+	if (strcmp(str1, "PACKETQUEUESIZE") == 0)
 	{
-	    strcpy(out_cfg->udpaddr, str2) ;
+	    strcpy(out_cfg->packetQueueSize, str2) ;
+	    continue;
+	}
+	if (strcmp(str1, "MULTICASTENABLED") == 0)
+	{
+	    strcpy(out_cfg->multicastEnabled, str2);
+	    continue;
+	}
+	if (strcmp(str1, "MULTICASTHOST") == 0)
+	{
+	    strcpy(out_cfg->multicastHost, str2);
+	    continue;
+	}
+	if (strcmp(str1, "MULTICASTCHANNELLIST") == 0)
+	{
+	    strcpy(out_cfg->multicastChannelList, str2);
+	    continue;
+	}
+	if (strcmp(str1, "FAILEDREGISTRATIONSBEFORESLEEP") == 0)
+	{
+	    strcpy(out_cfg->failedRegistrationsBeforeSleep, str2);
+	    continue;
+	}
+	if (strcmp(str1, "MINUTESTOSLEEPBEFORERETRY") == 0)
+	{
+	    strcpy(out_cfg->minutesToSleepBeforeRetry, str2);
+	    continue;
+	}
+	if (strcmp(str1, "DUTYCYCLE_MAXCONNECTTIME") == 0)
+	{
+	    strcpy(out_cfg->dutycycle_maxConnectTime, str2);
+	    continue;
+	}
+	if (strcmp(str1, "DUTYCYCLE_SLEEPTIME") == 0)
+	{
+	    strcpy(out_cfg->dutycycle_sleepTime, str2);
+	    continue;
+	}
+	if (strcmp(str1, "LIMITBACKFILL") == 0)
+	{
+	    strcpy(out_cfg->limitBackfill, str2) ;
+	    continue;
+	}
+	if (strcmp(str1, "OPTTHROTTLEKBITPERSEC") == 0)
+	{
+	    strcpy(out_cfg->opt_throttle_kbitpersec, str2);
+	    continue;
+	}
+	if (strcmp(str1, "OPTBWFILLKBITTARGET") == 0)
+	{
+	    strcpy(out_cfg->opt_bwfill_kbit_target, str2);
+	    continue;
+	}
+	if (strcmp(str1, "OPTBWFILLPROBEINTERVAL") == 0)
+	{
+	    strcpy(out_cfg->opt_bwfill_probe_interval, str2);
+	    continue;
+	}
+	if (strcmp(str1, "OPTBWFILLEXCEEDTRIGGER") == 0)
+	{
+	    strcpy(out_cfg->opt_bwfill_exceed_trigger, str2);
+	    continue;
+	}
+	if (strcmp(str1, "OPTBWFILLINCREASEINTERVAL") == 0)
+	{
+	    strcpy(out_cfg->opt_bwfill_increase_interval, str2);
+	    continue;
+	}
+	if (strcmp(str1, "OPTBWFILLMAXLATENCY") == 0)
+	{
+	    strcpy(out_cfg->opt_bwfill_max_latency, str2);
+	    continue;
+	}
+	/* Server/program specific parameters. */
+	if (strcmp(str1, "TCPADDR") == 0)
+	{
+	    strcpy(out_cfg->tcpaddr, str2) ;
+	    continue;
+	}
+	if (strcmp(str1, "UDPADDR") == 0)	/* Alias for q8serv TCPADDR */
+	{
+	    strcpy(out_cfg->tcpaddr, str2) ;
 	    continue;
 	}
 	if (strcmp(str1, "BASEPORT") == 0)
@@ -286,64 +445,9 @@ int GetServerParamsFromStationIni(struct q8serv_cfg* out_cfg, char *section_name
 	    strcpy(out_cfg->startmsg, str2) ;
 	    continue;
 	}
-	if (strcmp(str1, "VERBOSITY") == 0)
-	{
-	    strcpy(out_cfg->verbosity, str2) ;
-	    continue;
-	}
-	if (strcmp(str1, "DIAGNOSTIC") == 0)
-	{
-	    strcpy(out_cfg->diagnostic, str2) ;
-	    continue;
-	}
-	if (strcmp(str1, "LOGLEVEL") == 0)
-	{
-	    strcpy(out_cfg->loglevel, str2);
-	    continue;
-	}
-	if (strcmp(str1, "FAILEDREGISTRATIONSBEFORESLEEP") == 0)
-	{
-	    strcpy(out_cfg->failedRegistrationsBeforeSleep, str2);
-	    continue;
-	}
-	if (strcmp(str1, "MINUTESTOSLEEPBEFORERETRY") == 0)
-	{
-	    strcpy(out_cfg->minutesToSleepBeforeRetry, str2);
-	    continue;
-	}
-	if (strcmp(str1, "DUTYCYCLE_MAXCONNECTTIME") == 0)
-	{
-	    strcpy(out_cfg->dutycycle_maxConnectTime, str2);
-	    continue;
-	}
-	if (strcmp(str1, "DUTYCYCLE_SLEEPTIME") == 0)
-	{
-	    strcpy(out_cfg->dutycycle_sleepTime, str2);
-	    continue;
-	}
-	if (strcmp(str1, "MULTICASTENABLED") == 0)
-	{
-	    strcpy(out_cfg->multicastEnabled, str2);
-	    continue;
-	}
 	if (strcmp(str1, "MULTICASTPORT") == 0)
 	{
 	    strcpy(out_cfg->multicastPort, str2);
-	    continue;
-	}
-	if (strcmp(str1, "MULTICASTHOST") == 0)
-	{
-	    strcpy(out_cfg->multicastHost, str2);
-	    continue;
-	}
-	if (strcmp(str1, "MULTICASTCHANNELLIST") == 0)
-	{
-	    strcpy(out_cfg->multicastChannelList, str2);
-	    continue;
-	}
-	if (strcmp(str1, "LIMITBACKFILL") == 0)
-	{
-	    strcpy(out_cfg->limitBackfill, str2) ;
 	    continue;
 	}
     }

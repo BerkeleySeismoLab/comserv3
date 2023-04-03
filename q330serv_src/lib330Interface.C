@@ -23,10 +23,13 @@
 #include "lib330Interface.h"
 #include "portingtools.h"
 
-// #define DEBUG_Lib330Interface
+//: #define DEBUG_Lib330Interface
+//: #define DEBUG_MULTICAST
+//: #define DEBUG_PQUEUE
 
-static int throttle_free_packet_threshold = 0.5 * PACKETQUEUE_QUEUE_SIZE;
-static int min_free_packet_threshold = 0.1 * PACKETQUEUE_QUEUE_SIZE;
+static int throttle_free_packet_threshold;
+static int unthrottle_free_packet_threshold;
+static int min_free_packet_threshold;
 
 // Static variables from Lib330Interface needed in static callback functions.
 double Lib330Interface::timestampOfLastRecord = 0;
@@ -64,6 +67,11 @@ Lib330Interface::Lib330Interface(char *stationName, ConfigVO ourConfig) {
     g_log << std::endl;
     g_log << "+++ Initializing station thread" << std::endl;
 
+
+    g_log << "+++ IP info:" << std::endl;  
+    g_log << "+++ IP Addr:" << this->registrationInfo.q330id_address << std::endl;
+    log_q330serv_config(ourConfig);
+
     if(ourConfig.getMulticastEnabled()) {
 	g_log << "+++ Multicast Enabled:" << std::endl;
 	if( (mcastSocketFD = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0) {
@@ -84,6 +92,16 @@ Lib330Interface::Lib330Interface(char *stationName, ConfigVO ourConfig) {
 		(char *)multicastChannelList[i].location << std::endl;
 	}
     }
+
+    // Allocate intermediate PacketQueue.
+    int npackets = ourConfig.getPacketQueueSize();
+    if (npackets <= 0) npackets = DEFAULT_PACKETQUEUE_QUEUE_SIZE;
+    packetQueue = new PacketQueue(npackets);
+
+    // Set thresholds for the intermediate PacketQueue.
+    throttle_free_packet_threshold = (0.2 * npackets);
+    unthrottle_free_packet_threshold = (0.8 * npackets);
+    min_free_packet_threshold = (0.1 * npackets);
 
     lib_create_context(&(this->stationContext), &(this->creationInfo));
     if(this->creationInfo.resp_err == LIBERR_NOERR) {
@@ -243,9 +261,45 @@ enum tlibstate Lib330Interface::getLibState() {
     return this->currentLibState;
 }
 
+void Lib330Interface::log_q330serv_config(ConfigVO ourConfig) {
+    g_log << "+++ Config info:" << std::endl;
+    g_log << "+++   ServerName =                     " << ourConfig.getServerName() << std::endl;
+    g_log << "+++   ServerDesc =                     " << ourConfig.getServerDesc() << std::endl;
+    g_log << "+++   ServerDir =                      " << ourConfig.getServerDir() << std::endl;
+    g_log << "+++   ServerSource =                   " << ourConfig.getServerSource() << std::endl;
+    g_log << "+++   SeedStation =                    " << ourConfig.getSeedStation() << std::endl;
+    g_log << "+++   SeedNetwork =                    " << ourConfig.getSeedNetwork() << std::endl;
+    g_log << "+++   LogDir =                         " << ourConfig.getLogDir() << std::endl;
+    g_log << "+++   LogType =                        " << ourConfig.getLogType() << std::endl;
+    g_log << "+++   Q330UdpAddr =                    " << ourConfig.getQ330UdpAddr() << std::endl;
+    g_log << "+++   Q330BasePort =                   " << ourConfig.getQ330BasePort() << std::endl;
+    g_log << "+++   Q330DataPort =                   " << ourConfig.getQ330DataPortNumber() << std::endl;
+    g_log << "+++   Q330SerialNumber =               " << ourConfig.getQ330SerialNumber() << std::endl;
+    g_log << "+++   Q330Authcode =                   " << ourConfig.getQ330AuthCode() << std::endl;
+    g_log << "+++   LockFile =                       " << ourConfig.getLockFile() << std::endl;
+    g_log << "+++   StartMsg =                       " << ourConfig.getStartMsg() << std::endl;
+    g_log << "+++   StatusInterval =                 " << ourConfig.getStatusInterval() << std::endl;
+    g_log << "+++   Verbosity =                      " << ourConfig.getVerbosity() << std::endl;
+    g_log << "+++   Diagnostic =                     " << ourConfig.getDiagnostic() << std::endl;
+    g_log << "+++   LogLevel =                       " << ourConfig.getLogLevel() << std::endl;
+    g_log << "+++   FailedRegistrationsBeforeSleep = " << ourConfig.getFailedRegistrationsBeforeSleep() << std::endl;
+    g_log << "+++   MinutesToSleepBeforeRetry =      " << ourConfig.getMinutesToSleepBeforeRetry() << std::endl;
+    g_log << "+++   DutyCycle_MaxConnectTime =       " << ourConfig.getDutyCycle_MaxConnectTime() << std::endl;
+    g_log << "+++   DutyCycle_SleepTime =            " << ourConfig.getDutyCycle_SleepTime() << std::endl;
+    g_log << "+++   MulticastEnabled =               " << ourConfig.getMulticastEnabled() << std::endl;
+    g_log << "+++   MulticastPort =                  " << ourConfig.getMulticastPort() << std::endl;
+    g_log << "+++   MulticastHost =                  " << ourConfig.getMulticastHost() << std::endl;
+    g_log << "+++   MulticastChannelList =           " << ourConfig.getMulticastChannelList() << std::endl;
+    g_log << "+++   ContFileDir =                    " << ourConfig.getContFileDir() << std::endl;
+    g_log << "+++   WaitForClients =                 " << ourConfig.getWaitForClients() << std::endl;
+    g_log << "+++   PacketQueueSize =                " << ourConfig.getPacketQueueSize() << std::endl;
+}
+
 /***********************************************************************
  *
- * lib330 callbacks
+ * lib330 callbacks and associated routines.
+ * Since they are callback routines, they are all static, and cannot
+ * access non-static class variables.
  *
  ***********************************************************************/
 
@@ -368,7 +422,7 @@ void Lib330Interface::miniseed_callback(pointer p) {
     }
 
     // Put the packet in the intermediate packet queue.
-    packetQueue.enqueuePacket((char *)data->data_address, data->data_size, packetType);
+    packetQueue->enqueuePacket((char *)data->data_address, data->data_size, packetType);
 
     // Throttle (delay) for up to 1 second if we are in danger of filling the packet queue.
     // Since this function is called from the lib330 thread, this should help
@@ -376,23 +430,22 @@ void Lib330Interface::miniseed_callback(pointer p) {
     // We rely on the main thread to dequeue the packets into the comserv buffers.
     struct timespec t;
     t.tv_sec = 0;
-    t.tv_nsec = 250000000;
-    for(int i=0; i < 4; i++) {
-	int nfree = packetQueue.numFree();
-	if (nfree < throttle_free_packet_threshold) {
-	    if (! throttling) {
-		g_log << "XXX Limited space in intermediate queue. Start delay in miniseed_callback" << std::endl;
-		++throttling;
-	    }
-	    nanosleep(&t, NULL);
+    t.tv_nsec = 100000000;
+    for(int i = 0; i < 10; i++) {
+	int nfree = packetQueue->numFree();
+#ifdef DEBUG_PQUEUE
+	g_log << "--- nfree in pq = " << nfree << std::endl;
+#endif
+	if ((! throttling) && (nfree < throttle_free_packet_threshold)) {
+	    g_log << "XXX Start delay in miniseed_callback. Intermediate PacketQueue nfree = " << nfree << std::endl;
+	    ++throttling;
 	}
-	else {
-	    if (throttling) {
-		g_log << "XXX End delay in miniseed_callback" << std::endl;
-		throttling = 0;
-	    }
-	    break;
+	if ((throttling) && (nfree >= unthrottle_free_packet_threshold)) {
+	    g_log << "--- End delay in miniseed_callback. Intermediate PacketQuue nfree = " << nfree << std::endl;
+	    throttling = 0;
 	}
+	if (! throttling) break;
+	nanosleep(&t, NULL);
     }
 }
 
@@ -404,7 +457,7 @@ void Lib330Interface::miniseed_callback(pointer p) {
  * Return: 1 if true , 0 if false.
  ***********************************************************************/
 int Lib330Interface::queueNearFull() {
-    int nearFull = (packetQueue.numFree() < min_free_packet_threshold);
+    int nearFull = (packetQueue->numFree() < min_free_packet_threshold);
     return nearFull;
 }
 
@@ -423,11 +476,11 @@ int Lib330Interface::processPacketQueue() {
     // We do not want to dequeue a packet unless we are guaranteed that
     // there is room in the comserv packet queues to accept it.
     // Otherwise, we risk losing the packet.
-    while (packetQueue.numQueued() > 0) {
+    while (packetQueue->numQueued() > 0) {
 	if(comserv_anyQueueBlocking()) {
 	    return 0;
 	}
-	QueuedPacket thisPacket = packetQueue.dequeuePacket();
+	QueuedPacket thisPacket = packetQueue->dequeuePacket();
 	if (thisPacket.dataSize != 0) {
 	    sendFailed = comserv_queue((char *)thisPacket.data, thisPacket.dataSize, thisPacket.packetType);
 	    if(sendFailed) {

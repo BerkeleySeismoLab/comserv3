@@ -255,33 +255,63 @@ pchar localtime_string (double jul)
     return time_string (jul) ;
 }
 #else
+
+#define DATE_FORMAT	 "%04d-%02d-%02d"
+#define TIME_FORMAT	 "%02d:%02d:%02d.%06d"
+#define DATETIME_FORMAT DATE_FORMAT "T" TIME_FORMAT
+
 /* return pointer to static string that contains ascii version of time */
 pchar localtime_string (double jul)
 {
-    time_t seconds ;
-    int32_t usecs ;
-    static char tmp2[32] ;
-    char tmp[26], tmp3[10] ;
+    struct tm tm_now;
+    struct timeval tv;
+    
+    static char datetime[80] ;
 
-    seconds = jul ;
-    usecs = (jul - seconds) * 1000000.0 + 0.5 ;
-    if (usecs < 0)
-	usecs = 0 ;
-    if (usecs > 999999)
-	usecs = 999999 ;
-    strcpy(tmp, (pchar) asctime(localtime((time_t *)&seconds))) ; /* convert julian to local time string */
-    strncpy(tmp2, &tmp[11], 8) ; /* pick out time */
-    tmp2[8] = '\0' ;
-    sprintf(tmp3, "%-8d", usecs + 1000000) ; /* convert usecs to string */
-    strcat(tmp2, ".") ; /* separator */
-    strcat(tmp2, &tmp3[1]) ; /* merge time and usecs */
-    strncat(tmp2, tmp, 11) ; /* get day of week, month, and day */
-    tmp2[27] = '\0' ;
-    strncat(tmp2, &tmp[20], 4) ; /* add on year */
-    tmp2[31] = '\0' ;
-    return (pchar) &tmp2 ;
+    tv.tv_sec = jul ;
+    tv.tv_usec = (jul - tv.tv_sec) * 1000000.0 + 0.5 ;
+
+    gmtime_r (&tv.tv_sec, &tm_now);
+
+    if (tv.tv_usec < 0)
+	tv.tv_usec = 0 ;
+    if (tv.tv_usec > 999999)
+	tv.tv_usec = 999999 ;
+
+    sprintf (datetime, DATETIME_FORMAT, 
+	     tm_now.tm_year + 1900, tm_now.tm_mon+1, tm_now.tm_mday,
+	     tm_now.tm_hour, tm_now.tm_min, tm_now.tm_sec, (int)tv.tv_usec);
+    return ((pchar)datetime);
 }
 #endif
+
+/* return pointer to static string that contains ascii version of time */
+//:  Original localtime_string
+//: pchar localtime_string (double jul)
+//: {
+//:     time_t seconds ;
+//:     int32_t usecs ;
+//:     static char tmp2[32] ;
+//:     char tmp[26], tmp3[10] ;
+//: 
+//:     seconds = jul ;
+//:     usecs = (jul - seconds) * 1000000.0 + 0.5 ;
+//:     if (usecs < 0)
+//: 	usecs = 0 ;
+//:     if (usecs > 999999)
+//: 	usecs = 999999 ;
+//:     strcpy(tmp, (pchar) asctime(localtime((time_t *)&seconds))) ; /* convert julian to local time string */
+//:     strncpy(tmp2, &tmp[11], 8) ; /* pick out time */
+//:     tmp2[8] = '\0' ;
+//:     sprintf(tmp3, "%-8d", usecs + 1000000) ; /* convert usecs to string */
+//:     strcat(tmp2, ".") ; /* separator */
+//:     strcat(tmp2, &tmp3[1]) ; /* merge time and usecs */
+//:     strncat(tmp2, tmp, 11) ; /* get day of week, month, and day */
+//:     tmp2[27] = '\0' ;
+//:     strncat(tmp2, &tmp[20], 4) ; /* add on year */
+//:     tmp2[31] = '\0' ;
+//:     return (pchar) &tmp2 ;
+//: }
     
 /* Get seconds since 1970 given the year and julian day */
 int32_t jconv (short yr, short jday)

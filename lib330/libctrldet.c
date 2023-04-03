@@ -353,7 +353,7 @@ begin
                   strcat(s, " On") ;
                 else
                   strcat(s, " Off") ;
-                libdatamsg(q330, LIBMSG_CTRLDET, (pointer)addr(s)) ;
+              libdatamsg(q330, LIBMSG_CTRLDET, (pointer)addr(s)) ;
             end
       end
   q->ctrl->wason = q->ctrl->ison ; /* new current state */

@@ -61,6 +61,7 @@ ConfigVO::ConfigVO(mserv_cfg cfg) {
     setLogLevel(cfg.loglevel);
     setContFileDir(cfg.contFileDir);
     setWaitForClients(cfg.waitForClients);
+    setPacketQueueSize(cfg.packetQueueSize);
 
     p_configured = true;
 }
@@ -87,6 +88,7 @@ ConfigVO::ConfigVO()
     p_logLevel = 0;
     memset(p_contFileDir, 0, sizeof(p_contFileDir));
     p_waitForClients = 0;
+    p_packetQueueSize = DEFAULT_PACKETQUEUE_QUEUE_SIZE;
 
     p_configured = false;
 }
@@ -188,6 +190,10 @@ char* ConfigVO::getContFileDir() const
 
 uint32_t ConfigVO::getWaitForClients() const {
     return p_waitForClients;
+}
+
+uint32_t ConfigVO::getPacketQueueSize() const {
+    return p_packetQueueSize;
 }
 
 //**********************************************************************
@@ -396,6 +402,20 @@ void ConfigVO::setWaitForClients(char* input)
     }
 }
 
+void ConfigVO::setPacketQueueSize(char* input)
+{
+    if(!strcmp(input, "") || !strcmp(input, "0")) {
+	p_packetQueueSize = DEFAULT_PACKETQUEUE_QUEUE_SIZE;
+	return;
+    }
+    p_packetQueueSize = atoi(input);
+    if (p_packetQueueSize <= 0)
+    {
+	g_log << "xxx Error converting input to Q660 packetQueueSize number : " << input << std::endl;
+	p_packetQueueSize = 0;
+    }
+}
+
 //**********************************************************************
 
 //
@@ -425,3 +445,14 @@ void ConfigVO::setLogLevel(uint32_t a)
 {
     p_diagnostic = a;
 }
+
+void ConfigVO::setWaitForClients(uint32_t a) 
+{
+    p_waitForClients = a;
+}
+
+void ConfigVO::setPacketQueueSize(uint32_t a) 
+{
+    p_packetQueueSize = a;
+}
+

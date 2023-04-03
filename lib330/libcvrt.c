@@ -102,14 +102,14 @@ void storestring (pbyte *p, integer fieldwidth, string *s)
 begin
   integer lth ;
 
-lth = strlen((char *)s) + 1 ;
+  lth = strlen((char *)s) + 1 ;
   if (lth > fieldwidth)
     then
       begin
         lth = fieldwidth ;
         (*s)[lth - 1] = 0 ; /* shorten too long string */
       end
-      lib330_strpas ((pchar) *p, (pchar)s) ;
+  lib330_strpas ((pchar) *p, (pchar)s) ;
   incn(*p, lth) ;
   if (fieldwidth > lth)
     then

@@ -26,17 +26,23 @@
 #include "lib660Interface.h"
 #include "portingtools.h"
 
+#define MAXWAITLIBSHUTDOWN      10
+
 //: #define DEBUG_Lib660Interface
 //: #define DEBUG_MULTICAST
 //: #define DEBUG_FILE_CALLBACK	1
+//: #define DEBUG_PQUEUE
 
-static int throttle_free_packet_threshold = 0.5 * PACKETQUEUE_QUEUE_SIZE;
-static int min_free_packet_threshold = 0.1 * PACKETQUEUE_QUEUE_SIZE;
+static int throttle_free_packet_threshold;
+static int unthrottle_free_packet_threshold;
+static int min_free_packet_threshold;
 
 // Static variables from Lib660Interface needed in static callback functions.
 double Lib660Interface::timestampOfLastRecord = 0;
 int Lib660Interface::num_multicastChannelEntries = 0;
 multicastChannelEntry Lib660Interface::multicastChannelList[MAX_MULTICASTCHANNELENTRIES];
+std::map<std::string, int> Lib660Interface::lowlatencymap;
+std::map<std::string,int>::iterator Lib660Interface::it;
 
 
 Lib660Interface::Lib660Interface(char *stationName, ConfigVO ourConfig) {
@@ -71,7 +77,7 @@ Lib660Interface::Lib660Interface(char *stationName, ConfigVO ourConfig) {
 
     g_log << "+++ IP info:" << std::endl;  
     g_log << "+++ IP Addr:" << this->registrationInfo.q660id_address << std::endl;
-
+    log_q8serv_config(ourConfig);
     if(ourConfig.getMulticastEnabled()) {
 	g_log << "+++ Multicast Enabled:" << std::endl;
 	if( (mcastSocketFD = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0) {
@@ -94,9 +100,33 @@ Lib660Interface::Lib660Interface(char *stationName, ConfigVO ourConfig) {
 	}
     }
 
+    // Allocate intermediate PacketQueue if needed.  
+    // Reuse existing PacketQueue if one was previously created.
+    int npackets = ourConfig.getPacketQueueSize();
+    if (npackets <= 0) npackets = DEFAULT_PACKETQUEUE_QUEUE_SIZE;
+    if (g_packetQueue == NULL) {
+	packetQueue = new PacketQueue(npackets);
+	g_packetQueue = packetQueue;
+	if (g_packetQueue != NULL) {
+	    g_log << "+++ Created intermediate PacketQueue of " << npackets << " packets"<< std::endl;
+	}
+	else {
+	    g_log << "+++ ERROR - unable to created intermediate PacketQueue of " << npackets << " packets"<< std::endl;
+	}
+    }
+    else {
+	g_log << "+++ Using existing intermediate PacketQueue of " << npackets << " packets"<< std::endl;
+    }
+
+    // Set thresholds for the intermediate PacketQueue.
+    throttle_free_packet_threshold = (0.2 * npackets);
+    unthrottle_free_packet_threshold = (0.8 * npackets);
+    min_free_packet_threshold = (0.1 * npackets);
+
     lib_create_context(&(this->stationContext), &(this->creationInfo));
     if(this->creationInfo.resp_err == LIBERR_NOERR) {
-	g_log << "+++ Station thread created" << std::endl;
+	g_log << "+++ Station context created: address is " << (void *)this->stationContext << std::endl;
+	g_stationContext = this->stationContext;	//:: DEBUG
     } else {
 	this->handleError(creationInfo.resp_err);
     }
@@ -105,15 +135,46 @@ Lib660Interface::Lib660Interface(char *stationName, ConfigVO ourConfig) {
 
 Lib660Interface::~Lib660Interface() {
     enum tliberr errcode;
+    topstat opstat;
+    int countdown;
+
     g_log << "+++ Cleaning up lib660 Interface" << std::endl;
+
+    // Stop the thread.
     this->startDeregistration();
-    while(this->getLibState() != LIBSTATE_IDLE) {
+    countdown = MAXWAITLIBSHUTDOWN;
+
+    while(this->stationContext && countdown--) {
+	this->currentLibState = lib_get_state(this->stationContext, &errcode, &opstat);
+	// wait for IDLE state
+	if (errcode == LIBERR_INVCTX) {
+	    // library already closed somehow
+	    break;
+	}
+	if (this->currentLibState == LIBSTATE_IDLE || this->currentLibState == LIBSTATE_TERM) {
+	    // proceed to TERM
+	    break;
+	}
 	sleep(1);
     }
+
     this->changeState(LIBSTATE_TERM, LIBERR_CLOSED);
-    while(getLibState() != LIBSTATE_TERM) {
+    countdown = MAXWAITLIBSHUTDOWN;
+
+    while (this->stationContext && countdown--) {
+	// wait for TERM state
+	this->currentLibState = lib_get_state(this->stationContext, &errcode, &opstat);
+	if (errcode == LIBERR_INVCTX) {
+	    // library already closed somehow
+	    break;
+	}
+	if (this->currentLibState == LIBSTATE_TERM) {
+	    // proceed to shutdown
+	    break;
+	}
 	sleep(1);
     }
+
     if (mcastSocketFD >= 0) {
 	g_log << "+++ Multicast socket close" << std::endl;
 	int err = close(mcastSocketFD);
@@ -124,6 +185,7 @@ Lib660Interface::~Lib660Interface() {
     if(errcode != LIBERR_NOERR) {
 	this->handleError(errcode);
     }
+    g_stationContext = NULL;	//:: DEBUG
     g_log << "+++ lib660 Interface destroyed" << std::endl;
 }
 
@@ -132,10 +194,10 @@ void Lib660Interface::initializeRegistrationInfo(ConfigVO ourConfig) {
     // First zero the registrationInfo structure.
     memset (&this->registrationInfo, 0, sizeof(this->registrationInfo));
     strcpy(this->registrationInfo.q660id_pass, ourConfig.getQ660Password());
-    strcpy(this->registrationInfo.q660id_address, ourConfig.getQ660UdpAddr());
+    strcpy(this->registrationInfo.q660id_address, ourConfig.getQ660TcpAddr());
     this->registrationInfo.q660id_baseport = ourConfig.getQ660BasePort();
     /* Start of new items in lib660.  Possibly configurable items or change. */
-    this->registrationInfo.low_lat = FALSE;
+    this->registrationInfo.spare1 = FALSE;
     this->registrationInfo.prefer_ipv4 = TRUE;
     this->registrationInfo.start_newer = TRUE;
     /* End of new items in lib660.  Possibly configurable items. */
@@ -151,8 +213,15 @@ void Lib660Interface::initializeRegistrationInfo(ConfigVO ourConfig) {
     this->registrationInfo.opt_token = 0;
     this->registrationInfo.opt_start = OST_LAST;	//:: DSN -  Make configurable?
     this->registrationInfo.opt_end = 0;
+    this->registrationInfo.opt_client_mode = LMODE_BSL;
     this->registrationInfo.opt_limit_last_backfill = ourConfig.getLimitBackfill();
-    this->registrationInfo.opt_lookback[0] = '\0';
+    // Bandwidth control
+    this->registrationInfo.opt_throttle_kbitpersec = ourConfig.getOptThrottleKbitpersec();
+    this->registrationInfo.opt_bwfill_kbit_target = ourConfig.getOptBwfillKbitTarget();
+    this->registrationInfo.opt_bwfill_probe_interval = ourConfig.getOptBwfillProbeInterval();
+    this->registrationInfo.opt_bwfill_exceed_trigger = ourConfig.getOptBwfillExceedTrigger();
+    this->registrationInfo.opt_bwfill_increase_interval = ourConfig.getOptBwfillIncreaseInterval();
+    this->registrationInfo.opt_bwfill_max_latency = ourConfig.getOptBwfillMaxLatency();
 }
 
 
@@ -196,10 +265,11 @@ void Lib660Interface::initializeCreationInfo(char *stationName, ConfigVO ourConf
     this->creationInfo.call_messages = this->msg_callback;
     if(ourConfig.getMulticastEnabled()) {
 	this->creationInfo.call_secdata = this->onesec_callback;
+	this->creationInfo.call_lowlatency = this->lowlatency_callback;
     } else {
 	this->creationInfo.call_secdata = NULL;
+	this->creationInfo.call_lowlatency = NULL;
     }
-    this->creationInfo.call_lowlatency = NULL;
 }
 
 
@@ -215,7 +285,7 @@ void Lib660Interface::startRegistration() {
 
 void Lib660Interface::startDeregistration() {
     g_log << "+++ Starting deregistration from Q660" << std::endl;
-    this->changeState(LIBSTATE_IDLE, LIBERR_NOERR);
+    this->changeState(LIBSTATE_IDLE, LIBERR_CLOSED);
 }
 
 
@@ -227,6 +297,9 @@ void Lib660Interface::changeState(enum tlibstate newState, enum tliberr reason) 
 void Lib660Interface::startDataFlow() {
     g_log << "+++ Requesting dataflow to start" << std::endl;
     this->changeState(LIBSTATE_RUN, LIBERR_NOERR);
+    /* Clear the lowlatency map. */
+    g_log << "+++ Clearing lowlantecy map" << std::endl;
+    lowlatencymap.clear();
 }
 
 
@@ -325,10 +398,54 @@ enum tlibstate Lib660Interface::getLibState() {
     return this->currentLibState;
 }
 
+void Lib660Interface::log_q8serv_config(ConfigVO ourConfig) {
+    g_log << "+++ Config info:" << std::endl;
+    g_log << "+++   ServerName =                     " << ourConfig.getServerName() << std::endl;
+    g_log << "+++   ServerDesc =                     " << ourConfig.getServerDesc() << std::endl;
+    g_log << "+++   ServerDir =                      " << ourConfig.getServerDir() << std::endl;
+    g_log << "+++   ServerSource =                   " << ourConfig.getServerSource() << std::endl;
+    g_log << "+++   SeedStation =                    " << ourConfig.getSeedStation() << std::endl;
+    g_log << "+++   SeedNetwork =                    " << ourConfig.getSeedNetwork() << std::endl;
+    g_log << "+++   LogDir =                         " << ourConfig.getLogDir() << std::endl;
+    g_log << "+++   LogType =                        " << ourConfig.getLogType() << std::endl;
+    g_log << "+++   Q660TcpAddr =                    " << ourConfig.getQ660TcpAddr() << std::endl;
+    g_log << "+++   Q660BasePort =                   " << ourConfig.getQ660BasePort() << std::endl;
+    g_log << "+++   Q660Priority =                   " << ourConfig.getQ660Priority() << std::endl;
+    g_log << "+++   Q660SerialNumber =               " << ourConfig.getQ660SerialNumber() << std::endl;
+    g_log << "+++   Q660Password =                   " << ourConfig.getQ660Password() << std::endl;
+    g_log << "+++   LockFile =                       " << ourConfig.getLockFile() << std::endl;
+    g_log << "+++   StartMsg =                       " << ourConfig.getStartMsg() << std::endl;
+    g_log << "+++   StatusInterval =                 " << ourConfig.getStatusInterval() << std::endl;
+    g_log << "+++   Verbosity =                      " << ourConfig.getVerbosity() << std::endl;
+    g_log << "+++   Diagnostic =                     " << ourConfig.getDiagnostic() << std::endl;
+    g_log << "+++   LogLevel =                       " << ourConfig.getLogLevel() << std::endl;
+    g_log << "+++   FailedRegistrationsBeforeSleep = " << ourConfig.getFailedRegistrationsBeforeSleep() << std::endl;
+    g_log << "+++   MinutesToSleepBeforeRetry =      " << ourConfig.getMinutesToSleepBeforeRetry() << std::endl;
+    g_log << "+++   DutyCycle_MaxConnectTime =       " << ourConfig.getDutyCycle_MaxConnectTime() << std::endl;
+    g_log << "+++   DutyCycle_SleepTime =            " << ourConfig.getDutyCycle_SleepTime() << std::endl;
+    g_log << "+++   MulticastEnabled =               " << ourConfig.getMulticastEnabled() << std::endl;
+    g_log << "+++   MulticastPort =                  " << ourConfig.getMulticastPort() << std::endl;
+    g_log << "+++   MulticastHost =                  " << ourConfig.getMulticastHost() << std::endl;
+    g_log << "+++   MulticastChannelList =           " << ourConfig.getMulticastChannelList() << std::endl;
+    g_log << "+++   ContFileDir =                    " << ourConfig.getContFileDir() << std::endl;
+    g_log << "+++   LimitBackfill =                  " << ourConfig.getLimitBackfill() << std::endl;
+    g_log << "+++   WaitForClients =                 " << ourConfig.getWaitForClients() << std::endl;
+    g_log << "+++   PacketQueueSize =                " << ourConfig.getPacketQueueSize() << std::endl;
+    // Bandwith control options
+    g_log << "+++   OptThrottleKbitpersec =          " << ourConfig.getOptThrottleKbitpersec() << std::endl;
+    g_log << "+++   OptBwfillKbitTarget =            " << ourConfig.getOptBwfillKbitTarget() << std::endl;
+    g_log << "+++   OptBwfillProbeInterval =         " << ourConfig.getOptBwfillProbeInterval() << std::endl;
+    g_log << "+++   OptBwfillExceedTrigger =         " << ourConfig.getOptBwfillExceedTrigger() << std::endl;
+    g_log << "+++   OptBwfillIncreaseInterval =      " << ourConfig.getOptBwfillIncreaseInterval() << std::endl;
+    g_log << "+++   OptBwfillMaxLatency =            " << ourConfig.getOptBwfillMaxLatency() << std::endl;
+}
+
 
 /***********************************************************************
  *
- * lib660 callbacks
+ * lib660 callbacks and associated routines.
+ * Since they are callback routines, they are all static, and cannot
+ * access non-static class variables.
  *
  ***********************************************************************/
 
@@ -341,7 +458,7 @@ void Lib660Interface::state_callback(pointer p) {
     tstate_call *state;
 
     state = (tstate_call *)p;
-
+ 
     if(state->state_type == ST_STATE) {
 	g_libInterface->setLibState((enum tlibstate)state->info);
     }
@@ -350,14 +467,12 @@ void Lib660Interface::state_callback(pointer p) {
 
 /***********************************************************************
  * onesec_callback:
- *	Receive one second data packets from lib660.
- *	Multicast the packet if configured.
- *	Convert lib660 epocch time to lib330 epoch time for compatibility
- *	with q330 onesec multicast packets.
- *
- *  2011 modification to one-second multicast packet:
- *  1.  New structure with explicitly sized data types.
- *  2.  All values are multicast in network byte order.
+ * 	Receive onesec single channel uncompessed data packets from lib660.
+ * 	Multicast the packet if configured, and channel NOT seen by 
+ * 	lowlatency_callback.
+ *	Convert lib660 epocch time to lib330 epoch time for
+ *	compatibility with q330 onesec multicast packets.
+ *	All values are multicast in network byte order.
  ***********************************************************************/
 void Lib660Interface::onesec_callback(pointer p) {
     onesec_pkt msg;
@@ -393,38 +508,131 @@ void Lib660Interface::onesec_callback(pointer p) {
     if (ll < 2) strncat(msg.location,"  ", 2-ll);
     msg.rate = htonl((int)src->rate);
 
+    // Determine whether to multicast this packet.
+    int fnmatch_flags = 0;
+    for(int i=0; i < num_multicastChannelEntries; i++) {
+	if( fnmatch(multicastChannelList[i].channel, msg.channel, fnmatch_flags) == 0 && 
+	    fnmatch(multicastChannelList[i].location, msg.location, fnmatch_flags) == 0) {
+
+	    // Only multicast if it is not a lowlatency channel. */
+	    std::string chanloc = (std::string)msg.channel + "." + (std::string)msg.location;
+	    it = lowlatencymap.find(chanloc);
+	    if (it == lowlatencymap.end()) {
+		// Channel is not a lowlatency channel.  Multicast it.
+		// All fields in multicast msg must be in network byte order.
+		for(int i=0;i<src->sample_count;i++){
+		    msg.samples[i] = htonl((int)src->samples[i]);
+		}
+		int msgsize = ONESEC_PKT_HDR_LEN + src->sample_count * sizeof(int);
+		
+		// Convert q660 epoch time to q330 epoch time for the multicast timestamp.
+		// q660 epoch time starts at 2016-01-01T00:00:00 UTC.
+		// q330 epoch time starts at 2000-01-01T00:00:00 UTC.
+		// Both systems use a nominal epoch time (all days have 86400 seconds),
+		// and do not count leapseconds.
+		q330_timestamp_sec = (uint32_t)src->timestamp + Q660_to_Q330_sec_offset;
+		msg.timestamp_sec = q330_timestamp_sec;
+		msg.timestamp_usec = (src->timestamp - (double)((uint32_t)src->timestamp))*1000000;
 #ifdef DEBUG_Lib660Interface
-    g_log << __func__ << "onsec-callback: channnel: " << msg.station << "." << msg.net << "." << msg.channel << "." << msg.location << std::endl;
+		g_log << __func__ << ": channnel: " << 
+		    msg.station << "." << msg.net << "." << msg.channel << "." << msg.location << 
+		    " sample_count=" << src->sample_count << 
+//		    " q330_timestamp=" << msg.timestamp_sec << "," << msg.timestamp_usec << std::endl;
+		    " Q8_timestamp=" << std::fixed << src->timestamp << std::endl;
 #endif
-  
-    // Convert q660 epoch time to q330 epoch time for the multicast timestamp.
-    // q660 epoch time starts at 2016-01-01T00:00:00 UTC.
-    // q330 epoch time starts at 2000-01-01T00:00:00 UTC.
-    // Both systems use a nominal epoch time (all days have 86400 seconds),
-    // and do not count leapseconds.
-
-    q330_timestamp_sec = (uint32_t)src->timestamp + Q660_to_Q330_sec_offset;
-    msg.timestamp_sec = htonl((int)q330_timestamp_sec);
-    msg.timestamp_usec = htonl((int)((src->timestamp - (double)(((int)src->timestamp)))*1000000));
-
-    //#ifdef ENDIAN_LITTLE
-    //g_log <<" TimeStamp for "<<msg.net<<"."<<msg.station<<"."<<msg.channel<<std::endl;
-    //g_log <<" : "<<msg.timestamp<<std::endl;
-    //SwapDouble((double*)&msg.timestamp);
-    //g_log <<" (after swap) TimeStamp for "<<msg.net<<"."<<msg.station<<"."<<msg.channel;
-    //g_log <<" : "<<msg.timestamp<<std::endl;
-    //#endif
-
-    for(int i=0;i<src->rate;i++){
-	msg.samples[i] = htonl((int)src->samples[i]);
+		msg.timestamp_sec = htonl(msg.timestamp_sec);
+		msg.timestamp_usec = htonl(msg.timestamp_usec);
+		retval = sendto(mcastSocketFD, &msg, msgsize, 0, (struct sockaddr *) &(mcastAddr), sizeof(mcastAddr));
+#ifdef DEBUG_MULTICAST      
+		g_log << "Multicasting " << msg.station << "." << msg.net << "." <<  msg.channel << "." << msg.location << std::endl;
+#endif
+		if(retval < 0) {
+		    g_log << "XXX Unable to send multicast packet: " << strerror(errno) << std::endl;
+		}
+	    }
+	} 
     }
-    int msgsize = ONESEC_PKT_HDR_LEN + src->rate * sizeof(int);
+}
+
+
+/***********************************************************************
+ * lowlatency_callback
+ *	Receive lowlatency single channel uncompessed data packets from lib660.
+ *	Multicast the packet if configured.
+ *	Convert lib660 epocch time to lib330 epoch time for compatibility
+ *	with q330 onesec multicast packets.
+ *	All values are multicast in network byte order.
+ ***********************************************************************/
+void Lib660Interface::lowlatency_callback(pointer p) {
+    onesec_pkt msg;
+    tonesec_call *src = (tonesec_call*)p;
+    int retval;
+    char temp[32];
+    uint32_t q330_timestamp_sec;
+    char *tp;
+  
+    // Translate tonesec_call to onesec_pkt;
+    memset(&msg, 0, sizeof(msg));
+    memset(temp, 0, sizeof(temp));
+    strncpy(temp,src->station_name,9);
+    tp = strtok((char*)temp,(char*)"-");
+    // If the station_name is not valid, ignore the packet.
+    // The station_name is not valid when not connected to a Q8.
+    // However, lib660 still generates SOH channels with invalid station_name.
+    if (tp == NULL) {
+	strncpy(temp,src->station_name,9);
+#ifdef DEBUG_Lib660Interface 
+	g_log << "ERROR in " << __func__ << ": Bad format for station_name: " << temp << std::endl;
+#endif
+	return;
+    }
+    strcpy(msg.net,tp);
+    strcpy(msg.station,strtok(NULL,(char*)"-"));
+    strcpy(msg.channel,src->channel);
+    strcpy(msg.location,src->location);
+    // Ensure that channel is 3 characters, and location is 2 characters, blank padded.
+    int lc = strlen(msg.channel);
+    int ll = strlen(msg.location);
+    if (lc < 3) strncat(msg.channel,"   ", 3-lc);
+    if (ll < 2) strncat(msg.location,"  ", 2-ll);
+    msg.rate = htonl((int)src->rate);
+
 
     // Determine whether to multicast this packet.
     int fnmatch_flags = 0;
     for(int i=0; i < num_multicastChannelEntries; i++) {
 	if( fnmatch(multicastChannelList[i].channel, msg.channel, fnmatch_flags) == 0 && 
 	    fnmatch(multicastChannelList[i].location, msg.location, fnmatch_flags) == 0) {
+
+	    // Add channel to the lowlatency map it if is not there already.
+	    std::string chanloc = (std::string)msg.channel + "." + (std::string)msg.location;
+	    it = lowlatencymap.find(chanloc);
+	    if (it == lowlatencymap.end()) {
+		lowlatencymap[chanloc] = 1;
+	    }
+	    // All fields in multicast msg must be in network byte order.
+	    for(int i=0;i<src->sample_count;i++){
+		msg.samples[i] = htonl((int)src->samples[i]);
+	    }
+	    int msgsize = ONESEC_PKT_HDR_LEN + src->sample_count * sizeof(int);
+
+	    // Convert q660 epoch time to q330 epoch time for the multicast timestamp.
+	    // q660 epoch time starts at 2016-01-01T00:00:00 UTC.
+	    // q330 epoch time starts at 2000-01-01T00:00:00 UTC.
+	    // Both systems use a nominal epoch time (all days have 86400 seconds),
+	    // and do not count leapseconds.
+	    q330_timestamp_sec = (uint32_t)src->timestamp + Q660_to_Q330_sec_offset;
+	    msg.timestamp_sec = q330_timestamp_sec;
+	    msg.timestamp_usec = (src->timestamp - (double)((uint32_t)src->timestamp))*1000000;
+#ifdef DEBUG_Lib660Interface
+	    g_log << __func__ << ": channnel: " << 
+		msg.station << "." << msg.net << "." << msg.channel << "." << msg.location << 
+		" sample_count=" << src->sample_count << 
+//		" q330_timestamp=" << msg.timestamp_sec << "," << msg.timestamp_usec << std::endl;
+		" Q8_timestamp=" << std::fixed << src->timestamp << std::endl;
+#endif
+	    msg.timestamp_sec = htonl(msg.timestamp_sec);
+	    msg.timestamp_usec = htonl(msg.timestamp_usec);
 	    retval = sendto(mcastSocketFD, &msg, msgsize, 0, (struct sockaddr *) &(mcastAddr), sizeof(mcastAddr));
 #ifdef DEBUG_MULTICAST      
 	    g_log << "Multicasting " << msg.station << "." << msg.net << "." <<  msg.channel << "." << msg.location << std::endl;
@@ -492,7 +700,7 @@ void Lib660Interface::miniseed_callback(pointer p) {
 #endif
 
     // Put the packet in the intermediate packet queue.
-    packetQueue.enqueuePacket((char *)data->data_address, data->data_size, packetType);
+    packetQueue->enqueuePacket((char *)data->data_address, data->data_size, packetType);
 
     // Throttle (delay) for up to 1 second if we are in danger of filling the packet queue.
     // Since this function is called from the lib660 thread, this should help
@@ -500,23 +708,22 @@ void Lib660Interface::miniseed_callback(pointer p) {
     // We rely on the main thread to dequeue the packets into the comserv buffers.
     struct timespec t;
     t.tv_sec = 0;
-    t.tv_nsec = 250000000;
-    for(int i=0; i < 4; i++) {
-	int nfree = packetQueue.numFree();
-	if (nfree < throttle_free_packet_threshold) {
-	    if (! throttling) {
-		g_log << "XXX Limited space in intermediate queue. Start delay in miniseed_callback" << std::endl;
-		++throttling;
-	    }
-	    nanosleep(&t, NULL);
+    t.tv_nsec = 100000000;
+    for(int i = 0; i < 10; i++) {
+	int nfree = packetQueue->numFree();
+#ifdef DEBUG_PQUEUE
+	g_log << "--- nfree in pq = " << nfree << std::endl;
+#endif
+	if ((! throttling) && (nfree < throttle_free_packet_threshold)) {
+	    g_log << "XXX Start delay in miniseed_callback. Intermediate PacketQueue nfree = " << nfree << std::endl;
+	    ++throttling;
 	}
-	else {
-	    if (throttling) {
-		g_log << "--- End delay in miniseed_callback" << std::endl;
-		throttling = 0;
-	    }
-	    break;
+	if ((throttling) && (nfree >= unthrottle_free_packet_threshold)) {
+	    g_log << "--- End delay in miniseed_callback. Intermediate PacketQuue nfree = " << nfree << std::endl;
+	    throttling = 0;
 	}
+	if (! throttling) break;
+	nanosleep(&t, NULL);
     }
 }
 
@@ -528,7 +735,7 @@ void Lib660Interface::miniseed_callback(pointer p) {
  * Return: 1 if true , 0 if false.
  ***********************************************************************/
 int Lib660Interface::queueNearFull() {
-    int nearFull = (packetQueue.numFree() < min_free_packet_threshold);
+    int nearFull = (packetQueue->numFree() < min_free_packet_threshold);
     return nearFull;
 }
 
@@ -547,11 +754,11 @@ int Lib660Interface::processPacketQueue() {
     // We do not want to dequeue a packet unless we are guaranteed that
     // there is room in the comserv packet queues to accept it.
     // Otherwise, we risk losing the packet.
-    while (packetQueue.numQueued() > 0) {
+    while (packetQueue->numQueued() > 0) {
 	if(comserv_anyQueueBlocking()) {
 	    return 0;
 	}
-	QueuedPacket thisPacket = packetQueue.dequeuePacket();
+	QueuedPacket thisPacket = packetQueue->dequeuePacket();
 	if (thisPacket.dataSize != 0) {
 	    sendFailed = comserv_queue((char *)thisPacket.data, thisPacket.dataSize, thisPacket.packetType);
 	    if(sendFailed) {
@@ -673,11 +880,11 @@ void Lib660Interface::file_callback (pointer p)
 {
     tfileacc_call *pfa ;
     char fname[PATH_MAX] = "";
-    integer flags ;
+    int flags ;
     mode_t rwmode ;
     off_t result, long_offset ;
-    integer numread ;
-    integer numwrite ;
+    ssize_t numread ;
+    ssize_t numwrite ;
     struct stat sb ;
     int filekind = FK_UNKNOWN;
   
@@ -817,8 +1024,8 @@ void Lib660Interface::file_callback (pointer p)
 	break ;
 
     case FAT_READ :
-	numread = (integer)read (pfa->handle, pfa->buffer, pfa->options) ;
-	if (numread != pfa->options)
+	numread = read (pfa->handle, pfa->buffer, pfa->options) ;
+	if ((int)numread != pfa->options)
 	{
 	    pfa->fault = TRUE ;
 	}
@@ -829,8 +1036,8 @@ void Lib660Interface::file_callback (pointer p)
 	break ;
 
     case FAT_WRITE :
-	numwrite = (integer)write(pfa->handle, pfa->buffer, pfa->options) ;
-	if (numwrite != pfa->options)
+	numwrite = write(pfa->handle, pfa->buffer, pfa->options) ;
+	if ((int)numwrite != pfa->options)
 	{
 	    pfa->fault = TRUE ;
 	}	  
@@ -842,7 +1049,7 @@ void Lib660Interface::file_callback (pointer p)
 
     case FAT_SIZE :
 	pfa->fault = fstat (pfa->handle, &(sb)) ;
-	pfa->options = (integer)sb.st_size ;
+	pfa->options = (int)sb.st_size ;
 #if DEBUG_FILE_CALLBACK > 1
 	LogMessage (CS_LOG_TYPE_DEBUG, "%s: op=%s fd=%d err=%d\n", tag,
 		    FAT_str[pfa->fileacc_type], pfa->handle, pfa->fault);
@@ -890,6 +1097,17 @@ void Lib660Interface::setLibState(enum tlibstate newState) {
      * Do NOT automatically call startDataFlow if we are in LIBSTATE_RUNWAIT.
      * Allow main program to decide when to call startDataFlow.
      */
+
+    switch (newState) {
+    case LIBSTATE_IDLE:
+    case LIBSTATE_WAIT:
+	/* Clear the lowlatency map. */
+	g_log << "+++ Clearing lowlantecy map" << std::endl;
+	lowlatencymap.clear();
+	break;
+    default:
+	break;
+    }
 }
 
 

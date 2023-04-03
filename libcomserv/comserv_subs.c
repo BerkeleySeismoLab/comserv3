@@ -91,6 +91,7 @@ Edit History:
    39 12 Jul 2020 DSN	Removed code needed only by original comserv program.
    			Removed _OSK conditional code.
    40 29 Sep 2020 DSN Updated for comserv3.
+   41  3 Mar 2023 DSN Skip client with NULL client address in comserv_scan.
 */           
 
 #define EDITION 39
@@ -501,6 +502,12 @@ int comserv_scan()
 		if (clients[i].client_memid == clientid)
 		{
 		    cursvc = clients[i].client_address ;
+/*:: DSN start add */		    
+		    if (cursvc == NULL) {
+			/* Skip client with NULL client address - client may have died. */
+			continue ;
+		    }
+/*:: DSN end add */
 		    if (cursvc->client_pid != clients[i].client_pid)
 			cursvc = NULL ; /* not a complete match */
 		    else

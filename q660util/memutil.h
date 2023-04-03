@@ -1,5 +1,11 @@
+
+
+
+
 /*   Memory Utility definitions
-     Copyright 2016 Certified Software Corporation
+     Copyright 2016 by
+     Kinemetrics, Inc.
+     Pasadena, CA 91107 USA.
 
     This file is part of Lib660
 
@@ -21,10 +27,12 @@ Edit History:
    Ed Date       By  Changes
    -- ---------- --- ---------------------------------------------------
     0 2016-01-08 rdr Adapted from WS330.
+    1 2021-12-24 rdr Copyright assignment to Kinemetrics.
+------2022-02-24 jms remove pseudo-pascal macros------
 */
 #ifndef MEMUTIL_H
 #define MEMUTIL_H
-#define VER_MEMUTIL 4
+#define VER_MEMUTIL 6
 
 #ifndef UTILTYPES_H
 #include "utiltypes.h"
@@ -34,28 +42,30 @@ Edit History:
 #define DEFAULT_MEM_INC 16384
 #endif
 
-typedef struct tmem_manager { /* Linked list of memory segments for token expansion and buffers */
-  struct tmem_manager *next ; /* next block */
-  integer alloc_size ; /* allocated size of this block */
-  integer sofar ; /* amount used in this block */
-  pointer base ; /* start of the allocated memory in this block */
+typedef struct tmem_manager   /* Linked list of memory segments for token expansion and buffers */
+{
+    struct tmem_manager *next ; /* next block */
+    int alloc_size ; /* allocated size of this block */
+    int sofar ; /* amount used in this block */
+    pointer base ; /* start of the allocated memory in this block */
 } tmem_manager ;
 typedef tmem_manager *pmem_manager ;
 
 typedef pointer *pptr ;
 
-typedef struct {       /* An instance of a memory manager */
-  pmem_manager memory_head ; /* start of memory management blocks */
-  pmem_manager cur_memory ; /* current block we are allocating from */
-  pointer xmlbuf ; /* Address of XML buffer */
-  integer xmlsize ; /* Size of XML buffer */
-  integer cur_memory_required ; /* for continuity, if required */
+typedef struct         /* An instance of a memory manager */
+{
+    pmem_manager memory_head ; /* start of memory management blocks */
+    pmem_manager cur_memory ; /* current block we are allocating from */
+    pointer xmlbuf ; /* Address of XML buffer */
+    int xmlsize ; /* Size of XML buffer */
+    int cur_memory_required ; /* for continuity, if required */
 } tmeminst ;
 typedef tmeminst *pmeminst ;
 
-extern void memclr (pointer p, integer sz) ;
-extern void getbuf (pmeminst pmem, pointer *p, integer size) ;
-extern void getxmlbuf (pmeminst pmem, pointer *p, integer size) ;
+extern void memclr (pointer p, int sz) ;
+extern void getbuf (pmeminst pmem, pointer *p, int size) ;
+extern void getxmlbuf (pmeminst pmem, pointer *p, int size) ;
 extern pointer extend_link (pointer base, pointer add) ;
 extern pointer delete_link (pointer base, pointer del) ;
 extern void initialize_memory_utils (pmeminst pmem) ;

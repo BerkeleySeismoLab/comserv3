@@ -53,6 +53,7 @@ struct mserv_cfg
     char diagnostic[CFGWIDTH]; 
     char loglevel[CFGWIDTH];
     char waitForClients[CFGWIDTH];
+    char packetQueueSize[CFGWIDTH];
 };
 
 #ifdef __cplusplus

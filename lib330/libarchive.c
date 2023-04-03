@@ -418,6 +418,8 @@ begin
             parc->appended = TRUE ;
           end
       break ;
+    default :
+      break ;
   end
 end
 

@@ -44,6 +44,13 @@ Edit History:
    15 2022-04-18 dsn Add check for EINPROGRESS return code from socket() call for linux.
                      Keep check for EWOULDBLOCK solaris return code.
 */
+
+#ifdef X86_WIN32
+#include <io.h>				/* close(), read(), write() */
+#else
+#include <unistd.h>			/* close(), read(), write() */
+#endif
+
 #ifdef CMEX32
 #include "cmexserial.h"
 #endif
@@ -168,7 +175,7 @@ begin
       return 0 ;
 end
 
-void tcp_error (pq330 q330, string95 *msgsuf)
+void tcp_error (pq330 q330, const string95 *msgsuf)
 begin
 
   lib_change_state (q330, LIBSTATE_WAIT, LIBERR_NOTR) ;
@@ -180,8 +187,13 @@ end
 
 boolean open_sockets (pq330 q330, boolean both, boolean fromback)
 begin
-  integer lth, j, err ;
-  integer flag ;
+  socklen_t lth ;
+  integer err ;
+#ifdef X86_WIN32
+  longword flag ;
+#else
+  integer flags ;
+#endif
   integer bufsize ;
   struct sockaddr xyz ;
   boolean isd ;
@@ -250,7 +262,7 @@ begin
             sprintf((char *)addr(msg), "%d on tcp port", err) ;
           else
             sprintf((char *)addr(msg), "%d on control port", err) ;
-        libmsgadd(q330, LIBMSG_SOCKETERR, addr(msg)) ;
+        libmsgadd(q330, LIBMSG_SOCKETERR, (const pointer) addr(msg)) ;
         return TRUE ;
       end
 #ifndef X86_WIN32
@@ -263,12 +275,12 @@ begin
   psock->sin_family = AF_INET ;
   psock->sin_port = htons(q330->q330cport) ;
   psock->sin_addr.s_addr = htonl(q330->q330ip) ;
-  flag = 1 ;
 #ifdef X86_WIN32
+  flag = 1 ;
   ioctlsocket (q330->cpath, FIONBIO, addr(flag)) ;
 #else
-  flag = fcntl (q330->cpath, F_GETFL, 0) ;
-  fcntl (q330->cpath, F_SETFL, flag or O_NONBLOCK) ;
+  flags = fcntl (q330->cpath, F_GETFL, 0) ;
+  fcntl (q330->cpath, F_SETFL, flags or O_NONBLOCK) ;
 #endif
   if (q330->tcp)
     then
@@ -276,12 +288,11 @@ begin
         q330->tcpidx = 0 ;
         flag2 = 1 ;
 #ifdef X86_WIN32
-        j = sizeof(BOOL) ;
-        setsockopt (q330->cpath, SOL_SOCKET, SO_REUSEADDR, addr(flag2), j) ;
+        lth = sizeof(BOOL) ;
 #else
-        j = sizeof(int) ;
-        setsockopt (q330->cpath, SOL_SOCKET, SO_REUSEADDR, addr(flag2), j) ;
+        lth = sizeof(int) ;
 #endif
+        setsockopt (q330->cpath, SOL_SOCKET, SO_REUSEADDR, (const pointer) addr(flag2), lth) ;
         err = connect (q330->cpath, addr(q330->csockout), sizeof(struct sockaddr)) ;
         if (err)
           then
@@ -297,7 +308,7 @@ begin
                   begin
                     close_sockets (q330) ;
                     sprintf((char *)addr(msg), "%d on tcp port", err) ;
-                    libmsgadd(q330, LIBMSG_SOCKETERR, addr(msg)) ;
+                    libmsgadd(q330, LIBMSG_SOCKETERR, (const pointer) addr(msg)) ;
                     return TRUE ;
                   end
               q330->got_connected = FALSE ; /* OK, but not yet connected */
@@ -310,13 +321,8 @@ begin
         psock->sin_family = AF_INET ;
         psock->sin_port = htons(q330->par_register.host_ctrlport) ;
         psock->sin_addr.s_addr = INADDR_ANY ;
-#ifdef X86_WIN32
         err = bind(q330->cpath, addr(q330->csockin), sizeof(struct sockaddr)) ;
         if (err)
-#else
-        err = bind(q330->cpath, addr(q330->csockin), sizeof(struct sockaddr)) ;
-        if (err)
-#endif
           then
             begin
               err =
@@ -329,7 +335,7 @@ begin
 #endif
               q330->cpath = INVALID_SOCKET ;
               sprintf((char *)addr(msg), "%d on control port", err) ;
-              libmsgadd(q330, LIBMSG_BINDERR, addr(msg)) ;
+              libmsgadd(q330, LIBMSG_BINDERR, (const pointer) addr(msg)) ;
               return TRUE ;
             end
         if (q330->q330ip == 0xFFFFFFFF)
@@ -339,11 +345,7 @@ begin
             baler_socket (q330, q330->cpath, BS_CONTROL) ;
       end
   lth = sizeof(struct sockaddr) ;
-#ifdef X86_WIN32
   getsockname (q330->cpath, addr(xyz), addr(lth)) ;
-#else
-  getsockname (q330->cpath, addr(xyz), addr(lth)) ;
-#endif
   psock = (pointer) addr(xyz) ;
   q330->ctrlport = ntohs(psock->sin_port) ;
   if (q330->tcp)
@@ -351,7 +353,7 @@ begin
       sprintf((char *)addr(msg), "on tcp port %d", q330->ctrlport) ;
     else
       sprintf((char *)addr(msg), "on control port %d", q330->ctrlport) ;
-  libmsgadd(q330, LIBMSG_SOCKETOPEN, addr(msg)) ;
+  libmsgadd(q330, LIBMSG_SOCKETOPEN, (const pointer) addr(msg)) ;
   q330->share.opstat.current_ip = q330->q330ip ;
   q330->share.opstat.current_port = q330->q330cport ;
   if ((both) land (lnot q330->tcp))
@@ -368,7 +370,7 @@ begin
                      errno ;
 #endif
               sprintf((char *)addr(msg), "%d on data port", err) ;
-              libmsgadd(q330, LIBMSG_SOCKETERR, addr(msg)) ;
+              libmsgadd(q330, LIBMSG_SOCKETERR, (const pointer) addr(msg)) ;
               return TRUE ;
             end
         lth = sizeof(longint) ;
@@ -395,13 +397,8 @@ begin
         psock->sin_family = AF_INET ;
         psock->sin_port = htons(q330->par_register.host_dataport) ;
         psock->sin_addr.s_addr = INADDR_ANY ;
-#ifdef X86_WIN32
         err = bind(q330->dpath, addr(q330->dsockin), sizeof(struct sockaddr)) ;
         if (err)
-#else
-        err = bind(q330->dpath, addr(q330->dsockin), sizeof(struct sockaddr)) ;
-        if (err)
-#endif
           then
             begin
               err =
@@ -414,7 +411,7 @@ begin
 #endif
               q330->dpath = INVALID_SOCKET ;
               sprintf((char *)addr(msg), "%d on data port", err) ;
-              libmsgadd(q330, LIBMSG_BINDERR, addr(msg)) ;
+              libmsgadd(q330, LIBMSG_BINDERR, (const pointer) addr(msg)) ;
               return TRUE ;
             end
         baler_socket (q330, q330->dpath, BS_DATA) ;
@@ -423,20 +420,19 @@ begin
         psock->sin_family = AF_INET ;
         psock->sin_port = htons(q330->q330dport) ;
         psock->sin_addr.s_addr = htonl(q330->q330ip) ;
-        flag = 1 ;
-        lth = sizeof(struct sockaddr) ;
 #ifdef X86_WIN32
+        flag = 1 ;
         ioctlsocket (q330->dpath, FIONBIO, addr(flag)) ;
-        getsockname (q330->dpath, addr(xyz), addr(lth)) ;
 #else
-        flag = fcntl (q330->dpath, F_GETFL, 0) ;
-        fcntl (q330->dpath, F_SETFL, flag or O_NONBLOCK) ;
-        getsockname (q330->dpath, addr(xyz), addr(lth)) ;
+        flags = fcntl (q330->dpath, F_GETFL, 0) ;
+        fcntl (q330->dpath, F_SETFL, flags or O_NONBLOCK) ;
 #endif
+        lth = sizeof(struct sockaddr) ;
+        getsockname (q330->dpath, addr(xyz), addr(lth)) ;
         psock = (pointer) addr(xyz) ;
         q330->dataport = ntohs(psock->sin_port) ;
         sprintf((char *)addr(msg), "on data port %d", q330->dataport) ;
-        libmsgadd(q330, LIBMSG_SOCKETOPEN, addr(msg)) ;
+        libmsgadd(q330, LIBMSG_SOCKETOPEN, (const pointer) addr(msg)) ;
       end
   return FALSE ;
 end
@@ -561,7 +557,8 @@ end
 #ifndef OMIT_NETWORK
 void read_data_socket (pq330 q330)
 begin
-  integer lth, err ;
+  socklen_t lth ;
+  integer err ;
   string95 msg ;
 
   if (q330->dpath == INVALID_SOCKET)
@@ -579,7 +576,7 @@ begin
                errno ;
 #endif
         if (err != EWOULDBLOCK)
-          then
+          then begin
             if (err == ECONNRESET)
               then
                 begin
@@ -603,9 +600,10 @@ begin
               else
                 begin
                   sprintf(msg, "%d", err) ;
-                  libmsgadd(q330, LIBMSG_RECVERR, addr(msg)) ;
+                  libmsgadd(q330, LIBMSG_RECVERR, (const pointer) addr(msg)) ;
                   add_status (q330, AC_IOERR, 1) ; /* add one I/O error */
                 end
+          end
       end
   else if (err > 0)
     then
@@ -639,9 +637,9 @@ end
 
 void read_cmd_socket (pq330 q330)
 begin
-  integer lth ;
-  pbyte p ;
+  socklen_t lth ;
   integer err ;
+  pbyte p ;
   word poff, qdplth ;
   string95 msg ;
 #ifdef BSL_Q330_TCP_DEBUG
@@ -668,7 +666,7 @@ begin
                 then
                   begin
                     sprintf(msg, "%d, Waiting 10 minutes", err) ;
-                    tcp_error (q330, addr(msg)) ;
+                    tcp_error (q330, (const pointer) addr(msg)) ;
                   end
             end
         else if (err == 0)
@@ -683,7 +681,7 @@ begin
                 then
                   begin
                     sprintf (errstr, "Read %d bytes into tcpbuf[%d...%d]",
-			     err, q330->tcpidx-err, q330->tcpidx-1);
+                             err, q330->tcpidx-err, q330->tcpidx-1);
                     libmsgadd (q330, HOSTMSG_ALL, addr(errstr)) ;
                   end
 #endif
@@ -694,11 +692,11 @@ begin
                   qdplth = loadword (addr(p)) ;
 #ifdef BSL_Q330_TCP_DEBUG
                   if (q330->cur_verbosity and VERB_PACKET)
-		    then
-		      begin
+                    then
+                      begin
                         sprintf (errstr, "poff=%u (0x%X) qdplth=%u (0x%X)",
-				 (unsigned int)poff, (unsigned int)poff, 
-				 (unsigned int)qdplth, (unsigned int)qdplth) ;
+                                 (unsigned int)poff, (unsigned int)poff, 
+                                 (unsigned int)qdplth, (unsigned int)qdplth) ;
                         libmsgadd (q330, HOSTMSG_ALL, addr(errstr)) ;
                       end
 #endif
@@ -716,16 +714,16 @@ begin
                         memcpy (addr(q330->commands.cmsgin.qdp), addr((q330->tcpbuf)[4]), err) ;
                         q330->tcpidx = q330->tcpidx - (qdplth + 4) ; /* amount left over */
                         if (q330->tcpidx > 0)
-			  then
+                          then
 #ifdef BSL_Q330_TCP_DEBUG
                             begin /* have a full packet, or more */
                               memcpy (addr(q330->tcpbuf), addr((q330->tcpbuf)[qdplth + 4]), q330->tcpidx) ; /* move to start of buffer */
                               sprintf (errstr, "Move remaining %d bytes from tcpbuf[%d...%d] to tcpuf[%d...%d]",
-				       q330->tcpidx, 
-				       qdplth+4, qdplth+4+q330->tcpidx-1, 0, q330->tcpidx-1);
+                                       q330->tcpidx, 
+                                       qdplth+4, qdplth+4+q330->tcpidx-1, 0, q330->tcpidx-1);
                               libmsgadd (q330, HOSTMSG_ALL, addr(errstr));
                             end
-			  else
+                          else
                            begin
                              sprintf (errstr, "No remaining bytes in tcpbuf");
                              libmsgadd (q330, HOSTMSG_ALL, addr(errstr));
@@ -754,7 +752,7 @@ begin
                      errno ;
 #endif
               if (err != EWOULDBLOCK)
-                then
+                then begin
                   if (err == ECONNRESET)
                     then
                       begin
@@ -779,9 +777,10 @@ begin
                     else
                       begin
                         sprintf(msg, "%d", err) ;
-                        libmsgadd(q330, LIBMSG_RECVERR, addr(msg)) ;
+                        libmsgadd(q330, LIBMSG_RECVERR, (const pointer) addr(msg)) ;
                         add_status (q330, AC_IOERR, 1) ; /* add one I/O error */
                       end
+                end
             end
         else if (err > 0)
           then
@@ -1282,7 +1281,7 @@ begin
       begin
         build_tcp (payload, srcaddr, destaddr, srcport, destport, datalength,
                    seq, ack, window, flags) ;
-        build_ip (q330, payload, srcaddr, destaddr, IPT_TCP, abs(datalength) + TCP_HDR_LTH) ;
+        build_ip (q330, payload, srcaddr, destaddr, IPT_TCP, datalength + TCP_HDR_LTH) ;
       end
   sendpkt (q330, payload) ;
 end

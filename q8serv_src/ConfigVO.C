@@ -50,7 +50,7 @@ ConfigVO::ConfigVO(q8serv_cfg cfg) {
     // Info from global defaults or program section.
     setLogDir(cfg.logdir);
     setLogType(cfg.logtype);
-    setQ660UdpAddr(cfg.udpaddr);
+    setQ660TcpAddr(cfg.tcpaddr);
     setQ660BasePort(cfg.baseport);
     setQ660Priority(cfg.priority);
     setQ660SerialNumber(cfg.serialnumber);
@@ -72,6 +72,13 @@ ConfigVO::ConfigVO(q8serv_cfg cfg) {
     setContFileDir(cfg.contFileDir);
     setLimitBackfill(cfg.limitBackfill);
     setWaitForClients(cfg.waitForClients);
+    setPacketQueueSize(cfg.packetQueueSize);
+    setOptThrottleKbitpersec(cfg.opt_throttle_kbitpersec);
+    setOptBwfillKbitTarget(cfg.opt_bwfill_kbit_target);
+    setOptBwfillProbeInterval(cfg.opt_bwfill_probe_interval);
+    setOptBwfillExceedTrigger(cfg.opt_bwfill_exceed_trigger);
+    setOptBwfillIncreaseInterval(cfg.opt_bwfill_increase_interval);
+    setOptBwfillMaxLatency(cfg.opt_bwfill_max_latency);
 
     p_configured = true;
 }
@@ -86,7 +93,7 @@ ConfigVO::ConfigVO()
     memset(p_seed_network, 0, sizeof(p_seed_network));
     memset(p_logdir, 0, sizeof(p_logdir));
     memset(p_logtype, 0, sizeof(p_logtype));
-    memset(p_q660_udpaddr, 0, sizeof(p_q660_udpaddr));
+    memset(p_q660_tcpaddr, 0, sizeof(p_q660_tcpaddr));
     p_q660_base_port = 0;
     p_q660_priority = 0;
     p_q660_serial_number = 0;
@@ -108,6 +115,13 @@ ConfigVO::ConfigVO()
     memset(p_contFileDir, 0, sizeof(p_contFileDir));
     p_limitBackfill = 0;
     p_waitForClients = 0;
+    p_packetQueueSize = DEFAULT_PACKETQUEUE_QUEUE_SIZE;
+    p_opt_throttle_kbitpersec = 0;
+    p_opt_bwfill_kbit_target = 0;
+    p_opt_bwfill_probe_interval = 0;
+    p_opt_bwfill_exceed_trigger = 0;
+    p_opt_bwfill_increase_interval = 0;
+    p_opt_bwfill_max_latency = 0;
     
     p_configured = false;
 }
@@ -158,9 +172,9 @@ char * ConfigVO::getLogType() const
     return (char *)p_logtype; 
 }
 
-char * ConfigVO::getQ660UdpAddr() const
+char * ConfigVO::getQ660TcpAddr() const
 {
-    return (char *)p_q660_udpaddr; 
+    return (char *)p_q660_tcpaddr; 
 }
 
 uint32_t ConfigVO::getQ660BasePort() const
@@ -228,7 +242,7 @@ uint16_t ConfigVO::getDutyCycle_SleepTime() const {
     return p_dutycycle_sleepTime;
 }
 
-int8_t ConfigVO::getMulticastEnabled() const {
+uint16_t ConfigVO::getMulticastEnabled() const {
     return p_multicast_enabled;
 }
 
@@ -254,6 +268,34 @@ uint32_t ConfigVO::getLimitBackfill() const {
 
 uint32_t ConfigVO::getWaitForClients() const {
     return p_waitForClients;
+}
+
+uint32_t ConfigVO::getPacketQueueSize() const {
+    return p_packetQueueSize;
+}
+
+uint32_t ConfigVO::getOptThrottleKbitpersec() const {
+    return p_opt_throttle_kbitpersec;
+}
+
+uint32_t ConfigVO::getOptBwfillKbitTarget() const {
+    return p_opt_bwfill_kbit_target;
+}
+
+uint32_t ConfigVO::getOptBwfillProbeInterval() const {
+    return p_opt_bwfill_probe_interval;
+}
+
+uint32_t ConfigVO::getOptBwfillExceedTrigger() const {
+    return p_opt_bwfill_exceed_trigger;
+}
+
+uint32_t ConfigVO::getOptBwfillIncreaseInterval() const {
+    return p_opt_bwfill_increase_interval;
+}
+
+uint32_t ConfigVO::getOptBwfillMaxLatency() const {
+    return p_opt_bwfill_max_latency;
 }
 
 //**********************************************************************
@@ -302,9 +344,9 @@ void ConfigVO::setLogType(char* input)
     strcpy(p_logtype, input);
 }
  
-void ConfigVO::setQ660UdpAddr(char* input)
+void ConfigVO::setQ660TcpAddr(char* input)
 {
-    strcpy(p_q660_udpaddr, input);
+    strcpy(p_q660_tcpaddr, input);
 }
  
 void ConfigVO::setQ660BasePort(char* input)
@@ -314,6 +356,7 @@ void ConfigVO::setQ660BasePort(char* input)
     {
 	g_log << "xxx Error converting input to Q660 base port number : " <<  
 	    port << std::endl;
+	exit (1);
     }
     else
     {
@@ -337,8 +380,10 @@ void ConfigVO::setQ660Priority(char* input)
   
 void ConfigVO::setQ660SerialNumber(char* input)
 {
-    uint64_t sn = strtoull(input,0,0);
-    if(sn <= 0)
+    uint64_t sn;
+    errno = 0;
+    sn = strtoull(input,0,0);
+    if(sn <= 0 || errno != 0)
     {
 	g_log << "xxx Error converting input to serial number : input = "
 	      << input << " output = " << sn << std::endl;
@@ -356,14 +401,14 @@ void ConfigVO::setQ660Password(char* input)
   
 void ConfigVO::setLockFile(char* input)
 {
-    strlcat(p_lockfile,input,sizeof(p_lockfile)); // always null terminates the string
+    strlcpy(p_lockfile,input,sizeof(p_lockfile)); // always null terminates the string
 }
 
 void ConfigVO::setStartMsg(char* input)
 {
     char msg[256];
     sprintf(msg,"Starting %s %s", APP_IDENT_STRING, input);
-    strlcat(p_startmsg,input,sizeof(p_startmsg)); // always null terminates the string
+    strlcpy(p_startmsg,input,sizeof(p_startmsg)); // always null terminates the string
 }
 
 void ConfigVO::setStatusInterval(char* input)
@@ -575,6 +620,140 @@ void ConfigVO::setWaitForClients(char* input)
     }
 }
 
+void ConfigVO::setPacketQueueSize(char* input)
+{
+    if(!strcmp(input, "") || !strcmp(input, "0")) {
+	p_packetQueueSize = DEFAULT_PACKETQUEUE_QUEUE_SIZE;
+	return;
+    }
+    p_packetQueueSize = atoi(input);
+    if (p_packetQueueSize <= 0)
+    {
+	g_log << "xxx Error converting input to Q660 packetQueueSize number : " << input << std::endl;
+	p_packetQueueSize = 0;
+    }
+}
+
+// Optional config parameters.  Supply default if not specified.
+void ConfigVO::setOptThrottleKbitpersec(char* input)
+{
+    uint32_t val;
+    uint32_t default_val = 0;
+    if(!strcmp(input, "")) {
+        val = default_val;
+    }
+    else {
+	errno = 0;
+	val = strtoul(input,0,0);
+	if(val < 0 || errno != 0)
+	{
+	    g_log << "xxx Error converting input to optBwfillThrottleKbitpersec : input = "
+		  << input << " default = " << default_val << std::endl;
+	    val = default_val;
+	}
+    }
+    p_opt_throttle_kbitpersec = val;
+}
+
+void ConfigVO::setOptBwfillKbitTarget(char* input)
+{
+    uint32_t val;
+    uint32_t default_val = 0;
+    if(!strcmp(input, "")) {
+        val = default_val;
+    }
+    else {
+	errno = 0;
+	val = strtoul(input,0,0);
+	if(val < 0 || errno != 0)
+	{
+	    g_log << "xxx Error converting input to optBwfillKbitTargit : input = "
+		  << input << " default = " << default_val << std::endl;
+	    val = default_val;
+	}
+    }
+    p_opt_bwfill_kbit_target = val;
+}
+
+void ConfigVO::setOptBwfillProbeInterval(char* input)
+{
+    uint32_t val;
+    uint32_t default_val = 0;
+    if(!strcmp(input, "")) {
+        val = default_val;
+    }
+    else {
+	errno = 0;
+	val = strtoul(input,0,0);
+	if(val < 0 || errno != 0)
+	{
+	    g_log << "xxx Error converting input to optBwfillProbeInterval : input = "
+		  << input << " default = " << default_val << std::endl;
+	    val = default_val;
+	}
+    }
+    p_opt_bwfill_probe_interval = val;
+}
+
+void ConfigVO::setOptBwfillExceedTrigger(char* input)
+{
+    uint32_t val;
+    uint32_t default_val = 0;
+    if(!strcmp(input, "")) {
+        val = default_val;
+    }
+    else {
+	errno = 0;
+	val = strtoul(input,0,0);
+	if(val < 0 || errno != 0)
+	{
+	    g_log << "xxx Error converting input to optBwfillExceedTrigger : input = "
+		  << input << " default = " << default_val << std::endl;
+	    val = default_val;
+	}
+    }
+    p_opt_bwfill_exceed_trigger = val;
+}
+
+void ConfigVO::setOptBwfillIncreaseInterval(char* input)
+{
+    uint32_t val;
+    uint32_t default_val = 0;
+    if(!strcmp(input, "")) {
+        val = default_val;
+    }
+    else {
+	errno = 0;
+	val = strtoul(input,0,0);
+	if(val < 0 || errno != 0)
+	{
+	    g_log << "xxx Error converting input to optBwfillIncreaseInterval : input = "
+		  << input << " default = " << default_val << std::endl;
+	    val = default_val;
+	}
+    }
+    p_opt_bwfill_increase_interval = val;
+}
+
+void ConfigVO::setOptBwfillMaxLatency(char* input)
+{
+    uint32_t val;
+    uint32_t default_val = 0;
+    if(!strcmp(input, "")) {
+        val = default_val;
+    }
+    else {
+	errno = 0;
+	val = strtoul(input,0,0);
+	if(val < 0 || errno != 0)
+	{
+	    g_log << "xxx Error converting input to optBwfillMaxLatency : input = "
+		  << input << " default = " << default_val << std::endl;
+	    val = default_val;
+	}
+    }
+    p_opt_bwfill_max_latency = val;
+}
 //**********************************************************************
 
 //
@@ -613,4 +792,39 @@ void ConfigVO::setDiagnostic(uint32_t a)
 void ConfigVO::setWaitForClients(uint32_t a) 
 {
     p_waitForClients = a;
+}
+
+void ConfigVO::setPacketQueueSize(uint32_t a) 
+{
+    p_packetQueueSize = a;
+}
+
+void ConfigVO::setOptThrottleKbitpersec(uint32_t a)
+{
+    p_opt_throttle_kbitpersec = a;
+}
+
+void ConfigVO::setOptBwfillKbitTarget(uint32_t a)
+{
+    p_opt_bwfill_kbit_target = a;
+}
+
+void ConfigVO::setOptBwfillProbeInterval(uint32_t a)
+{
+	p_opt_bwfill_probe_interval = a;
+}
+
+void ConfigVO::setOptBwfillExceedTrigger(uint32_t a)
+{
+    p_opt_bwfill_exceed_trigger = a;
+}
+
+void ConfigVO::setOptBwfillIncreaseInterval(uint32_t a)
+{
+	p_opt_bwfill_increase_interval = a;
+}
+
+void ConfigVO::setOptBwfillMaxLatency(uint32_t a)
+{
+    p_opt_bwfill_max_latency = a;
 }

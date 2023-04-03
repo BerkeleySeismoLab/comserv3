@@ -66,12 +66,13 @@ public:
     uint16_t getDutyCycle_MaxConnectTime() const;
     uint16_t getDutyCycle_SleepTime() const;
     uint16_t getDutyCycle_BufferLevel() const;
-    int8_t   getMulticastEnabled() const;
+    uint16_t getMulticastEnabled() const;
     uint16_t getMulticastPort() const;
     char *   getMulticastHost() const;
     char *   getMulticastChannelList() const;
     char *   getContFileDir() const;
     uint32_t getWaitForClients() const;
+    uint32_t getPacketQueueSize() const;
 
     void setServerName(char *input);
     void setServerDesc(char *input);
@@ -104,6 +105,7 @@ public:
     void setMulticastChannelList(char * input);
     void setContFileDir(char * input);
     void setWaitForClients(char *input);
+    void setPacketQueueSize(char *input);
 
     void setQ330BasePort(uint32_t);
     void setQ330DataPortNumber(uint32_t);
@@ -112,6 +114,8 @@ public:
     void setStatusInterval(uint32_t);
     void setVerbosity(uint32_t);
     void setDiagnostic(uint32_t);
+    void setWaitForClients(uint32_t);
+    void setPacketQueueSize(uint32_t);
 
 private:
     char p_server_name[256];	// Not in config file, but set by config reader.
@@ -139,12 +143,13 @@ private:
     uint16_t p_dutycycle_maxConnectTime;
     uint16_t p_dutycycle_sleepTime;
     uint16_t p_dutycycle_bufferLevel;
-    int8_t   p_multicast_enabled;
+    uint16_t p_multicast_enabled;
     uint16_t p_multicast_port;
     char     p_multicast_host[256];
     char     p_multicast_channellist[512];
     char     p_contFileDir[256];
     uint32_t p_waitForClients;
+    uint32_t p_packetQueueSize;
 
     bool     p_configured;
 };

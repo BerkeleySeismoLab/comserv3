@@ -1,5 +1,11 @@
+
+
+
+
 /*   Lib660 Statistics headers
-     Copyright 2017 Certified Software Corporation
+     Copyright 2017 by
+     Kinemetrics, Inc.
+     Pasadena, CA 91107 USA.
 
     This file is part of Lib660
 
@@ -21,16 +27,18 @@ Edit History:
    Ed Date       By  Changes
    -- ---------- --- ---------------------------------------------------
     0 2017-06-11 rdr Created
+    1 2021-12-24 rdr Copyright assignment to Kinemetrics.
+------2022-02-24 jms remove pseudo-pascal macros------
 */
 #ifndef libstats_h
 /* Flag this file as included */
 #define libstats_h
-#define VER_LIBSTATS 3
+#define VER_LIBSTATS 4
 
 #include "libtypes.h"
 #include "libstrucs.h"
 
-extern void add_status (pq660 q660, enum tlogfld acctype, longword count) ;
+extern void add_status (pq660 q660, enum tlogfld acctype, U32 count) ;
 extern void lib_stats_timer (pq660 q660) ;
 extern void update_op_stats (pq660 q660) ;
 extern void update_gps_stats (pq660 q660) ;

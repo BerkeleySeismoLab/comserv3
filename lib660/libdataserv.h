@@ -1,5 +1,11 @@
+
+
+
+
 /*   Lib660 Dataserver definitions
-     Copyright 2017 Certified Software Corporation
+     Copyright 2017 by
+     Kinemetrics, Inc.
+     Pasadena, CA 91107 USA.
 
     This file is part of Lib660
 
@@ -21,11 +27,13 @@ Edit History:
    Ed Date       By  Changes
    -- ---------- --- ---------------------------------------------------
     0 2017-06-08 rdr Created
+    1 2021-12-24 rdr Copyright assignment to Kinemetrics.
+------2022-02-24 jms remove pseudo-pascal macros------
 */
 #ifndef libdataserv_h
 /* Flag this file as included */
 #define libdataserv_h
-#define VER_LIBDATASERV 3
+#define VER_LIBDATASERV 5
 
 #include "libtypes.h"
 #include "libstrucs.h"
@@ -35,19 +43,20 @@ Edit History:
 #define MAX_DS_BUFFERS 16 /* around 65K */
 
 typedef tlowlat_call tdsbuf[MAX_DS_BUFFERS] ;
-typedef struct {
-  word ds_port ;         /* TCP port number */
-  integer server_number ;
-  integer record_count ; /* number of records allocated */
-  pointer stnctx ;       /* station context */
-  tdsbuf *dsbuf ;        /* pointer to circular buffer */
+typedef struct
+{
+    U16 ds_port ;         /* TCP port number */
+    int server_number ;
+    int record_count ; /* number of records allocated */
+    pointer stnctx ;       /* station context */
+    tdsbuf *dsbuf ;        /* pointer to circular buffer */
 } tds_par ;
 typedef tlowlat_call *plowlat_call ;
 
 extern pointer lib_ds_start (tds_par *dspar) ;
 extern void lib_ds_stop (pointer ct) ;
 extern void lib_ds_send (pointer ct, plowlat_call pbuf) ;
-extern void process_ll (pq660 q660, pbyte p, integer chan_offset, 
-                        longword sec) ;
+extern void process_ll (pq660 q660, PU8 p, int chan_offset,
+                        U32 sec) ;
 
 #endif

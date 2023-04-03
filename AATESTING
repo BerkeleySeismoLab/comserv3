@@ -1,0 +1,17 @@
+2021/11/06
+Tesing faster response.
+
+--------------------
+In include/comserv_vars.h:
+
+//:: #define MAXWAIT 10 /* maximum number of seconds for clients to wait */
+#define MAXWAIT 5 /* maximum number of seconds for clients to wait */
+
+//:: EXTERN int32_t polltime = 50000 ;
+EXTERN int32_t polltime = 20000 ;
+
+--------------------
+In include/service.h:
+
+//:: #define CS_CHECK_INTERVAL	5
+#define CS_CHECK_INTERVAL	2

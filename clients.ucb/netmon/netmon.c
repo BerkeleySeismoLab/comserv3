@@ -31,7 +31,7 @@
 				STATIONS_INI pathnames.
 */
 
-#define	VERSION		"1.2.3 (2022.059)"
+#define	VERSION		"1.2.4 (2022.320)"
 
 #ifdef COMSERV2
 #define	CLIENT_NAME	"NETM"
@@ -1399,8 +1399,11 @@ int spawn_process (char *prog, char *station)
 	pid2 = fork();
 	switch (pid2) {
 	case 0:	    /* grandchild				*/
+	    fd = open ("/dev/null", O_RDONLY);
+	    fclose(stdin);
+	    dup2(fd,0);
+	    close(fd);
 	    fd = open (logfile, O_WRONLY|O_APPEND|O_CREAT,0666);
-	    close(0);
 	    fclose(stdout);
 	    fclose(stderr);
 	    dup2(fd,1);

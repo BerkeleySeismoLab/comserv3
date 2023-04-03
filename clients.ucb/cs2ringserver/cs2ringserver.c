@@ -7,11 +7,13 @@
  *	Initialize config_struc structure before open_cfg call.
  *  2022-02-28 ver 1.2.2 (2022.059) DSN
  *	Updated to allow enviromental override of STATIONS_INI.
+ *  2023-03-10 ver 1.2.3 (2023.069) DSN
+ *	Update to cleanly exit after error writing to ringserver.
  ************************************************************************/
 
 #include <stdio.h>
 
-#define VERSION	"1.2.2 (2022.059)"
+#define VERSION	"1.2.3 (2023.069)"
 
 #ifdef COMSERV2
 #define CLIENT_NAME	"2RNG"
@@ -27,15 +29,15 @@ char *syntax[] = {
 "    [-o station.net] [-n client_name] [-v n] [-h] station_list",
 "    where:",
 "	-O ringserver	Name of ringserver (host:port).",
-"	-H host		Specify remote host that provides data via a socket.",
-"	-S service	Specify socket name/number on remote host for data.",
-"	-p passwd	Passwd to specify via remote socket.",
-"	-P passwdfile	File containing passwd to specify via remote socket.",
+"	-H host		Specify datasock host that provides input mSEED via a socket.",
+"	-S service	Specify socket name/number for datasock host for input mSEED.",
+"	-p passwd	Passwd to specify over socket to datasock host for input MSEED.",
+"	-P passwdfile	File containing passwd to for datasock host.",
 "	-o station.net	Override the station and network in the MSEED data",
 "			data records with the specified station.net.",
 "	-n client_name	Override default comserv client name with new name.",
 "			Default client name is " CLIENT_NAME ".",
-"	-R		Request stations and channels via remote socket.",
+"	-R		Request stations and channels from remote datasock.",
 "	-v n		Set verbosity level to n.",
 "	-f		Flush - start with new data.",
 "	-h		Help - prints syntax message.",
@@ -43,6 +45,7 @@ char *syntax[] = {
 "Notes:",
 "1.  Program will not register as a comserv client if it is receiving",
 "    MSEED data from a datasock socket.",
+"2.  Program exits if unable to write to ringserver.",
 NULL };
 
 #include <stdlib.h>
@@ -110,7 +113,7 @@ tclientname client_name;	/* Comserv client name			*/
 
 /*  Signal handler variables and functions.				*/
 void finish_handler(int sig);
-void terminate_program (int error);
+int terminate_comserv (int error);
 
 extern int fill_from_socket (char *station, char *host, char *service,
 			     char *passwd, int request_flag);
@@ -401,8 +404,8 @@ int main (int argc, char **argv)
     }
     else {
 	status = fill_from_comserv (station);
+	terminate_comserv (status);
     }
-    terminate_program (status);
-    return (0);
+    exit (status);
 }
 

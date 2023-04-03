@@ -66,6 +66,7 @@ struct q330serv_cfg
     char multicastEnabled[CFGWIDTH];
     char multicastChannelList[CFGWIDTH];
     char waitForClients[CFGWIDTH];
+    char packetQueueSize[CFGWIDTH];
 };
 
 #ifdef __cplusplus

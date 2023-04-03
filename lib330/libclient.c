@@ -142,7 +142,7 @@ begin
   result = lib_register_330 (q330, rpar) ;
   if (q330->share.target_state == LIBSTATE_WAIT)
     then
-	libmsgadd (q330, LIBMSG_NOIP, (pointer)"") ;
+        libmsgadd (q330, LIBMSG_NOIP, (pointer)"") ;
   return result ;
 end
 
@@ -589,7 +589,7 @@ begin
 
   if (ct)
     then
-      msgadd (ct, msgcode, dt, msgsuf, TRUE) ;
+	msgadd (ct, msgcode, dt, (pointer)msgsuf, TRUE) ;
 end
 
 void lib_webadvertise (tcontext ct, string15 *stnname, string *dpaddr)
@@ -602,7 +602,7 @@ begin
       return ;
   lock (q330) ;
   while (strlen((char *)stnname) < 8)
-      strcat((char *)stnname, (char *)" ") ;
+    strcat((char *)stnname, (char *)" ") ;
   if (q330->share.fixed.flags and FF_NWEB)
     then
       begin
@@ -613,7 +613,7 @@ begin
       begin
         memcpy(addr(q330->share.old_webadv.name), stnname, 8) ;
         while (strlen((char *)dpaddr) < 24)
-	    strcat ((char *)dpaddr, (char *)" ") ;
+            strcat ((char *)dpaddr, (char *)" ") ;
         memcpy(addr(q330->share.old_webadv.ip_port), dpaddr, 24) ;
       end
   q330->share.webadv_requested = TRUE ;
@@ -673,7 +673,7 @@ begin
   return result ;
 end
 
-const tmodules modules =
+static /* typedef'd const */ tmodules modules =
    {{/*name*/"LibClient", /*ver*/VER_LIBCLIENT},     {/*name*/"LibStrucs", /*ver*/VER_LIBSTRUCS},
     {/*name*/"LibTypes", /*ver*/VER_LIBTYPES},       {/*name*/"LibMsgs", /*ver*/VER_LIBMSGS},
     {/*name*/"LibSupport", /*ver*/VER_LIBSUPPORT},   {/*name*/"LibStats", /*ver*/VER_LIBSTATS},
@@ -691,7 +691,7 @@ const tmodules modules =
 #endif
     {/*name*/"Q330Types", /*ver*/VER_Q330TYPES},     {/*name*/"Q330IO", /*ver*/VER_Q330IO},
     {/*name*/"Q330Cvrt", /*ver*/VER_Q330CVRT},       {/*name*/"LibPOC", /*ver*/VER_LIBPOC},
-    {/*name*/"", /*ver*/0}} ;
+    {/*name*/"", /*ver*/0}} ; /* Null name to indicate end of list */
 
 pmodules lib_get_modules (void)
 begin

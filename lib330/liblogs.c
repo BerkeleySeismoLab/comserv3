@@ -390,7 +390,7 @@ begin
       begin
         if (q330->par_create.mini_embed)
           then
-	    add_blockette (paqs, ppar, (pword)addr(buffer), ts) ;
+            add_blockette (paqs, ppar, (pword)addr(buffer), ts) ;
         if (q330->par_create.mini_separate)
           then
             build_separate_record (paqs, ppar, (pword)addr(buffer), ts, PKC_EVENT) ;
@@ -544,10 +544,10 @@ begin
                     begin
                       if (q330->par_create.mini_embed)
                         then
-			  add_blockette (paqs, q, (pword)addr(buffer), paqs->data_timetag) ;
+                          add_blockette (paqs, q, (pword)addr(buffer), paqs->data_timetag) ;
                       if (q330->par_create.mini_separate)
                         then
-			  build_separate_record (paqs, q, (pword)addr(buffer), paqs->data_timetag, PKC_CALIBRATE) ;
+                          build_separate_record (paqs, q, (pword)addr(buffer), paqs->data_timetag, PKC_CALIBRATE) ;
                     end
                 q = q->dispatch_link ;
               end

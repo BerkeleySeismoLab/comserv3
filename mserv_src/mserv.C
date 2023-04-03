@@ -29,6 +29,7 @@
  * Modification History:
  *  2020-09-29 DSN Updated for comserv3.
  *  2021-04-27 DSN Initialize config_struc structures before use.
+ *  2023-02-07 DSN Added support for configurable PacketQueue size.
  */
 
 #include <iostream>
@@ -79,7 +80,9 @@ Verbose*         g_verbList; // Not needed. Just for testing
 
 Logger		 g_log;
 LibmsmcastInterface  *g_libInterface = NULL;
-int		 log_inited;
+PacketQueue	 *g_packetQueue = NULL;
+tcontext	 g_stationContext = NULL;	//:: DEBUG
+int		 log_inited = 0;
 
 #ifdef ENDIAN_LITTLE
 #define MY_ENDIAN_STRING	"LITTLE_ENDIAN"
@@ -132,6 +135,7 @@ int main(int argc, char *argv[]) {
     setlinebuf(stdout);
     setlinebuf(stderr);
     define_comserv_vars();
+    g_packetQueue = NULL;
 
     cmdname = basename(strdup(argv[0]));
     while ( (c = getopt(argc,argv,"hv:c:n:")) != -1)
@@ -294,7 +298,9 @@ int main(int argc, char *argv[]) {
 
 	// 1.  Wait until we get to state RUNWAIT. /
 	g_libInterface->startRegistration();
-	if(!g_libInterface->waitForState(LIBSTATE_RUNWAIT, 120, scan_comserv_clients)) {
+	int delay_for_runwait = 120;
+	if(!g_libInterface->waitForState(LIBSTATE_RUNWAIT, delay_for_runwait, scan_comserv_clients)) {
+	    g_log << "+++ Unable to get to RUNWAIT state in " << delay_for_runwait << "seconds.  Delete libmcast interface." << std::endl;
 	    delete g_libInterface;
 	    g_libInterface = NULL;
 	    continue;
@@ -313,10 +319,12 @@ int main(int argc, char *argv[]) {
     
 	// If we are still in RUNWAIT state, start data flowing by moving to RUN state.
 	// Otherwise, reset and try again.
-	if (g_libInterface->getLibState() == LIBSTATE_RUNWAIT) {
+	int current_state;
+	if ((current_state = g_libInterface->getLibState()) == LIBSTATE_RUNWAIT) {
 	    g_libInterface->startDataFlow();      
 	}
 	else {
+	    g_log << "+++ Unexpected state: " << current_state << ", not RUNWWAIT.  Delete libmcast interface" << std::endl;
 	    delete g_libInterface;
 	    g_libInterface = NULL;
 	    continue;
@@ -332,7 +340,7 @@ int main(int argc, char *argv[]) {
 		nextStatusUpdate = time(NULL) + g_cvo.getStatusInterval();
 	    }
 	    packetQueueEmptied = g_libInterface->processPacketQueue();
-	    if(!packetQueueEmptied && g_libInterface->queueNearFull()) {
+	    if((! packetQueueEmptied) && g_libInterface->queueNearFull()) {
 		g_log << "XXX Intermediate packet queue too full.  Halting dataflow." << std::endl;
 		g_reset = 1;
 	    }
@@ -410,6 +418,9 @@ void scan_comserv_clients() {
 	    //cleanup(1);
 	    g_log << "--- Suspending link (Requested)" << std::endl;
 	    g_libInterface->startDeregistration();
+	    while(g_libInterface->getLibState() != LIBSTATE_IDLE) {
+		sleep(1);
+	    }
 	    areSuspended = 1;
 	    flushData = 1;
 	    break;

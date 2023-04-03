@@ -3,11 +3,10 @@
 
 /*
  * 29 Sep 2020 DSN Updated for comserv3.
+ * 03 Oct 2022 DSN Updated for runtime configuration of queueSize.
  */
 
 #include <pthread.h>
-
-const int PACKETQUEUE_QUEUE_SIZE = 500;
 
 class QueuedPacket {
  public:
@@ -25,16 +24,18 @@ class QueuedPacket {
 
 class PacketQueue {
  public:
-  PacketQueue();
+  PacketQueue(int n);
   ~PacketQueue();
   void enqueuePacket(char *, int, short);
   QueuedPacket dequeuePacket();
+  int maxPackets();
   int numQueued();
   int numFree();
  private:
   void advanceHead();
   void advanceTail();
-  QueuedPacket queue[PACKETQUEUE_QUEUE_SIZE];
+  QueuedPacket *queue;
+  int queueSize;
   int queueHead;
   int queueTail;
   pthread_mutex_t queueLock;

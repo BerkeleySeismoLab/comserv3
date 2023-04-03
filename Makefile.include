@@ -14,7 +14,7 @@ CC	= gcc
 CXX	= g++
 DEBUG	= -g
 # DEBUG	= -g -pg	# Use if you want to use gprof profiling.
-COPT	= -Wall
+COPT	= -Wall -O0
 
 OSDEFS	= -DLINUX -Dlinux
 ENDIAN	= -DENDIAN_LITTLE -D_BIG_ENDIAN_HEADER

@@ -52,7 +52,6 @@ extern CHANNEL_INFO **channelv;	/* list of channels.			*/
 
 /*  Signal handler variables and functions.		*/
 void finish_handler(int sig);
-void terminate_program (int error);
 extern int write_to_ring (seed_record_header *pseed);
 
 const static int MIN_BLKSIZE = 128;
@@ -172,6 +171,7 @@ int open_socket(char *server, 	/* remote node name */
 
     return(s);
 }
+
 
 /************************************************************************
  *  get_mspacket:
@@ -339,7 +339,7 @@ int fill_from_socket (char *station, char *host, char *service,
 
 /*  
  * 
- *   Reading socket to get hypo_centers
+ *   Reading socket to get miniSEED records.
  *   status == 0 indicates end-of-file (socket closed by remote), else its 
  *   the number of bytes received
  *

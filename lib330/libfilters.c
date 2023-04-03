@@ -446,9 +446,9 @@ begin
   q330 = paqs->owner ;
   pavg->signed_sum = pavg->signed_sum + s ; /* update sum */
   pavg->sqr_sum = pavg->sqr_sum + samp * samp ; /* update mean-sqr */
-  if (abs(samp) > pavg->peak_abs)
+  if (fabs(samp) > pavg->peak_abs)
     then
-      pavg->peak_abs = abs(samp) ;
+      pavg->peak_abs = fabs(samp) ;
   inc(pavg->avg_count) ;
   if (pavg->avg_count >= q->avg_length)
     then
@@ -457,7 +457,7 @@ begin
         seed2string((pointer)q->location, (pointer)q->seedname, (pchar)addr(ss)) ;
         sprintf(s1, "%s:%12.3f%12.3f%12.3f", ss,
                 pavg->running_avg, sqrt(pavg->sqr_sum / q->avg_length), pavg->peak_abs) ;
-        libdatamsg(q330, LIBMSG_AVG, addr(s1)) ;
+        libdatamsg(q330, LIBMSG_AVG, (const pointer) addr(s1)) ;
         pavg->avg_count = 0 ;
         pavg->signed_sum = 0.0 ;
         pavg->sqr_sum = 0.0 ;

@@ -1,5 +1,11 @@
+
+
+
+
 /*   Lib660 POC Receiver definitions
-     Copyright 2017 Certified Software Corporation
+     Copyright 2017 by
+     Kinemetrics, Inc.
+     Pasadena, CA 91107 USA.
 
     This file is part of Lib660
 
@@ -21,29 +27,34 @@ Edit History:
    Ed Date       By  Changes
    -- ---------- --- ---------------------------------------------------
     0 2017-06-10 rdr Created
+    1 2021-12-24 rdr Copyright assignment to Kinemetrics.
+------2022-02-24 jms remove pseudo-pascal macros------
 */
 #ifndef libpoc_h
 /* Flag this file as included */
 #define libpoc_h
-#define VER_LIBPOC 0
+#define VER_LIBPOC 5
 
 #include "utiltypes.h"
 #include "readpackets.h"
 #include "libtypes.h"
 #include <errno.h>
 
-typedef struct { /* Format of callback parameter */
-  tip_v6 ip6_address ; /* new dynamic IP address for IPV6 */
-  longword ip_address ; /* new dynamic IP address for IPV4 */
-  boolean ipv6 ; /* TRUE for IPV6 */
-  tpoc_message msg ; /* Message received from Q660 */
+typedef struct   /* Format of callback parameter */
+{
+    tip_v6 ip6_address ; /* new dynamic IP address for IPV6 */
+    U32 ip_address ; /* new dynamic IP address for IPV4 */
+    BOOLEAN ipv6 ; /* TRUE for IPV6 */
+    tpoc_message msg ; /* Message received from Q660 */
 } tpoc_recvd ;
-enum tpocstate {PS_NEWPOC, PS_CONNRESET} ;
+enum tpocstate
+{PS_NEWPOC, PS_CONNRESET} ;
 typedef void (*tpocproc)(enum tpocstate pocstate, tpoc_recvd *poc_recv) ;
-typedef struct { /* parameters for POC receiver */
-  boolean ipv6 ; /* TRUE to use IPV6 */
-  word poc_port ; /* UDP port to listen on */
-  tpocproc poc_callback ; /* procedure to call when poc received */
+typedef struct   /* parameters for POC receiver */
+{
+    BOOLEAN ipv6 ; /* TRUE to use IPV6 */
+    U16 poc_port ; /* UDP port to listen on */
+    tpocproc poc_callback ; /* procedure to call when poc received */
 } tpoc_par ;
 
 extern pointer lib_poc_start (tpoc_par *pp) ;

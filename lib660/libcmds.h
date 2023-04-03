@@ -1,5 +1,11 @@
+
+
+
+
 /*   Lib660 Command Processing headers
-     Copyright 2017 Certified Software Corporation
+     Copyright 2017 by
+     Kinemetrics, Inc.
+     Pasadena, CA 91107 USA.
 
     This file is part of Lib660
 
@@ -21,11 +27,13 @@ Edit History:
    Ed Date       By  Changes
    -- ---------- --- ---------------------------------------------------
     0 2017-06-07 rdr Created
+    1 2021-12-24 rdr Copyright assignment to Kinemetrics.
+------2022-02-24 jms remove pseudo-pascal macros------
 */
 #ifndef libcmds_h
 /* Flag this file as included */
 #define libcmds_h
-#define VER_LIBCMDS 9
+#define VER_LIBCMDS 20
 
 #include "utiltypes.h"
 #include "libtypes.h"
@@ -39,5 +47,6 @@ extern void start_deallocation (pq660 q660) ;
 extern void change_status_request (pq660 q660) ;
 extern void send_user_message (pq660 q660, pchar msg) ;
 extern void tcp_error (pq660 q660, pchar msgsuf) ;
+extern void disconnect_me (pq660 q660) ;
 
 #endif

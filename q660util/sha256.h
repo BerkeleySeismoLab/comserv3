@@ -1,7 +1,11 @@
+
+
+
+
 /*
     Q660 SHA256 definitions Copyright 2016 by
-    Certified Software Corporation
-    John Day, Oregon, USA
+    Kinemetrics, Inc.
+    Pasadena, CA 91107 USA.
 
     This file is part of Lib660
 
@@ -22,11 +26,13 @@
 REV  DATE        BY   CHANGE
 -----------------------------------------------------------------------
   0  2016-09-05  rdr  Created.
+  1  2021-12-24  rdr  Copyright assignment to Kinemetrics.
+------2022-02-24 jms remove pseudo-pascal macros------
 */
 
 #ifndef SHA256_H
 #define SHA256_H
-#define VER_SHA256 0
+#define VER_SHA256 4
 
 #ifndef UTILTYPES_H
 #include "utiltypes.h"

@@ -41,7 +41,7 @@ struct q8serv_cfg
     /* Info from either global NETWORK_INI or server's STATION_INI file. */
     char logdir[CFGWIDTH];
     char logtype[CFGWIDTH];
-    char udpaddr[CFGWIDTH];
+    char tcpaddr[CFGWIDTH];
     char contFileDir[CFGWIDTH];
     char statusinterval[CFGWIDTH];
     char baseport[CFGWIDTH];
@@ -63,6 +63,14 @@ struct q8serv_cfg
     char multicastChannelList[CFGWIDTH];
     char limitBackfill[CFGWIDTH];
     char waitForClients[CFGWIDTH];
+    char packetQueueSize[CFGWIDTH];
+    /* Info for lowlatency support. */
+    char opt_throttle_kbitpersec[CFGWIDTH];
+    char opt_bwfill_kbit_target[CFGWIDTH];
+    char opt_bwfill_probe_interval[CFGWIDTH];
+    char opt_bwfill_exceed_trigger[CFGWIDTH];
+    char opt_bwfill_increase_interval[CFGWIDTH];
+    char opt_bwfill_max_latency[CFGWIDTH];
 };
 
 #ifdef __cplusplus

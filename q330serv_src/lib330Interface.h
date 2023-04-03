@@ -63,7 +63,7 @@ struct onesec_pkt{
 // These variable must be global because they are used in callback routines 
 // called from outside the class, so they cannot be class variables.
 
-EXTERN PacketQueue packetQueue;
+EXTERN PacketQueue *packetQueue;
 EXTERN struct sockaddr_in mcastAddr;
 #ifdef DEFINE_EXTERNAL
 EXTERN int mcastSocketFD = -1;
@@ -89,6 +89,7 @@ public:
     int processPacketQueue();
     int queueNearFull();
     bool build_multicastChannelList(char *);
+    void log_q330serv_config(ConfigVO ourConfig);
 
     // These functions are static because they are callback routes from lib330.
     static void state_callback(pointer p);

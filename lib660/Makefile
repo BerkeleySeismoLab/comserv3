@@ -34,8 +34,9 @@ HDRS =	libarchive.h libclient.h libcmds.h libcompress.h\
 	libfilters.h liblogs.h libmsgs.h libopaque.h\
 	libpoc.h libsampcfg.h libsampglob.h libsample.h\
 	libseed.h libstats.h libstrucs.h libsupport.h libtypes.h libverbose.h\
-	$(QD)/memutil.h $(QD)/pascal.h $(QD)/platform.h\
-	$(QD)/readpackets.h $(QD)/sha256.h $(QD)/ssifc.h $(QD)/utiltypes.h\
+	bsl_debug.h\
+	$(QD)/memutil.h $(QD)/platform.h\
+	$(QD)/readpackets.h $(QD)/sha256.h $(QD)/utiltypes.h\
 	$(QD)/xmlcfg.h $(QD)/xmlseed.h $(QD)/xmlsup.h Makefile
 
 
@@ -58,7 +59,7 @@ ifeq ($(OPTIMIZE),DEBUG)
 CFLAGS  = -g -I $(QD) -DPROG_DL -DPROG_SS -DINLIB660 -DDEVSOH\
 	-O0 -ffast-math\
 	-g -DUSE_GCC_PACKING -w \
-	-m$(NUMBITS) -Dlinux -DBSL -DBSL_DEBUG 
+	-m$(NUMBITS) -Dlinux -DBSL # -DBSL_DEBUG 
 endif
 
 COPT	= 

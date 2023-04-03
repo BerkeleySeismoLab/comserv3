@@ -1,6 +1,3 @@
-#ifndef __GLOBAL_H__
-#define __GLOBAL_H__
-
 /* 
     2007-09-13 - added DSN mods for signal trapping, cserv little endian changes from DSN
         and new lib660 from Bob R.
@@ -14,15 +11,18 @@
     2020-09-29 DSN Updated for comserv3.
 */
 
+#ifndef __GLOBAL_H__
+#define __GLOBAL_H__
+
+#include "private_station_info.h"
+
 /* GLobal definitions. */
  
 #define DEFAULT_STATUS_INTERVAL 100
 #define MIN_STATUS_INTERVAL 5
 #define MAX_STATUS_INTERVAL 200
 
-#define DEFAULT_DATA_RATE_INTERVAL 3
-#define MIN_DATA_RATE_INTERVAL 1
-#define MAX_DATA_RATE_INTERVAL 100
+#define DEFAULT_PACKETQUEUE_QUEUE_SIZE	500
 
 #define QUOTE(x)        #x
 #define STRING(x)       QUOTE(x)
@@ -31,12 +31,10 @@
 #define MAJOR_VERSION 2
 #define MINOR_VERSION 0
 #define RELEASE_VERSION 3
-#define RELEASE_DATE "2022.038"
+#define RELEASE_DATE "2023.093-beta"
 #define APP_VERSION_STRING APP_IDENT_STRING " v" STRING(MAJOR_VERSION) "." STRING(MINOR_VERSION) "." STRING(RELEASE_VERSION) " (" RELEASE_DATE ")"
 
 #define STATION_INI	"station.ini"
-
-#include "private_station_info.h"
 
 extern int log_inited;
 
@@ -46,6 +44,7 @@ extern int log_inited;
 #include "libmsmcastInterface.h"
 extern Logger g_log;
 extern LibmsmcastInterface *g_libInterface;
+extern PacketQueue *g_packetQueue;
 extern bool g_reset;
 #endif
 

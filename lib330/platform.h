@@ -77,6 +77,7 @@ Edit History:
 #if defined (X86_WIN32)
 
 #include <winsock2.h>
+#include <ws2tcpip.h>		/* socklen_t */
 #include <windows.h>
 #include <winbase.h>
 
