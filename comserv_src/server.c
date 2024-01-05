@@ -515,7 +515,7 @@ int main (int argc, char *argv[], char **envp)
 #endif
 
 /* open the stations list and look for that station */
-    strncpy (filename, get_station_ini_pathname(), CFGWIDTH);
+    strncpy (filename, get_stations_ini_pathname(), CFGWIDTH);
     filename[CFGWIDTH-1] = '\0';
     if (open_cfg(&cfg, filename, (pchar)station_name))
 	terminate ("Could not find station in STATIONS_INI file\n") ;
